@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LuxeBraids – Client Login & Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+    authDomain: "braiders-9cc89.firebaseapp.com",
+    databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+    projectId: "braiders-9cc89",
+    storageBucket: "braiders-9cc89.appspot.com",
+    messagingSenderId: "444617114412",
+    appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    measurementId: "G-J60EW3KX9D"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, updatePassword, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp };
+
+  onAuthStateChanged(auth, async (user) => {
+    window.currentUser = user;
+    if (user) {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        window.userProfile = snap.exists() ? snap.data() : {};
+      } catch(e) { window.userProfile = {}; }
+      if (typeof showDashboard === 'function') showDashboard(user);
+    } else {
+      window.location.href = 'client-login.html';
+    }
+  });
+</script>
+<link rel="stylesheet" href="client-dashboard.css"/>
+</head>
+<body>
+
+<!-- PAGE LOADER -->
+<div id="page-loader">
+  <div class="loader-logo">LuxeBraids</div>
+  <div class="loader-ring"></div>
+</div>
+
+<!-- ========== AUTH SCREEN ========== -->
+<div id="auth-screen">
+  <div class="auth-bg">
+    <div class="auth-bg-orb o1"></div>
+    <div class="auth-bg-orb o2"></div>
+    <div class="auth-bg-orb o3"></div>
+  </div>
+  <div class="auth-container">
+    <div class="auth-left">
+      <div class="auth-brand">
+        <div class="auth-logo-mark">L</div>
+        <div>
+          <div class="auth-brand-name">LuxeBraids</div>
+          <div class="auth-brand-sub">Premium Studio · Est. 2019</div>
+        </div>
+      </div>
+      <h1 class="auth-left-headline">Your Crown<br><em>Awaits You</em></h1>
+      <p class="auth-left-sub">Join thousands of queens who trust LuxeBraids for their most beautiful moments. Sign in to unlock your personal dashboard.</p>
+      <div class="auth-perks">
+        <div class="auth-perk"><div class="perk-icon pink"><i class="fas fa-calendar-check"></i></div><div class="perk-text"><strong>Easy Online Booking</strong><span>Book any style with just a few clicks</span></div></div>
+        <div class="auth-perk"><div class="perk-icon gold"><i class="fas fa-crown"></i></div><div class="perk-text"><strong>Loyalty Points</strong><span>Earn & redeem points on every visit</span></div></div>
+        <div class="auth-perk"><div class="perk-icon purple"><i class="fas fa-heart"></i></div><div class="perk-text"><strong>Save Favourites</strong><span>Keep track of styles you love</span></div></div>
+        <div class="auth-perk"><div class="perk-icon green"><i class="fas fa-comment-dots"></i></div><div class="perk-text"><strong>Stylist Messaging</strong><span>Chat directly with your stylist</span></div></div>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+          <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+        </div>
+        <div class="auth-error" id="auth-error"><i class="fas fa-exclamation-circle"></i><span id="auth-error-msg"></span></div>
+        <div class="auth-success" id="auth-success"><i class="fas fa-check-circle"></i><span id="auth-success-msg"></span></div>
+
+        <!-- LOGIN -->
+        <div id="login-form-wrap">
+          <h2 class="auth-form-title">Welcome back 👑</h2>
+          <p class="auth-form-sub">Sign in to access your dashboard</p>
+          <div class="form-field"><label>Email Address</label><div class="field-wrap"><i class="fas fa-envelope field-icon"></i><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()"/></div></div>
+          <div class="form-field"><label>Password</label><div class="field-wrap"><i class="fas fa-lock field-icon"></i><input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()"/><button class="toggle-pw" onclick="togglePw('login-password',this)" type="button"><i class="fas fa-eye"></i></button></div></div>
+          <span class="forgot-link" onclick="showForgotPw()">Forgot password?</span>
+          <button class="btn-auth-submit" id="btn-login" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Sign In<span class="btn-shimmer"></span></button>
+          <p class="auth-footer-link">Don't have an account? <a onclick="switchTab('signup')">Create one free</a></p>
+        </div>
+
+        <!-- SIGNUP -->
+        <div id="signup-form-wrap" style="display:none;">
+          <h2 class="auth-form-title">Join the Club ✨</h2>
+          <p class="auth-form-sub">Create your free LuxeBraids account</p>
+          <div class="form-row-2">
+            <div class="form-field"><label>First Name</label><div class="field-wrap"><i class="fas fa-user field-icon"></i><input type="text" id="signup-firstname" placeholder="Amara" autocomplete="given-name"/></div></div>
+            <div class="form-field"><label>Last Name</label><div class="field-wrap"><i class="fas fa-user field-icon"></i><input type="text" id="signup-lastname" placeholder="Njeru" autocomplete="family-name"/></div></div>
+          </div>
+          <div class="form-field"><label>Email Address</label><div class="field-wrap"><i class="fas fa-envelope field-icon"></i><input type="email" id="signup-email" placeholder="your@email.com" autocomplete="email"/></div></div>
+          <div class="form-field"><label>Phone / WhatsApp</label><div class="field-wrap"><i class="fas fa-phone field-icon"></i><input type="tel" id="signup-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel"/></div></div>
+          <div class="form-field">
+            <label>Password <span style="font-weight:400;text-transform:none;font-size:.74rem;color:var(--grey)">(min 2 characters)</span></label>
+            <div class="field-wrap"><i class="fas fa-lock field-icon"></i><input type="password" id="signup-password" placeholder="Create a password" autocomplete="new-password" oninput="checkPwStrength(this.value,'')"/><button class="toggle-pw" onclick="togglePw('signup-password',this)" type="button"><i class="fas fa-eye"></i></button></div>
+            <div class="pw-strength" id="pw-strength-wrap" style="display:none;">
+              <div class="pw-strength-bars"><div class="pw-bar" id="pwb1"></div><div class="pw-bar" id="pwb2"></div><div class="pw-bar" id="pwb3"></div><div class="pw-bar" id="pwb4"></div></div>
+              <div class="pw-strength-label">Strength: <span id="pw-strength-label">—</span></div>
+            </div>
+          </div>
+          <div class="form-field"><label>Confirm Password</label><div class="field-wrap"><i class="fas fa-lock field-icon"></i><input type="password" id="signup-confirm-pw" placeholder="Repeat your password" autocomplete="new-password"/><button class="toggle-pw" onclick="togglePw('signup-confirm-pw',this)" type="button"><i class="fas fa-eye"></i></button></div></div>
+          <button class="btn-auth-submit" id="btn-signup" onclick="handleSignup()"><i class="fas fa-user-plus"></i> Create Account<span class="btn-shimmer"></span></button>
+          <p class="auth-footer-link">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
+        </div>
+
+        <!-- FORGOT PASSWORD -->
+        <div id="forgot-form-wrap" style="display:none;">
+          <h2 class="auth-form-title">Reset Password 🔑</h2>
+          <p class="auth-form-sub">We'll send a reset link to your email</p>
+          <div class="form-field"><label>Email Address</label><div class="field-wrap"><i class="fas fa-envelope field-icon"></i><input type="email" id="forgot-email" placeholder="your@email.com"/></div></div>
+          <button class="btn-auth-submit" onclick="handleForgot()"><i class="fas fa-paper-plane"></i> Send Reset Link<span class="btn-shimmer"></span></button>
+          <p class="auth-footer-link"><a onclick="showLoginForm()"><i class="fas fa-arrow-left"></i> Back to Sign In</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DASHBOARD SCREEN ========== -->
+<div id="dashboard-screen">
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    <div class="announcement-track">
+      <span>✨ Today's booking is on offer — 20% off all braids</span><span>👑 Weekend braid discounts live now</span><span>🔥 Only 3 slots remaining for today</span><span>💅 Trending styles being booked as you browse</span><span>💍 Luxury bridal collection now available</span><span>⚡ Flash braid sale ends tonight at midnight</span><span>🌟 29 clients booked Boho Braids this week</span><span>✨ Today's booking is on offer — 20% off all braids</span><span>👑 Weekend braid discounts live now</span><span>🔥 Only 3 slots remaining for today</span><span>💅 Trending styles being booked as you browse</span><span>💍 Luxury bridal collection now available</span>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="db-navbar">
+    <div class="db-nav-container">
+      <button class="db-hamburger" id="db-hamburger"><span></span><span></span><span></span></button>
+      <div class="db-nav-logo"><div class="logo-mark">L</div><div><span class="logo-main">LuxeBraids</span><span class="logo-sub">Premium Studio</span></div></div>
+      <div class="db-nav-spacer"></div>
+      <div class="db-nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search styles…" id="styleSearchInput" oninput="filterStyles()"/></div>
+      <div class="db-nav-actions">
+        <button class="db-notif-btn" onclick="showToast('You have 2 new messages from your stylist 💬','gold')"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
+        <div class="db-user-pill" onclick="navigateTo('profile')"><div class="db-user-avatar" id="nav-avatar">A</div><span class="db-user-name" id="nav-username">Loading…</span></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="db-body">
+    <!-- Sidebar -->
+    <aside class="db-sidebar" id="db-sidebar">
+      <div class="sidebar-section-label">Main Menu</div>
+      <div class="sidebar-nav">
+        <button class="sidebar-item active" data-section="home" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
+        <button class="sidebar-item" data-section="bookings" onclick="navigateTo('bookings')"><i class="fas fa-calendar-check"></i> My Bookings<span class="sidebar-badge" id="bookings-badge">0</span></button>
+        <button class="sidebar-item" data-section="favourites" onclick="navigateTo('favourites')"><i class="fas fa-heart"></i> My Favourites<span class="sidebar-badge" id="fav-badge" style="background:var(--gold);color:var(--black);">0</span></button>
+        <button class="sidebar-item" data-section="loyalty" onclick="navigateTo('loyalty')"><i class="fas fa-crown"></i> Loyalty Points</button>
+        <button class="sidebar-item" data-section="messages" onclick="navigateTo('messages')"><i class="fas fa-comment-dots"></i> Messages<span class="sidebar-badge">2</span></button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Account</div>
+      <div class="sidebar-nav">
+        <button class="sidebar-item" data-section="profile" onclick="navigateTo('profile')"><i class="fas fa-user-circle"></i> My Profile</button>
+        <button class="sidebar-item logout-item" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+      <div class="sidebar-loyalty">
+        <div class="sl-label">Loyalty Points</div>
+        <div class="sl-points" id="sl-points-val">0</div>
+        <div class="sl-bar-wrap"><div class="sl-bar" id="sl-bar-inner" style="width:0%"></div></div>
+        <div class="sl-next" id="sl-next-label">Loading…</div>
+      </div>
+    </aside>
+    <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.4);" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <main class="db-main">
+
+      <!-- HOME -->
+      <div class="db-panel active" id="panel-home">
+        <div class="db-greeting"><h1>Hello, <span id="greeting-name">Queen</span> 👑</h1><p id="greeting-sub">Welcome back to LuxeBraids. What style are you feeling today?</p></div>
+        <div class="db-stats-row">
+          <div class="db-stat-card reveal"><div class="db-stat-icon pink"><i class="fas fa-calendar-check"></i></div><div class="db-stat-num" id="stat-bookings">0</div><div class="db-stat-label">Total Bookings</div></div>
+          <div class="db-stat-card reveal"><div class="db-stat-icon gold"><i class="fas fa-crown"></i></div><div class="db-stat-num" id="stat-points">0</div><div class="db-stat-label">Loyalty Points</div></div>
+          <div class="db-stat-card reveal"><div class="db-stat-icon purple"><i class="fas fa-heart"></i></div><div class="db-stat-num" id="stat-favs">0</div><div class="db-stat-label">Saved Styles</div></div>
+          <div class="db-stat-card reveal"><div class="db-stat-icon green"><i class="fas fa-star"></i></div><div class="db-stat-num">Gold</div><div class="db-stat-label">Membership Tier</div></div>
+        </div>
+        <!-- Hero -->
+        <div class="dash-hero">
+          <div class="dash-hero-bg"><div class="dash-hero-orb o1"></div><div class="dash-hero-orb o2"></div></div>
+          <div class="dash-hero-content">
+            <div class="dash-hero-badge"><span class="badge-dot"></span> Premium Braiding Studio — Est. 2019</div>
+            <h2>Where Beauty<br><em>Becomes Art</em></h2>
+            <p>Luxury braiding experiences crafted for queens. Every strand tells your story.</p>
+            <div class="dash-hero-cta">
+              <button class="btn-dash-primary" onclick="navigateTo('home');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),200)"><i class="fas fa-calendar-check"></i> Book Appointment<span class="btn-shimmer"></span></button>
+              <button class="btn-dash-secondary" onclick="navigateTo('favourites')">My Favourites <i class="fas fa-heart"></i></button>
+            </div>
+          </div>
+          <div class="dash-hero-art">
+            <div class="dash-hero-bubble" style="background:rgba(244,184,200,.15);border-color:rgba(244,184,200,.3);">👑</div>
+            <div class="dash-hero-bubble" style="background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.3);">✨</div>
+            <div class="dash-hero-bubble" style="background:rgba(255,45,120,.12);border-color:rgba(255,45,120,.2);">💕</div>
+          </div>
+        </div>
+        <!-- Styles Catalog -->
+        <div class="dash-eyebrow">Our Styles Collection</div>
+        <div class="dash-section-title">Discover Your Next Look</div>
+        <div class="dash-section-sub">Browse every category and book in seconds</div>
+
+        <!-- Quick-jump pills scroll to sections -->
+        <div class="section-header db-categories-header" style="margin-bottom:16px;">
+          <span class="section-eyebrow">Explore</span>
+          <h2 class="section-title">Find Your Perfect Style</h2>
+        </div>
+        <div class="categories-grid" id="home-cats">
+          <button class="cat-card active" data-cat="trending" onclick="scrollToCatSection('trending')">
+            <div class="cat-icon">🔥</div>
+            <span>Trending</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="new" onclick="scrollToCatSection('new')">
+            <div class="cat-icon">✨</div>
+            <span>New Arrivals</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="most-booked" onclick="scrollToCatSection('most-booked')">
+            <div class="cat-icon">👑</div>
+            <span>Most Booked</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="luxury" onclick="scrollToCatSection('luxury')">
+            <div class="cat-icon">💎</div>
+            <span>Luxury</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="budget" onclick="scrollToCatSection('budget')">
+            <div class="cat-icon">💸</div>
+            <span>Budget Friendly</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="bridal" onclick="scrollToCatSection('bridal')">
+            <div class="cat-icon">💍</div>
+            <span>Bridal &amp; Events</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="kids" onclick="scrollToCatSection('kids')">
+            <div class="cat-icon">🎀</div>
+            <span>Kids Styles</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="mens" onclick="scrollToCatSection('mens')">
+            <div class="cat-icon">✂️</div>
+            <span>Men's Braids</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="quick" onclick="scrollToCatSection('quick')">
+            <div class="cat-icon">⚡</div>
+            <span>Quick Styles</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="transformations" onclick="scrollToCatSection('transformations')">
+            <div class="cat-icon">🪄</div>
+            <span>Transformations</span>
+            <div class="cat-glow"></div>
+          </button>
+          <button class="cat-card" data-cat="all" onclick="scrollToCatSection('all')">
+            <div class="cat-icon">🌟</div>
+            <span>All Styles</span>
+            <div class="cat-glow"></div>
+          </button>
+        </div>
+
+        <!-- Catalog container: sections injected by JS -->
+        <div id="db-catalog-container"></div>
+        <!-- Reviews -->
+        <div class="dash-eyebrow" style="margin-top:8px;">Client Love</div>
+        <div class="dash-section-title" style="margin-bottom:16px;">What Queens Are Saying</div>
+        <div class="reviews-track-wrap"><div class="reviews-track" id="home-reviews-track"></div></div>
+        <!-- Booking Form -->
+        <div id="home-booking-section">
+          <div class="dash-eyebrow">Book Now</div>
+          <div class="dash-section-title" style="margin-bottom:4px;">Reserve Your Appointment</div>
+          <div class="dash-section-sub">No payment required now. Pay at the studio.</div>
+          <div class="dash-booking-wrap">
+            <form id="dash-booking-form" onsubmit="submitDashBooking(event)">
+              <div class="dash-booking-grid">
+                <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option><option>Goddess Box Braids — KSh 4,500</option><option>Knotless Braids — KSh 3,800</option><option>Fulani Braids — KSh 4,200</option><option>Boho Braids — KSh 5,200</option><option>Butterfly Locs — KSh 4,800</option><option>Bridal Crown Braids — KSh 8,500</option><option>Lemonade Braids — KSh 2,800</option><option>Faux Locs — KSh 4,000</option><option>Senegalese Twists — KSh 2,500</option><option>Ghana Braids — KSh 2,200</option><option>Kids Princess Braids — KSh 1,500</option><option>Men's Cornrow Designs — KSh 1,800</option><option>Passion Twists — KSh 3,600</option></select></div>
+                <div class="form-group"><label>Date</label><input type="date" id="db-bookDate"/></div>
+                <div class="form-group"><label>Time</label><select id="db-bookTime"><option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option></select></div>
+                <div class="form-group"><label>Stylist</label><select id="db-bookStylist"><option>Any Available Stylist</option><option>Zara — Box Braids</option><option>Amina — Locs & Twists</option><option>Destiny — Bridal</option><option>Kezia — Kids & Quick</option></select></div>
+                <div class="form-group full"><label>Full Name</label><input type="text" id="db-bookName" placeholder="Your full name"/></div>
+                <div class="form-group full"><label>Phone / WhatsApp</label><input type="tel" id="db-bookPhone" placeholder="+254 7XX XXX XXX"/></div>
+                <button type="submit" class="btn-book-submit"><i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span></button>
+                <p class="booking-note">🔒 No payment required now. Pay at studio.</p>
+              </div>
+            </form>
+          </div>
+        </div>
+        <!-- About -->
+        <div class="dash-about reveal">
+          <div class="dash-about-visual">👑</div>
+          <div>
+            <div class="dash-eyebrow">Our Story</div>
+            <h3>Crafting <em>Luxury</em> One Braid at a Time</h3>
+            <p>LuxeBraids was born from a belief that every woman deserves to feel like royalty. Our master stylists combine traditional braiding techniques with modern luxury to create hairstyles that turn heads and build confidence.</p>
+            <div class="dash-about-nums">
+              <div class="dash-about-num"><strong>5+</strong><span>Years Exp.</span></div>
+              <div class="dash-about-num"><strong>8</strong><span>Stylists</span></div>
+              <div class="dash-about-num"><strong>150+</strong><span>Styles</span></div>
+              <div class="dash-about-num"><strong>2,400+</strong><span>Clients</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- Contact -->
+        <div class="dash-eyebrow">Get in Touch</div>
+        <div class="dash-section-title" style="margin-bottom:16px;">Visit Us or Say Hello</div>
+        <div class="dash-contact-grid">
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div><h4>Studio Location</h4><p>Westlands, Nairobi<br>Kenya</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fab fa-whatsapp"></i></div><h4>WhatsApp Us</h4><p>+254 700 000 000<br>Mon–Sat 8AM–8PM</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-clock"></i></div><h4>Studio Hours</h4><p>Mon–Fri: 8AM–8PM<br>Sat–Sun: 9AM–6PM</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-envelope"></i></div><h4>Email Us</h4><p>hello@luxebraids.com<br>Response within 2 hours</p></div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="db-panel" id="panel-bookings">
+        <div class="db-greeting"><h1>My <span>Bookings</span></h1><p>Track and manage all your appointments</p></div>
+        <div class="bookings-header">
+          <div class="bookings-filter">
+            <button class="filter-btn active" onclick="filterBookings('all',this)">All</button>
+            <button class="filter-btn" onclick="filterBookings('pending',this)">Pending</button>
+            <button class="filter-btn" onclick="filterBookings('confirmed',this)">Confirmed</button>
+            <button class="filter-btn" onclick="filterBookings('completed',this)">Completed</button>
+          </div>
+          <button class="btn-new-booking" onclick="navigateTo('home');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),300)"><i class="fas fa-plus"></i> New Booking</button>
+        </div>
+        <div id="bookings-list"></div>
+      </div>
+
+      <!-- FAVOURITES -->
+      <div class="db-panel" id="panel-favourites">
+        <div class="db-greeting"><h1>My <span>Favourites</span> 💕</h1><p>Styles you've saved for later</p></div>
+        <div class="fav-grid" id="fav-grid"></div>
+        <div id="fav-empty" class="empty-state" style="display:none;"><div class="empty-emoji">💕</div><h3>No favourites yet</h3><p>Tap the heart icon on any style to save it here</p></div>
+      </div>
+
+      <!-- LOYALTY -->
+      <div class="db-panel" id="panel-loyalty">
+        <div class="db-greeting"><h1>Loyalty <span>Points</span> 👑</h1><p>Earn rewards on every appointment</p></div>
+        <div class="loyalty-hero">
+          <div class="loyalty-hero-orb o1"></div><div class="loyalty-hero-orb o2"></div>
+          <div class="loyalty-top">
+            <div><div class="loyalty-pts-big" id="loyalty-pts-big">0</div><div class="loyalty-pts-label">Total Points Earned</div></div>
+            <div class="loyalty-tier"><i class="fas fa-crown"></i> Gold Member</div>
+          </div>
+          <div class="loyalty-bar-section">
+            <div class="loyalty-bar-labels"><span>0 pts</span><span id="loyalty-next-label">500 pts to Platinum</span></div>
+            <div class="loyalty-bar-outer"><div class="loyalty-bar-inner" id="loyalty-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="loyalty-perks-grid">
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">🎁</div><div class="lp-title">Free Style Upgrade</div><div class="lp-desc">Upgrade your style free on your next appointment</div><div class="lp-req">200 points</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">💰</div><div class="lp-title">KSh 500 Discount</div><div class="lp-desc">Convert points into a discount on any booking</div><div class="lp-req">300 points</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">👑</div><div class="lp-title">Priority Booking</div><div class="lp-desc">Gold members get first pick of weekend slots</div><div class="lp-req">Gold tier perk</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">💆</div><div class="lp-title">Free Scalp Treatment</div><div class="lp-desc">Complimentary scalp treatment session</div><div class="lp-req">400 points</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">🎀</div><div class="lp-title">Referral Bonus</div><div class="lp-desc">Earn 50 bonus points for every friend you refer</div><div class="lp-req">Refer a friend</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">⭐</div><div class="lp-title">Birthday Special</div><div class="lp-desc">Double points on bookings during your birthday month</div><div class="lp-req">Birthday perk</div></div>
+        </div>
+        <div class="loyalty-history"><h3>Points History</h3><div id="loyalty-history-list"></div></div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="db-panel" id="panel-messages">
+        <div class="db-greeting"><h1>My <span>Messages</span> 💬</h1><p>Chat with your stylist and the LuxeBraids team</p></div>
+        <div class="messages-layout">
+          <div class="msg-list">
+            <div class="msg-list-header"><h3>Conversations</h3></div>
+            <div class="msg-thread active" id="thread-zara" onclick="selectThread('zara',this)"><div class="msg-thread-top"><span class="msg-thread-name">Zara (Stylist)</span><span class="msg-thread-time">2m ago</span></div><div class="msg-thread-preview"><span class="msg-unread-dot"></span>Your braids are ready!</div></div>
+            <div class="msg-thread" id="thread-studio" onclick="selectThread('studio',this)"><div class="msg-thread-top"><span class="msg-thread-name">LuxeBraids Studio</span><span class="msg-thread-time">1h ago</span></div><div class="msg-thread-preview">Booking confirmed for Saturday</div></div>
+            <div class="msg-thread" id="thread-amina" onclick="selectThread('amina',this)"><div class="msg-thread-top"><span class="msg-thread-name">Amina (Stylist)</span><span class="msg-thread-time">Yesterday</span></div><div class="msg-thread-preview">Thank you for your kind review 💕</div></div>
+          </div>
+          <div class="msg-chat">
+            <div class="msg-chat-header"><div class="msg-chat-avatar"><i class="fas fa-user"></i></div><div><div class="msg-chat-name" id="msg-chat-name">Zara (Stylist)</div><div class="msg-chat-status" id="msg-chat-status">● Online</div></div></div>
+            <div class="msg-chat-body" id="msg-chat-body"></div>
+            <div class="msg-chat-input"><input type="text" id="msg-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage()"/><button class="btn-msg-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="db-panel" id="panel-profile">
+        <div class="db-greeting"><h1>My <span>Profile</span></h1><p>Manage your account and preferences</p></div>
+        <div class="profile-grid">
+          <div class="profile-card">
+            <div class="profile-avatar-wrap"><div class="profile-avatar-big" id="profile-avatar-big">A</div><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div></div>
+            <div class="profile-name" id="profile-full-name">Loading…</div>
+            <div class="profile-email" id="profile-email-display">Loading…</div>
+            <div class="profile-tier-badge"><i class="fas fa-crown"></i> Gold Member</div>
+            <div class="profile-stats">
+              <div class="profile-stat"><strong id="ps-bookings">0</strong><span>Bookings</span></div>
+              <div class="profile-stat"><strong id="ps-points">0</strong><span>Points</span></div>
+              <div class="profile-stat"><strong id="ps-favs">0</strong><span>Favourites</span></div>
+              <div class="profile-stat"><strong>5★</strong><span>Rating</span></div>
+            </div>
+            <button class="btn-profile-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+          </div>
+          <div class="profile-form-wrap">
+            <h3>Edit Profile</h3>
+            <div class="profile-form-grid">
+              <div class="profile-form-group"><label>First Name</label><input type="text" id="pf-firstname" placeholder="Amara"/></div>
+              <div class="profile-form-group"><label>Last Name</label><input type="text" id="pf-lastname" placeholder="Njeru"/></div>
+              <div class="profile-form-group"><label>Phone / WhatsApp</label><input type="tel" id="pf-phone" placeholder="+254 7XX XXX XXX"/></div>
+              <div class="profile-form-group"><label>Date of Birth</label><input type="date" id="pf-dob"/></div>
+              <div class="profile-form-group full"><label>Favourite Style</label><select id="pf-favstyle"><option value="">Choose…</option><option>Goddess Box Braids</option><option>Knotless Braids</option><option>Fulani Braids</option><option>Boho Braids</option><option>Butterfly Locs</option><option>Bridal Crown Braids</option><option>Passion Twists</option></select></div>
+              <div class="profile-form-group full"><label>About Me</label><textarea id="pf-bio" rows="3" placeholder="Your hair type, preferences…"></textarea></div>
+              <div class="profile-form-group full"><button class="btn-save-profile" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button></div>
+            </div>
+            <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--grey-light);">
+              <h3 style="font-size:1.1rem;margin-bottom:14px;">Change Password</h3>
+              <div class="profile-form-grid">
+                <div class="profile-form-group full">
+                  <label>New Password <span style="font-weight:400;text-transform:none;font-size:.72rem;color:var(--grey)">(min 2 characters)</span></label>
+                  <input type="password" id="pf-newpw" placeholder="Enter new password" oninput="checkPwStrength(this.value,'pf')"/>
+                  <div class="pw-strength" id="pw-strength-wrap-pf" style="display:none;margin-top:6px;">
+                    <div class="pw-strength-bars"><div class="pw-bar" id="pfpwb1"></div><div class="pw-bar" id="pfpwb2"></div><div class="pw-bar" id="pfpwb3"></div><div class="pw-bar" id="pfpwb4"></div></div>
+                    <div class="pw-strength-label">Strength: <span id="pf-pw-strength-label">—</span></div>
+                  </div>
+                </div>
+                <div class="profile-form-group full"><label>Confirm New Password</label><input type="password" id="pf-confirmpw" placeholder="Repeat new password"/></div>
+                <div class="profile-form-group full"><button class="btn-save-profile" style="background:linear-gradient(135deg,var(--black),var(--black-soft));" onclick="changePassword()"><i class="fas fa-lock"></i> Update Password</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Style Modal -->
+  <div class="db-modal" id="style-modal">
+    <div class="db-modal-overlay" onclick="closeStyleModal()"></div>
+    <div class="db-modal-box"><button class="db-modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button><div class="modal-body-inner" id="modal-body-inner"></div></div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="confirm-modal" id="confirm-modal">
+    <div class="confirm-content"><div class="confirm-icon">✅</div><h3>Booking Confirmed!</h3><p id="confirm-msg">Your appointment has been successfully booked. We'll WhatsApp you shortly.</p><button class="btn-confirm-close" onclick="document.getElementById('confirm-modal').classList.remove('open')">Perfect, Thank You! 👑</button></div>
+  </div>
+</div>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/254700000000" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i><span class="wa-tooltip">Chat with us</span></a>
+<div class="toast-container" id="toast-container"></div>
+
+<script src="client-dashboard.js"></script>
+</body>
+</html>

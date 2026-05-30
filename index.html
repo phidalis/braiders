@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LuxeBraids – Premium Braiding Studio</title>
+<link rel="stylesheet" href="index.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+    authDomain: "braiders-9cc89.firebaseapp.com",
+    databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+    projectId: "braiders-9cc89",
+    storageBucket: "braiders-9cc89.appspot.com",
+    messagingSenderId: "444617114412",
+    appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    measurementId: "G-J60EW3KX9D"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.firebaseApp = app;
+  window.firebaseAuth = getAuth(app);
+  window.firebaseDb = getFirestore(app);
+  window.firebaseRtdb = getDatabase(app);
+  // Expose Firestore helpers for index.js (loaded as a plain script, can't use import)
+  window.fsCollection = collection;
+  window.fsAddDoc = addDoc;
+
+  // Update nav when auth state is known — no redirects, index.html is public
+  onAuthStateChanged(window.firebaseAuth, (user) => {
+    window.currentUser = user;
+    const navRight = document.getElementById('nav-auth-buttons');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    if (user) {
+      // Desktop nav
+      if (navRight) navRight.innerHTML = `
+        <a href="client-dashboard.html" class="btn-nav-dashboard">
+          <i class="fas fa-crown"></i> My Dashboard
+        </a>
+        <a href="#" id="logout-btn" class="btn-nav-outline">Logout</a>
+      `;
+      // Mobile menu — replace login/signup links with dashboard + logout
+      if (mobileMenu) {
+        document.getElementById('mobile-login-link')  && document.getElementById('mobile-login-link').remove();
+        document.getElementById('mobile-signup-link') && document.getElementById('mobile-signup-link').remove();
+        if (!document.getElementById('mobile-dashboard-link')) {
+          mobileMenu.insertAdjacentHTML('beforeend', `
+            <a href="client-dashboard.html" id="mobile-dashboard-link"><i class="fas fa-crown"></i> My Dashboard</a>
+            <a href="#" id="mobile-logout-link" class="mobile-signup">Logout</a>
+          `);
+          document.getElementById('mobile-logout-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(window.firebaseAuth);
+          });
+        }
+      }
+      document.getElementById('logout-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        signOut(window.firebaseAuth);
+      });
+    } else {
+      // Desktop nav
+      if (navRight) navRight.innerHTML = `
+        <a href="client-login.html" class="btn-nav-outline">Login</a>
+        <a href="client-login.html#signup" class="btn-nav-filled">Sign Up</a>
+      `;
+      // Mobile menu — restore login/signup, remove dashboard links
+      document.getElementById('mobile-dashboard-link')?.remove();
+      document.getElementById('mobile-logout-link')?.remove();
+    }
+  });
+</script>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announcement-bar">
+  <div class="announcement-track">
+    <span>✨ Today's booking is on offer — 20% off all braids</span>
+    <span>👑 Weekend braid discounts live now</span>
+    <span>🔥 Only 3 slots remaining for today</span>
+    <span>💅 Trending styles being booked as you browse</span>
+    <span>💍 Luxury bridal collection now available</span>
+    <span>⚡ Flash braid sale ends tonight at midnight</span>
+    <span>🌟 29 clients booked Boho Braids this week</span>
+    <span>✨ Today's booking is on offer — 20% off all braids</span>
+    <span>👑 Weekend braid discounts live now</span>
+    <span>🔥 Only 3 slots remaining for today</span>
+    <span>💅 Trending styles being booked as you browse</span>
+    <span>💍 Luxury bridal collection now available</span>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <div class="logo-mark">L</div>
+      <div class="logo-text">
+        <span class="logo-main">LuxeBraids</span>
+        <span class="logo-sub">Premium Studio</span>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#trending" class="nav-link">Trending Styles</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="#contact" class="nav-link">Contact</a>
+      <a href="#booking" class="nav-link btn-book-nav">
+        <i class="fas fa-calendar-check"></i> Book Now
+      </a>
+    </div>
+    <div class="nav-auth" id="nav-auth-buttons">
+      <a href="client-login.html" class="btn-nav-outline">Login</a>
+      <a href="client-login.html#signup" class="btn-nav-filled">Sign Up</a>
+    </div>
+    <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile-menu" id="mobile-menu">
+    <a href="#trending">Trending Styles</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="#booking">Book Appointment</a>
+    <a href="client-login.html" id="mobile-login-link">Login</a>
+    <a href="client-login.html#signup" id="mobile-signup-link" class="mobile-signup">Sign Up Free</a>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="hero" id="hero">
+  <div class="hero-slider" id="heroSlider">
+    <div class="hero-slide active" style="background: linear-gradient(135deg, #1a0a0f 0%, #3d0a2a 40%, #1a0a0f 100%)">
+      <div class="slide-visual">
+        <div class="slide-img-placeholder">
+          <div class="braid-art">
+            <div class="braid-circle c1"></div>
+            <div class="braid-circle c2"></div>
+            <div class="braid-circle c3"></div>
+            <div class="braid-lines"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-slide" style="background: linear-gradient(135deg, #0d0a1a 0%, #2d1a3d 40%, #0d0a1a 100%)">
+      <div class="slide-visual">
+        <div class="slide-img-placeholder purple">
+          <div class="braid-art">
+            <div class="braid-circle c1 purple"></div>
+            <div class="braid-circle c2 purple"></div>
+            <div class="braid-circle c3 purple"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-slide" style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1200 40%, #0a0a0a 100%)">
+      <div class="slide-visual">
+        <div class="slide-img-placeholder gold">
+          <div class="braid-art">
+            <div class="braid-circle c1 gold"></div>
+            <div class="braid-circle c2 gold"></div>
+            <div class="braid-circle c3 gold"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span>Premium Braiding Studio — Est. 2019</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="title-line">Where Beauty</span>
+      <span class="title-line accent">Becomes Art</span>
+    </h1>
+    <p class="hero-subtitle">Luxury braiding experiences crafted for queens. Every strand tells your story.</p>
+    <div class="hero-cta">
+      <a href="#booking" class="btn-hero-primary">
+        <i class="fas fa-calendar-star"></i>
+        Book Appointment
+        <span class="btn-shimmer"></span>
+      </a>
+      <a href="client-login.html#signup" class="btn-hero-secondary">
+        Join The Club
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">2,400+</span>
+        <span class="stat-label">Happy Clients</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">150+</span>
+        <span class="stat-label">Braid Styles</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">4.9★</span>
+        <span class="stat-label">Average Rating</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slider dots -->
+  <div class="slider-dots">
+    <button class="dot active" data-slide="0"></button>
+    <button class="dot" data-slide="1"></button>
+    <button class="dot" data-slide="2"></button>
+  </div>
+
+  <!-- Live activity popups -->
+  <div class="live-popup" id="livePopup">
+    <div class="popup-avatar">👑</div>
+    <div class="popup-text">
+      <strong>Amara S.</strong> just booked Goddess Braids
+      <span class="popup-time">2 min ago</span>
+    </div>
+  </div>
+
+  <div class="urgency-badge" id="urgencyBadge">
+    🔥 <strong>Only 3 slots left</strong> today
+  </div>
+</section>
+
+<!-- CATEGORY NAV -->
+<section class="categories-section" id="categories">
+  <div class="section-header">
+    <span class="section-eyebrow">Explore</span>
+    <h2 class="section-title">Find Your Perfect Style</h2>
+  </div>
+  <div class="categories-grid" id="categoriesGrid">
+    <button class="cat-card active" data-cat="trending">
+      <div class="cat-icon">🔥</div>
+      <span>Trending</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="new">
+      <div class="cat-icon">✨</div>
+      <span>New Arrivals</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="most-booked">
+      <div class="cat-icon">👑</div>
+      <span>Most Booked</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="luxury">
+      <div class="cat-icon">💎</div>
+      <span>Luxury</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="budget">
+      <div class="cat-icon">💸</div>
+      <span>Budget Friendly</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="bridal">
+      <div class="cat-icon">💍</div>
+      <span>Bridal & Events</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="kids">
+      <div class="cat-icon">🎀</div>
+      <span>Kids Styles</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="mens">
+      <div class="cat-icon">✂️</div>
+      <span>Men's Braids</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="quick">
+      <div class="cat-icon">⚡</div>
+      <span>Quick Styles</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="transformations">
+      <div class="cat-icon">🪄</div>
+      <span>Transformations</span>
+      <div class="cat-glow"></div>
+    </button>
+    <button class="cat-card" data-cat="all">
+      <div class="cat-icon">🌟</div>
+      <span>All Styles</span>
+      <div class="cat-glow"></div>
+    </button>
+  </div>
+</section>
+
+<!-- CATALOG — all category sections rendered by JS -->
+<div id="catalogContainer"></div>
+
+<!-- BOOKING SECTION -->
+<section class="booking-section" id="booking">
+  <div class="booking-bg-art"></div>
+  <div class="booking-container">
+    <div class="booking-left">
+      <span class="section-eyebrow">Reserve Your Spot</span>
+      <h2 class="booking-title">Book Your <em>Luxury</em><br>Appointment</h2>
+      <p>Every seat in our studio is a throne. Choose your style, pick your time, and leave looking like royalty.</p>
+      <div class="booking-perks">
+        <div class="perk"><i class="fas fa-check-circle"></i> Instant confirmation</div>
+        <div class="perk"><i class="fas fa-check-circle"></i> Free consultation included</div>
+        <div class="perk"><i class="fas fa-check-circle"></i> Flexible rescheduling</div>
+        <div class="perk"><i class="fas fa-check-circle"></i> Loyalty points on every booking</div>
+      </div>
+    </div>
+    <div class="booking-form-card">
+      <h3>Quick Booking</h3>
+      <form class="booking-form" id="bookingForm">
+        <div class="form-group">
+          <label>Select Style</label>
+          <select id="bookStyle" required>
+            <option value="">Choose a hairstyle…</option>
+            <option>Goddess Box Braids</option>
+            <option>Knotless Braids</option>
+            <option>Fulani Braids</option>
+            <option>Boho Braids</option>
+            <option>Lemonade Braids</option>
+            <option>Butterfly Locs</option>
+            <option>Faux Locs</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="bookDate" required/>
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <select id="bookTime" required>
+              <option value="">Select time…</option>
+              <option>9:00 AM</option>
+              <option>10:00 AM</option>
+              <option>11:00 AM</option>
+              <option>1:00 PM</option>
+              <option>2:00 PM</option>
+              <option>3:00 PM</option>
+              <option>4:00 PM</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Select Stylist</label>
+          <select id="bookStylist" required>
+            <option value="">Choose stylist…</option>
+            <option>Zara — Specialty: Box Braids</option>
+            <option>Amina — Specialty: Locs & Twists</option>
+            <option>Destiny — Specialty: Bridal Styles</option>
+            <option>Kezia — Specialty: Kids & Quick</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="bookName" placeholder="Your name" required/>
+        </div>
+        <div class="form-group">
+          <label>Phone / WhatsApp</label>
+          <input type="tel" id="bookPhone" placeholder="+254 7XX XXX XXX" required/>
+        </div>
+        <button type="submit" class="btn-book-submit">
+          <i class="fas fa-crown"></i> Confirm Booking
+          <span class="btn-shimmer"></span>
+        </button>
+        <p class="booking-note">🔒 No payment required now. Pay at studio.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS SECTION -->
+<section class="reviews-section" id="reviews">
+  <div class="section-header">
+    <span class="section-eyebrow">Client Love</span>
+    <h2 class="section-title">What Queens Are Saying</h2>
+  </div>
+  <div class="reviews-track-wrap">
+    <div class="reviews-track" id="reviewsTrack">
+      <!-- Reviews injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT SECTION -->
+<section class="about-section" id="about">
+  <div class="about-container">
+    <div class="about-visual">
+      <div class="about-img-frame">
+        <div class="about-img-placeholder">
+          <div class="about-crown">👑</div>
+          <div class="about-tagline">Est. 2019</div>
+        </div>
+        <div class="about-badge-float">
+          <span>4.9★ Rating</span>
+        </div>
+      </div>
+    </div>
+    <div class="about-content">
+      <span class="section-eyebrow">Our Story</span>
+      <h2>Crafting <em>Luxury</em><br>One Braid at a Time</h2>
+      <p>LuxeBraids was born from a belief that every woman deserves to feel like royalty. Our master stylists combine traditional braiding techniques with modern luxury to create hairstyles that turn heads and build confidence.</p>
+      <p>From intimate knotless braids to elaborate bridal crowns, every appointment is an experience in self-care and artistry.</p>
+      <div class="about-numbers">
+        <div class="about-num">
+          <strong>5+</strong>
+          <span>Years Experience</span>
+        </div>
+        <div class="about-num">
+          <strong>8</strong>
+          <span>Master Stylists</span>
+        </div>
+        <div class="about-num">
+          <strong>150+</strong>
+          <span>Braid Styles</span>
+        </div>
+      </div>
+      <a href="#booking" class="btn-about-cta">Book Your Experience</a>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="newsletter-section">
+  <div class="newsletter-container">
+    <div class="newsletter-content">
+      <span class="section-eyebrow">Stay in the Loop</span>
+      <h2>Get First Access to <em>New Styles</em> & Offers</h2>
+      <p>Join 3,000+ queens who get early access to trending styles, flash sales, and exclusive offers.</p>
+    </div>
+    <form class="newsletter-form" id="newsletterForm">
+      <input type="email" placeholder="Enter your email address" required/>
+      <button type="submit">
+        <i class="fas fa-paper-plane"></i> Subscribe
+        <span class="btn-shimmer"></span>
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="section-header">
+    <span class="section-eyebrow">Get in Touch</span>
+    <h2 class="section-title">Visit Us or Say Hello</h2>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+      <h4>Studio Location</h4>
+      <p>Westlands, Nairobi<br>Kenya</p>
+    </div>
+    <div class="contact-card">
+      <div class="contact-icon"><i class="fab fa-whatsapp"></i></div>
+      <h4>WhatsApp Us</h4>
+      <p>+254 700 000 000<br>Mon – Sat 8AM–8PM</p>
+    </div>
+    <div class="contact-card">
+      <div class="contact-icon"><i class="fas fa-clock"></i></div>
+      <h4>Studio Hours</h4>
+      <p>Mon–Fri: 8AM – 8PM<br>Sat–Sun: 9AM – 6PM</p>
+    </div>
+    <div class="contact-card">
+      <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+      <h4>Email Us</h4>
+      <p>hello@luxebraids.com<br>Response within 2 hours</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="logo-mark">L</div>
+        <div>
+          <div class="logo-main">LuxeBraids</div>
+          <div class="logo-sub">Premium Studio</div>
+        </div>
+      </div>
+      <p>Where beauty becomes art. Nairobi's most celebrated braiding studio since 2019.</p>
+      <div class="footer-socials">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+    <div class="footer-links-col">
+      <h5>Quick Links</h5>
+      <a href="#trending">Trending Styles</a>
+      <a href="#booking">Book Appointment</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#about">About Us</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <div class="footer-links-col">
+      <h5>Services</h5>
+      <a href="#">Box Braids</a>
+      <a href="#">Knotless Braids</a>
+      <a href="#">Bridal Styles</a>
+      <a href="#">Locs & Twists</a>
+      <a href="#">Kids Hairstyles</a>
+    </div>
+    <div class="footer-links-col">
+      <h5>Account</h5>
+      <a href="client-login.html">Login</a>
+      <a href="client-login.html#signup">Sign Up</a>
+      <a href="client-dashboard.html">My Dashboard</a>
+      <a href="admin-login.html">Admin</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 LuxeBraids. All rights reserved. Made with 💕 in Nairobi.</p>
+    <div class="footer-bottom-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/254700000000" class="whatsapp-float" target="_blank" aria-label="WhatsApp">
+  <i class="fab fa-whatsapp"></i>
+  <span class="wa-tooltip">Chat with us</span>
+</a>
+
+<!-- HAIRSTYLE MODAL -->
+<div class="style-modal" id="styleModal">
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal-content" id="modalContent">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-body" id="modalBody">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING CONFIRMATION MODAL -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-content">
+    <div class="confirm-icon">✅</div>
+    <h3>Booking Confirmed!</h3>
+    <p id="confirmMsg">Your appointment has been successfully booked. We'll WhatsApp you confirmation shortly.</p>
+    <button class="btn-confirm-close" id="confirmClose">Perfect, Thank You!</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="index.js"></script>
+</body>
+</html>

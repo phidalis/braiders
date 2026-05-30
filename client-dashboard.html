@@ -281,6 +281,13 @@
         </div>
 
         <!-- Catalog container: sections injected by JS -->
+        <!-- Hair Type Filter Bar -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;">Hair Type:</span>
+          <div id="db-hairTypeFilterBar" style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="ht-filter-btn active" data-ht="all" onclick="dbFilterByHairType('all',this)">All</button>
+          </div>
+        </div>
         <div id="db-catalog-container"></div>
         <!-- Reviews -->
         <div class="dash-eyebrow" style="margin-top:8px;">Client Love</div>
@@ -294,7 +301,7 @@
           <div class="dash-booking-wrap">
             <form id="dash-booking-form" onsubmit="submitDashBooking(event)">
               <div class="dash-booking-grid">
-                <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option><option>Goddess Box Braids — KSh 4,500</option><option>Knotless Braids — KSh 3,800</option><option>Fulani Braids — KSh 4,200</option><option>Boho Braids — KSh 5,200</option><option>Butterfly Locs — KSh 4,800</option><option>Bridal Crown Braids — KSh 8,500</option><option>Lemonade Braids — KSh 2,800</option><option>Faux Locs — KSh 4,000</option><option>Senegalese Twists — KSh 2,500</option><option>Ghana Braids — KSh 2,200</option><option>Kids Princess Braids — KSh 1,500</option><option>Men's Cornrow Designs — KSh 1,800</option><option>Passion Twists — KSh 3,600</option></select></div>
+                <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option><option value="Goddess Box Braids">Goddess Box Braids — KSh 4,500</option><option value="Knotless Braids">Knotless Braids — KSh 3,800</option><option value="Fulani Braids">Fulani Braids — KSh 4,200</option><option value="Boho Braids">Boho Braids — KSh 5,200</option><option value="Butterfly Locs">Butterfly Locs — KSh 4,800</option><option value="Bridal Crown Braids">Bridal Crown Braids — KSh 8,500</option><option value="Lemonade Braids">Lemonade Braids — KSh 2,800</option><option value="Faux Locs">Faux Locs — KSh 4,000</option><option value="Senegalese Twists">Senegalese Twists — KSh 2,500</option><option value="Ghana Braids">Ghana Braids — KSh 2,200</option><option value="Kids Princess Braids">Kids Princess Braids — KSh 1,500</option><option value="Men's Cornrow Designs">Men's Cornrow Designs — KSh 1,800</option><option value="Passion Twists">Passion Twists — KSh 3,600</option></select></div>
                 <div class="form-group"><label>Date</label><input type="date" id="db-bookDate"/></div>
                 <div class="form-group"><label>Time</label><select id="db-bookTime"><option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option></select></div>
                 <div class="form-group"><label>Stylist</label><select id="db-bookStylist"><option>Any Available Stylist</option><option>Zara — Box Braids</option><option>Amina — Locs & Twists</option><option>Destiny — Bridal</option><option>Kezia — Kids & Quick</option></select></div>
@@ -447,10 +454,24 @@
     </main>
   </div>
 
-  <!-- Style Modal -->
+  <!-- Style Modal (Fullscreen) -->
   <div class="db-modal" id="style-modal">
     <div class="db-modal-overlay" onclick="closeStyleModal()"></div>
-    <div class="db-modal-box"><button class="db-modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button><div class="modal-body-inner" id="modal-body-inner"></div></div>
+    <div class="db-modal-box">
+      <!-- Top bar -->
+      <div class="db-modal-topbar">
+        <span class="db-modal-topbar-title" id="db-modal-topbar-title">Style Details</span>
+        <button class="db-modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <!-- Scrollable body (gallery + details) -->
+      <div class="modal-body-inner" id="modal-body-inner"></div>
+      <!-- Sticky continue browsing bar -->
+      <div class="db-modal-continue-bar">
+        <button class="btn-continue-browsing" onclick="closeStyleModal()">
+          <i class="fas fa-arrow-left"></i> Continue Browsing
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Confirm Modal -->

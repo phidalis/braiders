@@ -12,8 +12,8 @@
 <!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -35,9 +35,18 @@
   // Expose Firestore helpers for index.js (loaded as a plain script, can't use import)
   window.fsCollection = collection;
   window.fsAddDoc = addDoc;
+  window.fsServerTimestamp = serverTimestamp;
+  // Expose so index.js can read Firestore settings (services, announcements)
+  window._fbGetDoc = getDoc;
+  window._fbDoc = doc;
 
   // Update nav when auth state is known — no redirects, index.html is public
   onAuthStateChanged(window.firebaseAuth, (user) => {
+    if (!user) {
+      // Sign in anonymously so Firestore writes (bookings, newsletter) are authenticated
+      signInAnonymously(window.firebaseAuth).catch(e => console.warn('Anonymous sign-in failed:', e));
+      return;
+    }
     window.currentUser = user;
     const navRight = document.getElementById('nav-auth-buttons');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -304,6 +313,18 @@
   </div>
 </section>
 
+<!-- HAIR TYPE FILTER BAR -->
+<section class="hairtype-filter-section" id="hairtype-filter-section" style="padding:0 0 12px;background:transparent;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:.75rem;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;">Hair Type:</span>
+      <div id="hairTypeFilterBar" style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button class="ht-filter-btn active" data-ht="all" onclick="filterByHairType('all',this)">All</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CATALOG — all category sections rendered by JS -->
 <div id="catalogContainer"></div>
 
@@ -542,13 +563,24 @@
   <span class="wa-tooltip">Chat with us</span>
 </a>
 
-<!-- HAIRSTYLE MODAL -->
+<!-- HAIRSTYLE MODAL (FULLSCREEN) -->
 <div class="style-modal" id="styleModal">
   <div class="modal-overlay" id="modalOverlay"></div>
   <div class="modal-content" id="modalContent">
-    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <!-- Top bar with title + close -->
+    <div class="modal-topbar">
+      <span class="modal-topbar-title" id="modalTopbarTitle">Style Details</span>
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    </div>
+    <!-- Scrollable body -->
     <div class="modal-body" id="modalBody">
       <!-- Injected by JS -->
+    </div>
+    <!-- Sticky continue browsing bar -->
+    <div class="modal-continue-bar">
+      <button class="btn-continue-browsing" id="btnContinueBrowsing">
+        <i class="fas fa-arrow-left"></i> Continue Browsing
+      </button>
     </div>
   </div>
 </div>

@@ -4,23 +4,7 @@
    ============================================ */
 
 // =================== HAIRSTYLE DATA ===================
-const hairstyles = [
-  { id: 1, name: "Goddess Box Braids", category: ["trending","most-booked","luxury","all"], price: 4500, originalPrice: 5500, duration: "6–8 hrs", emoji: "👑", rating: 4.9, reviews: 142, bookings: 89, badge: "Trending", hairType: "All types", hairLength: "Medium–Long", description: "Elegant goddess box braids with subtle curled ends. Perfect for queens who want length, volume, and timeless beauty. Includes free edge treatment." },
-  { id: 2, name: "Knotless Braids", category: ["trending","most-booked","all","new"], price: 3800, originalPrice: null, duration: "5–7 hrs", emoji: "✨", rating: 4.8, reviews: 218, bookings: 156, badge: "Most Booked", hairType: "All types", hairLength: "Any", description: "Knotless braids start from your roots with zero tension. More natural look, less stress on your scalp. Our most popular style." },
-  { id: 3, name: "Fulani Braids", category: ["trending","new","all"], price: 4200, originalPrice: null, duration: "5–6 hrs", emoji: "🌟", rating: 4.9, reviews: 97, bookings: 63, badge: "New", hairType: "Natural", hairLength: "Short–Long", description: "Inspired by West African Fulani women. Features a central cornrow, side braids, and gold cuffs for a regal, cultural look." },
-  { id: 4, name: "Boho Braids", category: ["trending","luxury","all"], price: 5200, originalPrice: 6000, duration: "7–9 hrs", emoji: "🌺", rating: 5.0, reviews: 74, bookings: 48, badge: "Hot 🔥", hairType: "All types", hairLength: "Long", description: "Romantic boho braids with loose wavy ends and floral accessories. Dreamy, feminine, and absolutely unforgettable." },
-  { id: 5, name: "Butterfly Locs", category: ["most-booked","new","all"], price: 4800, originalPrice: 5500, duration: "6–8 hrs", emoji: "🦋", rating: 4.7, reviews: 105, bookings: 72, badge: "On Offer", hairType: "All types", hairLength: "Medium–Long", description: "Distressed locs with a whimsical, butterfly-wing texture. Bold, artistic, and deeply personal." },
-  { id: 6, name: "Bridal Crown Braids", category: ["bridal","luxury","all"], price: 8500, originalPrice: null, duration: "8–10 hrs", emoji: "💍", rating: 5.0, reviews: 38, bookings: 22, badge: "Premium", hairType: "All types", hairLength: "Long", description: "Intricate bridal braided crown with gold cuffs, floral pins, and cascading twists. Your wedding day deserves perfection." },
-  { id: 7, name: "Lemonade Braids", category: ["trending","budget","all"], price: 2800, originalPrice: null, duration: "4–5 hrs", emoji: "🍋", rating: 4.6, reviews: 183, bookings: 134, badge: null, hairType: "Natural", hairLength: "Any", description: "Side-swept cornrow braids inspired by Beyoncé. Sleek, stylish, and ultra-modern. Quick and affordable." },
-  { id: 8, name: "Faux Locs", category: ["most-booked","all"], price: 4000, originalPrice: 4800, duration: "6–8 hrs", emoji: "🔮", rating: 4.8, reviews: 129, bookings: 91, badge: "On Offer", hairType: "All types", hairLength: "Medium–Long", description: "Natural-looking faux locs wrapped in soft hair for a distressed, earthy, goddess look that lasts months." },
-  { id: 9, name: "Senegalese Twists", category: ["budget","all","quick"], price: 2500, originalPrice: null, duration: "3–4 hrs", emoji: "🌾", rating: 4.5, reviews: 95, bookings: 78, badge: null, hairType: "All types", hairLength: "Medium", description: "Slim, silky Senegalese twists using high-quality kanekalon hair. Low maintenance and incredibly versatile." },
-  { id: 10, name: "Ghana Braids", category: ["most-booked","all"], price: 2200, originalPrice: null, duration: "3–4 hrs", emoji: "🌍", rating: 4.7, reviews: 167, bookings: 112, badge: null, hairType: "Natural", hairLength: "Any", description: "Bold straight-back cornrow braids inspired by Ghanaian heritage. Classic, clean, and regal." },
-  { id: 11, name: "Kids Princess Braids", category: ["kids","all","quick"], price: 1500, originalPrice: null, duration: "2–3 hrs", emoji: "🎀", rating: 4.9, reviews: 54, bookings: 41, badge: "Kids", hairType: "All types", hairLength: "Any", description: "Gentle, fun braids for little queens. Uses only soft, child-safe hair. Beads and bows available." },
-  { id: 12, name: "Men's Cornrow Designs", category: ["mens","all"], price: 1800, originalPrice: null, duration: "2–3 hrs", emoji: "✂️", rating: 4.6, reviews: 43, bookings: 38, badge: "Men's", hairType: "Natural", hairLength: "Short–Med", description: "Sharp, geometric cornrow designs for men who take their hair seriously. From simple straight-backs to intricate patterns." },
-  { id: 13, name: "Client Transformation", category: ["transformations","all"], price: 3500, originalPrice: null, duration: "Varies", emoji: "🪄", rating: 4.8, reviews: 29, bookings: 19, badge: "Before & After", hairType: "All types", hairLength: "Consultation", description: "Complete hair transformation package. Share your inspiration photo and our stylists will create your dream look." },
-  { id: 14, name: "Celebrity Braid Crown", category: ["luxury","all"], price: 7200, originalPrice: 9000, duration: "7–10 hrs", emoji: "⭐", rating: 5.0, reviews: 17, bookings: 11, badge: "Luxury", hairType: "All types", hairLength: "Long", description: "A-list worthy braid crown inspired by celebrity red carpet looks. Includes custom accessories and a finish consultation." },
-  { id: 15, name: "Passion Twists", category: ["new","trending","all"], price: 3600, originalPrice: null, duration: "5–6 hrs", emoji: "💕", rating: 4.7, reviews: 62, bookings: 44, badge: "New", hairType: "All types", hairLength: "Medium–Long", description: "Soft, curly passion twists with a romantic, effortless feel. Using water wave hair for a natural texture." },
-];
+let hairstyles = [];
 
 const reviews = [
   { name: "Amara N.", style: "Goddess Box Braids", text: "Zara literally made me cry — in the best way. I've never felt so beautiful. My braids lasted 3 months and still looked fresh.", rating: 5, initial: "A" },
@@ -47,15 +31,15 @@ const livePopups = [
 // =================== STATE ===================
 let currentCategory = "trending";
 let visibleCount = 10;
-let likedCards = new Set(JSON.parse(localStorage.getItem('lb_likes') || '[]'));
+let likedCards = new Set(); // session-only for unauthenticated visitors
 let heroSlideIndex = 0;
+let activeHairTypeFilter = 'all'; // hair type filter state
 
 // =================== INIT ===================
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroSlider();
   initCategories();
-  renderStyles();
   renderReviews();
   initBookingForm();
   initModals();
@@ -123,6 +107,21 @@ function initHeroSlider() {
 // =================== CATEGORIES ===================
 function initCategories() {
   // Category nav clicking is handled inside renderStyles after catalog is built
+}
+
+// =================== HAIR TYPE FILTER ===================
+function filterByHairType(ht, btn) {
+  activeHairTypeFilter = ht;
+  document.querySelectorAll('.ht-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStyles();
+}
+
+function buildHairTypeFilterBar(types) {
+  const bar = document.getElementById('hairTypeFilterBar');
+  if (!bar) return;
+  bar.innerHTML = `<button class="ht-filter-btn ${activeHairTypeFilter==='all'?'active':''}" data-ht="all" onclick="filterByHairType('all',this)">All</button>` +
+    types.map(ht => `<button class="ht-filter-btn ${activeHairTypeFilter===ht?'active':''}" data-ht="${ht}" onclick="filterByHairType('${ht}',this)">${ht}</button>`).join('');
 }
 
 // =================== CATEGORY SECTION DEFINITIONS ===================
@@ -236,7 +235,11 @@ function renderStyles() {
   container.innerHTML = '';
 
   catalogSections.forEach((sec, secIdx) => {
-    const styles = hairstyles.filter(h => h.category.includes(sec.key));
+    let styles = hairstyles.filter(h => h.category.includes(sec.key));
+    // Apply hair type filter
+    if (activeHairTypeFilter !== 'all') {
+      styles = styles.filter(h => h.hairType === activeHairTypeFilter || h.hairType === 'All types');
+    }
     if (!styles.length) return;
 
     const section = document.createElement('section');
@@ -368,10 +371,14 @@ function createCardHTML(style, theme = '') {
     ? `<div class="card-price">KSh ${style.price.toLocaleString()} <span class="original">KSh ${style.originalPrice.toLocaleString()}</span></div>`
     : `<div class="card-price">KSh ${style.price.toLocaleString()}</div>`;
 
+  const imgHTML = style.imageUrl
+    ? `<img src="${style.imageUrl}" alt="${style.name}" class="card-img" loading="lazy">`
+    : `<div class="card-img-no-image"><i class="fas fa-camera"></i><span>Image Coming Soon</span></div>`;
+
   return `
     <div class="style-card" data-id="${style.id}">
       <div class="card-img-wrap">
-        <div class="card-img-placeholder">${style.emoji}</div>
+        ${imgHTML}
         ${badgeHTML}
         <button class="card-like" data-id="${style.id}" aria-label="Like">
           <i class="${likedCards.has(style.id) ? 'fas' : 'far'} fa-heart"></i>
@@ -405,7 +412,7 @@ function toggleLike(id, btn) {
     btn.innerHTML = '<i class="fas fa-heart"></i>';
     showToast('Added to favorites! 💕', 'success');
   }
-  localStorage.setItem('lb_likes', JSON.stringify([...likedCards]));
+  // likes are session-only for unauthenticated visitors; persisted in Firestore for signed-in users via client-dashboard
 }
 
 // =================== REVIEWS ===================
@@ -437,14 +444,50 @@ function openStyleModal(id) {
   if (!style) return;
 
   const modal = document.getElementById('styleModal');
-  const body = document.getElementById('modalBody');
+  const body  = document.getElementById('modalBody');
+
+  // Collect all images (imageUrls array or single imageUrl)
+  const images = Array.isArray(style.imageUrls) && style.imageUrls.length
+    ? style.imageUrls
+    : style.imageUrl ? [style.imageUrl] : [];
+
+  // Update top bar title
+  const topbarTitle = document.getElementById('modalTopbarTitle');
+  if (topbarTitle) topbarTitle.textContent = style.name;
+
+  // Gallery slides HTML
+  let galleryInnerHTML = '';
+  if (images.length) {
+    images.forEach(url => {
+      galleryInnerHTML += `<div class="modal-gallery-slide"><img src="${url}" alt="${style.name}" loading="lazy"></div>`;
+    });
+  } else {
+    galleryInnerHTML = `<div class="modal-gallery-slide"><span class="gallery-emoji-placeholder">${style.emoji || '💇'}</span></div>`;
+  }
+
+  const showArrows = images.length > 1;
+  const showDots   = images.length > 1;
 
   const relatedStyles = hairstyles
     .filter(h => h.id !== id && h.category.some(c => style.category.includes(c)))
     .slice(0, 3);
 
   body.innerHTML = `
-    <div class="modal-gallery">${style.emoji}</div>
+    <div class="modal-gallery" id="modalGallery">
+      <div class="modal-gallery-track" id="modalGalleryTrack">
+        ${galleryInnerHTML}
+      </div>
+      ${showArrows ? `
+        <button class="modal-gallery-arrow prev" id="galleryPrev"><i class="fas fa-chevron-left"></i></button>
+        <button class="modal-gallery-arrow next" id="galleryNext"><i class="fas fa-chevron-right"></i></button>
+      ` : ''}
+      ${showDots ? `
+        <div class="modal-gallery-dots" id="galleryDots">
+          ${images.map((_, i) => `<div class="modal-gallery-dot ${i===0?'active':''}" data-idx="${i}"></div>`).join('')}
+        </div>
+      ` : ''}
+      ${images.length > 1 ? `<div class="modal-img-count" id="galleryCount">1 / ${images.length}</div>` : ''}
+    </div>
     <div class="modal-details">
       <h2>${style.name}</h2>
       <div class="modal-price">KSh ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">KSh ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
@@ -465,12 +508,12 @@ function openStyleModal(id) {
         <i class="fas fa-calendar-check"></i> Book This Style
       </button>
       ${relatedStyles.length ? `
-        <div style="margin-top:28px;">
+        <div style="margin-top:28px;margin-bottom:24px;">
           <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;margin-bottom:14px;">You May Also Like</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${relatedStyles.map(r => `
               <div onclick="openStyleModal(${r.id})" style="background:#fdf9fb;border:1px solid #f4b8c8;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:0.82rem;font-weight:500;display:flex;align-items:center;gap:8px;transition:all 0.2s;">
-                <span>${r.emoji}</span> ${r.name}
+                <span>${r.emoji || ''}</span> ${r.name}
               </div>
             `).join('')}
           </div>
@@ -478,6 +521,42 @@ function openStyleModal(id) {
       ` : ''}
     </div>
   `;
+
+  // Init carousel
+  let currentSlide = 0;
+  const track = document.getElementById('modalGalleryTrack');
+  const prevBtn = document.getElementById('galleryPrev');
+  const nextBtn = document.getElementById('galleryNext');
+  const dots = document.querySelectorAll('.modal-gallery-dot');
+  const countEl = document.getElementById('galleryCount');
+  const total = images.length;
+
+  function goToSlide(idx) {
+    if (idx < 0 || idx >= total) return;
+    currentSlide = idx;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    if (countEl) countEl.textContent = `${currentSlide + 1} / ${total}`;
+    if (prevBtn) prevBtn.classList.toggle('hidden', currentSlide === 0);
+    if (nextBtn) nextBtn.classList.toggle('hidden', currentSlide === total - 1);
+  }
+
+  prevBtn?.addEventListener('click', () => goToSlide(currentSlide - 1));
+  nextBtn?.addEventListener('click', () => goToSlide(currentSlide + 1));
+  dots.forEach(d => d.addEventListener('click', () => goToSlide(+d.dataset.idx)));
+
+  // Init arrow visibility
+  if (prevBtn) prevBtn.classList.add('hidden');
+  if (nextBtn && total <= 1) nextBtn.classList.add('hidden');
+
+  // Touch swipe support for gallery
+  let touchStartX = 0;
+  const galleryEl = document.getElementById('modalGallery');
+  galleryEl?.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  galleryEl?.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) goToSlide(dx < 0 ? currentSlide + 1 : currentSlide - 1);
+  });
 
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -501,9 +580,11 @@ function initModals() {
   const closeBtn = document.getElementById('modalClose');
   const confirmModal = document.getElementById('confirmModal');
   const confirmClose = document.getElementById('confirmClose');
+  const continueBrowsing = document.getElementById('btnContinueBrowsing');
 
   overlay?.addEventListener('click', closeModal);
   closeBtn?.addEventListener('click', closeModal);
+  continueBrowsing?.addEventListener('click', closeModal);
   confirmClose?.addEventListener('click', () => {
     confirmModal.classList.remove('open');
     document.body.style.overflow = '';
@@ -536,6 +617,27 @@ function setMinBookingDate() {
   }
 }
 
+// Services list used to enrich bookings with emoji/price.
+// Mirrors the default list in admin-dashboard.js; admin saves to Firestore/settings/services
+// which loadLiveDataFromFirestore() reads to keep this in sync at runtime.
+const SERVICES = [
+  {name:"Goddess Box Braids",emoji:"👑",price:4500},
+  {name:"Knotless Braids",emoji:"✨",price:3800},
+  {name:"Fulani Braids",emoji:"🌟",price:4200},
+  {name:"Boho Braids",emoji:"🌺",price:5200},
+  {name:"Butterfly Locs",emoji:"🦋",price:4800},
+  {name:"Bridal Crown Braids",emoji:"💍",price:8500},
+  {name:"Lemonade Braids",emoji:"🍋",price:2800},
+  {name:"Faux Locs",emoji:"🔮",price:4000},
+  {name:"Senegalese Twists",emoji:"🌾",price:2500},
+  {name:"Ghana Braids",emoji:"🌍",price:2200},
+  {name:"Kids Princess Braids",emoji:"🎀",price:1500},
+  {name:"Men's Cornrow Designs",emoji:"✂️",price:1800},
+  {name:"Client Transformation",emoji:"🪄",price:3500},
+  {name:"Celebrity Braid Crown",emoji:"⭐",price:7200},
+  {name:"Passion Twists",emoji:"💕",price:3600},
+];
+
 function initBookingForm() {
   const form = document.getElementById('bookingForm');
   if (!form) return;
@@ -548,39 +650,65 @@ function initBookingForm() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
     btn.disabled = true;
 
-    const bookingData = {
-      style: document.getElementById('bookStyle').value,
-      date: document.getElementById('bookDate').value,
-      time: document.getElementById('bookTime').value,
-      stylist: document.getElementById('bookStylist').value,
-      name: document.getElementById('bookName').value,
-      phone: document.getElementById('bookPhone').value,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      id: 'BK' + Date.now(),
-    };
+    const selectedStyle = document.getElementById('bookStyle').value;
+    const matchedService = SERVICES.find(s => s.name === selectedStyle);
+    const bookingRef = 'BK' + Date.now();
 
-    // Try Firebase save — use globals exposed by index.html module script
-    try {
-      if (window.firebaseDb && window.fsCollection && window.fsAddDoc) {
-        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), bookingData);
-      }
-    } catch (err) {
-      console.warn('Firestore booking save failed, saving locally:', err.code, err.message);
-      const existing = JSON.parse(localStorage.getItem('lb_bookings') || '[]');
-      existing.push(bookingData);
-      localStorage.setItem('lb_bookings', JSON.stringify(existing));
+    // Wait for Firebase globals AND auth to be ready (anonymous sign-in may be in progress)
+    let waited = 0;
+    while ((!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) && waited < 8000) {
+      await sleep(200);
+      waited += 200;
     }
 
-    await sleep(1500);
+    if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc) {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      showToast('Could not connect to Firebase. Please refresh and try again.', 'error');
+      return;
+    }
 
+    if (!window.currentUser) {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      showToast('Authentication not ready. Please refresh and try again.', 'error');
+      return;
+    }
+
+    try {
+      await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
+        style: selectedStyle,
+        date: document.getElementById('bookDate').value,
+        time: document.getElementById('bookTime').value,
+        stylist: document.getElementById('bookStylist').value,
+        name: document.getElementById('bookName').value,
+        phone: document.getElementById('bookPhone').value,
+        status: 'pending',
+        emoji: matchedService?.emoji || '✨',
+        price: matchedService?.price || null,
+        bookingRef,
+        userId: window.currentUser.uid,
+        createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Firestore booking save failed:', err.code, err.message);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
+      return;
+    }
+
+    // Success
+    const date = document.getElementById('bookDate').value;
+    const time = document.getElementById('bookTime').value;
+    const phone = document.getElementById('bookPhone').value;
     btn.innerHTML = originalText;
     btn.disabled = false;
     form.reset();
 
     const confirmModal = document.getElementById('confirmModal');
     const confirmMsg = document.getElementById('confirmMsg');
-    if (confirmMsg) confirmMsg.textContent = `Your ${bookingData.style} appointment on ${formatDate(bookingData.date)} at ${bookingData.time} has been confirmed! We'll WhatsApp you at ${bookingData.phone} shortly.`;
+    if (confirmMsg) confirmMsg.textContent = `Your ${selectedStyle} appointment on ${formatDate(date)} at ${time} has been confirmed! We'll WhatsApp you at ${phone} shortly.`;
     confirmModal?.classList.add('open');
     document.body.style.overflow = 'hidden';
 
@@ -688,14 +816,21 @@ function initNewsletter() {
     await sleep(1200);
 
     try {
-      if (window.firebaseDb && window.fsCollection && window.fsAddDoc) {
-        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'newsletter'), { email, date: new Date().toISOString() });
+      if (window.firebaseDb && window.fsCollection && window.fsAddDoc && window.currentUser) {
+        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'newsletter'), {
+          email,
+          date: new Date().toISOString(),
+          userId: window.currentUser.uid,
+        });
+      } else if (!window.currentUser) {
+        throw { code: 'unauthenticated', message: 'Not signed in' };
       }
     } catch (err) {
-      console.warn('Firestore newsletter save failed, saving locally:', err.code, err.message);
-      const subs = JSON.parse(localStorage.getItem('lb_subs') || '[]');
-      subs.push({ email, date: new Date().toISOString() });
-      localStorage.setItem('lb_subs', JSON.stringify(subs));
+      console.error('Firestore newsletter save failed:', err.code, err.message);
+      btn.innerHTML = orig;
+      btn.disabled = false;
+      showToast(`Subscribe failed (${err.code || err.message}). Please try again.`, 'error');
+      return;
     }
 
     btn.innerHTML = '<i class="fas fa-check"></i> Subscribed!';
@@ -732,3 +867,74 @@ function sleep(ms) {
 // Expose for HTML onclick
 window.openStyleModal = openStyleModal;
 window.showToast = showToast;
+
+// =================== FIRESTORE LIVE DATA ===================
+// Reads settings saved by admin and updates homepage booking select + announcements.
+// Falls back silently — original hardcoded data stays if Firestore is unavailable.
+async function loadLiveDataFromFirestore() {
+  try {
+    const db     = window.firebaseDb;
+    const getDoc = window._fbGetDoc;
+    const docFn  = window._fbDoc;
+    if (!db || !getDoc || !docFn) return;
+
+    // ---- Services: load from admin Firestore, render catalog ----
+    const svcSnap = await getDoc(docFn(db, 'settings', 'services'));
+    if (svcSnap.exists()) {
+      const list = svcSnap.data().list;
+      if (Array.isArray(list) && list.length) {
+        hairstyles = list.map((s, i) => ({
+          id:            s.id || (i + 1),
+          name:          s.name,
+          imageUrl:      s.imageUrl || '',
+          imageUrls:     Array.isArray(s.imageUrls) && s.imageUrls.length ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []),
+          category:      Array.isArray(s.category) ? s.category : ['all'],
+          price:         +s.price || 0,
+          originalPrice: s.originalPrice ? +s.originalPrice : null,
+          duration:      s.duration || '—',
+          rating:        s.rating  || 5.0,
+          reviews:       s.reviews || 0,
+          bookings:      s.bookings || 0,
+          badge:         s.badge   || null,
+          hairType:      s.hairType   || 'All types',
+          hairLength:    s.hairLength || '—',
+          description:   s.description || '',
+        }));
+        renderStyles();
+
+        // Booking select
+        const sel = document.getElementById('bookStyle');
+        if (sel) {
+          sel.innerHTML = '<option value="">Choose a style…</option>' +
+            list.map(s => `<option value="${s.name}">${s.name} — KSh ${(+s.price).toLocaleString()}</option>`).join('');
+        }
+      }
+    }
+
+    // ---- Announcements ----
+    const annSnap = await getDoc(docFn(db, 'settings', 'announcements'));
+    if (annSnap.exists()) {
+      const list = annSnap.data().list;
+      if (Array.isArray(list) && list.length) {
+        const track = document.querySelector('.announcement-track');
+        if (track) {
+          const doubled = [...list, ...list];
+          track.innerHTML = doubled.map(a => `<span>${a}</span>`).join('');
+        }
+      }
+    }
+
+    // ---- Hair types filter bar ----
+    const htSnap = await getDoc(docFn(db, 'settings', 'hairTypes'));
+    if (htSnap.exists()) {
+      const list = htSnap.data().list;
+      if (Array.isArray(list) && list.length) buildHairTypeFilterBar(list);
+    }
+  } catch(e) { /* Firebase unavailable — catalog stays empty until retry */ }
+}
+
+// Run once Firebase globals are ready (set by the inline module in index.html)
+(function waitAndLoad() {
+  if (window.firebaseDb && window._fbGetDoc && window._fbDoc) { loadLiveDataFromFirestore(); }
+  else { setTimeout(waitAndLoad, 200); }
+})();

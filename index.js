@@ -6,18 +6,7 @@
 // =================== HAIRSTYLE DATA ===================
 let hairstyles = [];
 
-const reviews = [
-  { name: "Amara N.", style: "Goddess Box Braids", text: "Zara literally made me cry — in the best way. I've never felt so beautiful. My braids lasted 3 months and still looked fresh.", rating: 5, initial: "A" },
-  { name: "Destiny K.", style: "Boho Braids", text: "The attention to detail is insane. My bridal braids had everyone at the wedding asking for the studio's contact. Worth every shilling!", rating: 5, initial: "D" },
-  { name: "Faith W.", style: "Knotless Braids", text: "Zero tension, zero headache. I slept in perfect comfort from day one. The team is so professional and caring.", rating: 5, initial: "F" },
-  { name: "Grace M.", style: "Butterfly Locs", text: "I've been to so many studios in Nairobi and LuxeBraids is unmatched. The ambiance, the skill, the results. All 10s.", rating: 5, initial: "G" },
-  { name: "Purity A.", style: "Fulani Braids", text: "My Fulani braids got so many compliments at work. The gold cuffs were chef's kiss. I'm never going anywhere else.", rating: 5, initial: "P" },
-  { name: "Joy S.", style: "Lemonade Braids", text: "Super fast, super clean, super affordable. I was in and out in under 5 hours looking like a queen. Highly recommend!", rating: 5, initial: "J" },
-  { name: "Naomi T.", style: "Faux Locs", text: "I asked for the distressed look and they nailed it perfectly. My locs have texture, bounce, and everyone thinks they're real.", rating: 5, initial: "N" },
-  { name: "Sharon O.", style: "Bridal Crown Braids", text: "My wedding hairstyle was beyond anything I'd imagined. Destiny at LuxeBraids is a true artist. I sobbed seeing myself.", rating: 5, initial: "S" },
-  { name: "Amara N.", style: "Goddess Box Braids", text: "Zara literally made me cry — in the best way. I've never felt so beautiful. My braids lasted 3 months and still looked fresh.", rating: 5, initial: "A" },
-  { name: "Destiny K.", style: "Boho Braids", text: "The attention to detail is insane. My bridal braids had everyone at the wedding asking for the studio's contact. Worth every shilling!", rating: 5, initial: "D" },
-];
+
 
 const livePopups = [
   { name: "Amara S.", style: "Goddess Box Braids", time: "2 min ago" },
@@ -40,9 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroSlider();
   initCategories();
-  renderReviews();
   initBookingForm();
   initModals();
+  initBookingStepsModal();
   initLivePopups();
   initOfferTimer();
   initScrollReveal();
@@ -368,8 +357,8 @@ function createCardHTML(style, theme = '') {
                      style.badge === "Men's" ? 'mens' : '';
   const badgeHTML = style.badge ? `<div class="card-badge badge-${badgeClass}">${style.badge}</div>` : '';
   const priceHTML = style.originalPrice
-    ? `<div class="card-price">KSh ${style.price.toLocaleString()} <span class="original">KSh ${style.originalPrice.toLocaleString()}</span></div>`
-    : `<div class="card-price">KSh ${style.price.toLocaleString()}</div>`;
+    ? `<div class="card-price">USD ${style.price.toLocaleString()} <span class="original">USD ${style.originalPrice.toLocaleString()}</span></div>`
+    : `<div class="card-price">USD ${style.price.toLocaleString()}</div>`;
 
   const imgHTML = style.imageUrl
     ? `<img src="${style.imageUrl}" alt="${style.name}" class="card-img" loading="lazy">`
@@ -387,11 +376,6 @@ function createCardHTML(style, theme = '') {
       </div>
       <div class="card-body">
         <div class="card-title">${style.name}</div>
-        <div class="card-meta">
-          <div class="card-rating">${stars} <span class="review-count">(${style.reviews})</span></div>
-          <div class="card-bookings">🔥 ${style.bookings} booked</div>
-        </div>
-        ${priceHTML}
         <button class="btn-card-book" data-style="${style.name}">
           <i class="fas fa-calendar-check"></i> Book Now
         </button>
@@ -413,29 +397,6 @@ function toggleLike(id, btn) {
     showToast('Added to favorites! 💕', 'success');
   }
   // likes are session-only for unauthenticated visitors; persisted in Firestore for signed-in users via client-dashboard
-}
-
-// =================== REVIEWS ===================
-function renderReviews() {
-  const track = document.getElementById('reviewsTrack');
-  if (!track) return;
-
-  // Duplicate for infinite scroll
-  const allReviews = [...reviews, ...reviews];
-  track.innerHTML = allReviews.map(r => `
-    <div class="review-card">
-      <div class="review-stars">${'★'.repeat(r.rating)}</div>
-      <p class="review-text">"${r.text}"</p>
-      <div class="review-author">
-        <div class="review-avatar">${r.initial}</div>
-        <div>
-          <div class="review-name">${r.name}</div>
-          <div class="review-style">${r.style}</div>
-        </div>
-        <div class="verified-badge">✓ Verified</div>
-      </div>
-    </div>
-  `).join('');
 }
 
 // =================== STYLE MODAL ===================
@@ -490,7 +451,7 @@ function openStyleModal(id) {
     </div>
     <div class="modal-details">
       <h2>${style.name}</h2>
-      <div class="modal-price">KSh ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">KSh ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
+      <div class="modal-price">USD ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">USD ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
       <div class="modal-tags">
         ${style.category.map(c => `<span class="modal-tag">${c}</span>`).join('')}
       </div>
@@ -563,16 +524,209 @@ function openStyleModal(id) {
 }
 
 window.bookFromModal = function(styleName) {
-  closeModal();
-  const bookSelect = document.getElementById('bookStyle');
-  if (bookSelect) {
-    for (let opt of bookSelect.options) {
-      if (opt.text === styleName) { bookSelect.value = opt.value; break; }
-    }
-  }
-  document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
-  setTimeout(() => showToast(`${styleName} selected! 👑`, 'gold'), 600);
+  openBookingStepsModal(styleName);
 };
+
+// =================== BOOKING STEPS MODAL ===================
+let bsmCurrentStep = 1;
+let bsmStyleName   = '';
+
+function openBookingStepsModal(styleName) {
+  bsmStyleName   = styleName;
+  bsmCurrentStep = 1;
+
+  // Set title
+  document.getElementById('bsmTopbarTitle').textContent = styleName;
+
+  // Reset to step 1
+  goToBsmStep(1);
+
+  // Set min date
+  const dateInput = document.getElementById('bsmDate');
+  if (dateInput) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+    dateInput.value = '';
+  }
+  document.getElementById('bsmTime').value   = '';
+  document.getElementById('bsmStylist').value = 'any';
+  document.getElementById('bsmName').value   = '';
+  document.getElementById('bsmPhone').value  = '';
+  if (document.getElementById('bsmNotes')) document.getElementById('bsmNotes').value = '';
+
+  document.getElementById('bookingStepsModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBsmModal() {
+  document.getElementById('bookingStepsModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function goToBsmStep(step) {
+  bsmCurrentStep = step;
+
+  // Panels
+  document.querySelectorAll('.bsm-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === step);
+  });
+
+  // Step indicators
+  document.querySelectorAll('.bsm-step').forEach((s, i) => {
+    const n = i + 1;
+    s.classList.remove('active', 'done');
+    if (n === step) s.classList.add('active');
+    else if (n < step) s.classList.add('done');
+  });
+
+  // Step lines
+  document.querySelectorAll('.bsm-step-line').forEach((l, i) => {
+    l.classList.toggle('done', i + 1 < step);
+  });
+
+  // Back button — hide on step 1
+  const backBtn = document.getElementById('bsmBack');
+  if (backBtn) backBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+
+  // If step 3, build review card
+  if (step === 3) buildBsmReview();
+}
+
+function buildBsmReview() {
+  const date = document.getElementById('bsmDate').value;
+  const time = document.getElementById('bsmTime').value;
+  const stylist = document.getElementById('bsmStylist').value;
+  const name = document.getElementById('bsmName').value;
+  const phone = document.getElementById('bsmPhone').value;
+  const notes = document.getElementById('bsmNotes')?.value || '';
+
+  const matchedService = SERVICES.find(s => s.name === bsmStyleName);
+  const priceStr = matchedService ? `USD ${matchedService.price.toLocaleString()}` : '';
+
+  const rows = [
+    { icon: 'fas fa-scissors', label: 'Style', value: `${matchedService?.emoji || '✨'} ${bsmStyleName}${priceStr ? ' — ' + priceStr : ''}` },
+    { icon: 'fas fa-calendar', label: 'Date', value: formatDate(date) || date },
+    { icon: 'fas fa-clock', label: 'Time', value: time },
+    { icon: 'fas fa-user-tie', label: 'Stylist', value: stylist === 'any' ? 'Any Available Stylist' : stylist },
+    { icon: 'fas fa-user', label: 'Name', value: name },
+    { icon: 'fab fa-whatsapp', label: 'WhatsApp', value: phone },
+    ...(notes ? [{ icon: 'fas fa-comment', label: 'Notes', value: notes }] : []),
+  ];
+
+  document.getElementById('bsmReviewCard').innerHTML = rows.map(r => `
+    <div class="bsm-review-row">
+      <div class="bsm-review-icon"><i class="${r.icon}"></i></div>
+      <div>
+        <div class="bsm-review-label">${r.label}</div>
+        <div class="bsm-review-value">${r.value}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function initBookingStepsModal() {
+  // Close / back
+  document.getElementById('bsmClose')?.addEventListener('click', closeBsmModal);
+  document.getElementById('bsmOverlay')?.addEventListener('click', closeBsmModal);
+  document.getElementById('bsmBack')?.addEventListener('click', () => {
+    if (bsmCurrentStep > 1) goToBsmStep(bsmCurrentStep - 1);
+  });
+
+  // Step 1 → 2
+  document.getElementById('bsmNext1')?.addEventListener('click', () => {
+    const date = document.getElementById('bsmDate').value;
+    const time = document.getElementById('bsmTime').value;
+    if (!date) { showToast('Please choose a date 📅', 'error'); return; }
+    if (!time) { showToast('Please choose a time ⏰', 'error'); return; }
+    goToBsmStep(2);
+  });
+
+  // Step 2 → 3
+  document.getElementById('bsmNext2')?.addEventListener('click', () => {
+    const name  = document.getElementById('bsmName').value.trim();
+    const phone = document.getElementById('bsmPhone').value.trim();
+    if (!name)  { showToast('Please enter your name 👤', 'error'); return; }
+    if (!phone) { showToast('Please enter your WhatsApp number 📱', 'error'); return; }
+    goToBsmStep(3);
+  });
+
+  // Confirm → submit
+  document.getElementById('bsmConfirmBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('bsmConfirmBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
+    btn.disabled  = true;
+
+    const selectedStyle  = bsmStyleName;
+    const matchedService = SERVICES.find(s => s.name === selectedStyle);
+    const bookingRef     = 'BK' + Date.now();
+    const date  = document.getElementById('bsmDate').value;
+    const time  = document.getElementById('bsmTime').value;
+    const stylist = document.getElementById('bsmStylist').value;
+    const name  = document.getElementById('bsmName').value;
+    const phone = document.getElementById('bsmPhone').value;
+
+    // Sync style to main booking select so other page logic stays in sync
+    const bookSelect = document.getElementById('bookStyle');
+    if (bookSelect) {
+      for (let opt of bookSelect.options) {
+        if (opt.text === selectedStyle) { bookSelect.value = opt.value; break; }
+      }
+    }
+
+    // Wait for Firebase
+    let waited = 0;
+    while ((!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) && waited < 8000) {
+      await sleep(200); waited += 200;
+    }
+
+    if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc) {
+      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.disabled  = false;
+      showToast('Could not connect. Please refresh and try again.', 'error');
+      return;
+    }
+    if (!window.currentUser) {
+      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.disabled  = false;
+      showToast('Authentication not ready. Please refresh and try again.', 'error');
+      return;
+    }
+
+    try {
+      await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
+        style: selectedStyle,
+        date, time, stylist, name, phone,
+        status:   'pending',
+        emoji:    matchedService?.emoji || '✨',
+        price:    matchedService?.price || null,
+        bookingRef,
+        userId:   window.currentUser.uid,
+        createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Firestore booking save failed:', err.code, err.message);
+      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.disabled  = false;
+      showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
+      return;
+    }
+
+    // Success — close steps modal, show confirm modal
+    closeBsmModal();
+    btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+    btn.disabled  = false;
+
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmMsg   = document.getElementById('confirmMsg');
+    if (confirmMsg) confirmMsg.textContent = `Your ${selectedStyle} appointment on ${formatDate(date)} at ${time} has been confirmed! We'll WhatsApp you at ${phone} shortly.`;
+    confirmModal?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showToast('Booking confirmed! 🎉', 'success');
+  });
+}
 
 function initModals() {
   const modal = document.getElementById('styleModal');
@@ -906,7 +1060,7 @@ async function loadLiveDataFromFirestore() {
         const sel = document.getElementById('bookStyle');
         if (sel) {
           sel.innerHTML = '<option value="">Choose a style…</option>' +
-            list.map(s => `<option value="${s.name}">${s.name} — KSh ${(+s.price).toLocaleString()}</option>`).join('');
+            list.map(s => `<option value="${s.name}">${s.name} — USD ${(+s.price).toLocaleString()}</option>`).join('');
         }
       }
     }
@@ -937,4 +1091,240 @@ async function loadLiveDataFromFirestore() {
 (function waitAndLoad() {
   if (window.firebaseDb && window._fbGetDoc && window._fbDoc) { loadLiveDataFromFirestore(); }
   else { setTimeout(waitAndLoad, 200); }
+})();
+
+// =================== REVIEWS (lxb- namespaced, no conflicts) ===================
+(function () {
+  'use strict';
+
+  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Absolutely Amazing! 🌟'];
+  let pickedRating = 0;
+
+  // Wait until Firebase globals are ready
+  function onFirebase(cb) {
+    if (window.firebaseDb) cb();
+    else setTimeout(() => onFirebase(cb), 300);
+  }
+
+  // ---- BUILD A REVIEW CARD using existing CSS classes ----
+  function buildCard(r) {
+    const initials = (r.name || 'A').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const fullStars = Math.round(r.rating || 5);
+    const starsHtml = '★'.repeat(fullStars) + (fullStars < 5 ? '☆'.repeat(5 - fullStars) : '');
+    const preview = (r.text || '').length > 120 ? r.text.slice(0, 117) + '…' : r.text;
+
+    const div = document.createElement('div');
+    div.className = 'review-card';
+    div.dataset.rid = r.id;
+    div.innerHTML = `
+      <div class="review-stars">${starsHtml}</div>
+      <div class="review-text">"${preview}"</div>
+      <div class="review-author">
+        <div class="review-avatar">${initials}</div>
+        <div>
+          <div class="review-name">${r.name || 'Anonymous'}</div>
+          <div class="review-style">${r.style || 'Verified Client'}</div>
+        </div>
+        <span class="verified-badge">✓ Verified</span>
+      </div>
+      <div class="review-card-tap">Tap to read ›</div>
+    `;
+    div.addEventListener('click', () => openDetail(r));
+    return div;
+  }
+
+  // ---- LOAD APPROVED REVIEWS ----
+  async function loadReviews() {
+    const loading = document.getElementById('lxbReviewsLoading');
+    const wrap    = document.getElementById('lxbReviewsWrap');
+    const track   = document.getElementById('lxbReviewsTrack');
+    const empty   = document.getElementById('lxbReviewsEmpty');
+    const avgNum  = document.getElementById('reviewsAvgNum');
+    const avgLbl  = document.getElementById('reviewsAvgLabel');
+    if (!track) return;
+
+    try {
+      const { collection, query, where, orderBy, limit, getDocs } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+      const q = query(
+        collection(window.firebaseDb, 'reviews'),
+        where('status', '==', 'published'),
+        limit(20)
+      );
+      const snap = await getDocs(q);
+      const reviews = [];
+      snap.forEach(d => reviews.push({ id: d.id, ...d.data() }));
+      // Sort by createdAt descending in JS (avoids needing a composite Firestore index)
+      reviews.sort((a, b) => {
+        const toMs = v => v?.seconds ? v.seconds * 1000 : (v ? new Date(v).getTime() : 0);
+        return toMs(b.createdAt) - toMs(a.createdAt);
+      });
+
+      loading.style.display = 'none';
+
+      if (!reviews.length) { empty.style.display = 'block'; return; }
+
+      // Update average
+      const avg = (reviews.reduce((s, r) => s + (r.rating || 5), 0) / reviews.length).toFixed(1);
+      if (avgNum) avgNum.textContent = avg;
+      if (avgLbl) avgLbl.textContent = `Based on ${reviews.length} verified review${reviews.length !== 1 ? 's' : ''}`;
+
+      // Render cards (no duplication needed — manual scroll)
+      reviews.forEach(r => track.appendChild(buildCard(r)));
+      wrap.style.display = 'block';
+      initReviewsScroll();
+
+    } catch (e) {
+      loading.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+    }
+  }
+
+  // ---- REVIEWS SCROLL CONTROLS ----
+  function initReviewsScroll() {
+    const track = document.getElementById('lxbReviewsTrack');
+    const prev  = document.getElementById('reviewsPrev');
+    const next  = document.getElementById('reviewsNext');
+    if (!track || !prev || !next) return;
+
+    const SCROLL_AMOUNT = 360;
+
+    function updateButtons() {
+      prev.classList.toggle('hidden', track.scrollLeft <= 10);
+      next.classList.toggle('hidden', track.scrollLeft + track.clientWidth >= track.scrollWidth - 10);
+    }
+
+    prev.addEventListener('click', () => { track.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' }); });
+    next.addEventListener('click', () => { track.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' }); });
+    track.addEventListener('scroll', updateButtons);
+    updateButtons();
+
+    // Drag-to-scroll (mouse)
+    let isDown = false, startX, scrollLeftStart;
+    track.addEventListener('mousedown', e => {
+      isDown = true;
+      startX = e.pageX - track.offsetLeft;
+      scrollLeftStart = track.scrollLeft;
+    });
+    document.addEventListener('mouseup', () => { isDown = false; });
+    track.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - track.offsetLeft;
+      track.scrollLeft = scrollLeftStart - (x - startX);
+    });
+  }
+
+  // ---- DETAIL MODAL ----
+  function openDetail(r) {
+    const modal = document.getElementById('lxbDetailModal');
+    const box   = document.getElementById('lxbDetailBox');
+    const initials = (r.name || 'A').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const fullStars = Math.round(r.rating || 5);
+    let dateStr = '';
+    try { dateStr = r.createdAt?.toDate?.().toLocaleDateString('en-KE', { month: 'long', year: 'numeric' }) || ''; } catch (e) {}
+
+    box.innerHTML = `
+      <button class="lxb-modal-close" id="lxbDetailClose"><i class="fas fa-times"></i></button>
+      <div class="lxb-detail-avatar">${initials}</div>
+      <div class="lxb-detail-name">${r.name || 'Anonymous'}</div>
+      <div class="lxb-detail-stars">
+        ${'<i class="fas fa-star"></i>'.repeat(fullStars)}${'<i class="far fa-star"></i>'.repeat(5 - fullStars)}
+      </div>
+      <div class="lxb-detail-text">${r.text || ''}</div>
+      ${dateStr ? `<div class="lxb-detail-date">${dateStr}</div>` : ''}
+    `;
+    modal.classList.add('lxb-open');
+    document.getElementById('lxbDetailClose').onclick = () => modal.classList.remove('lxb-open');
+    document.getElementById('lxbDetailOverlay').onclick = () => modal.classList.remove('lxb-open');
+  }
+
+  // ---- WRITE REVIEW MODAL ----
+  function initWriteModal() {
+    const openBtn  = document.getElementById('btnWriteReview');
+    const modal    = document.getElementById('lxbWriteModal');
+    const overlay  = document.getElementById('lxbWriteOverlay');
+    const closeBtn = document.getElementById('lxbWriteClose');
+    const submitBtn= document.getElementById('lxbSubmitBtn');
+    const textarea = document.getElementById('lxbRvText');
+    const charEl   = document.getElementById('lxbChar');
+    const hint     = document.getElementById('lxbStarHint');
+    if (!openBtn || !modal) return;
+
+    function openModal() {
+      pickedRating = 0;
+      document.querySelectorAll('.lxb-star').forEach(s => s.classList.remove('on'));
+      if (hint) hint.textContent = 'Tap to rate';
+      const nameF = document.getElementById('lxbRvName');
+      if (nameF) nameF.value = window.currentUser?.displayName || '';
+      if (textarea) textarea.value = '';
+      if (charEl) charEl.textContent = '0 / 500';
+      document.getElementById('lxbWriteForm').style.display = 'block';
+      document.getElementById('lxbWriteSuccess').style.display = 'none';
+      const submitEl = document.getElementById('lxbSubmitBtn');
+      if (submitEl) { submitEl.disabled = false; submitEl.innerHTML = '<i class="fas fa-heart"></i> Submit Review<span class="btn-shimmer"></span>'; }
+      modal.classList.add('lxb-open');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    overlay.addEventListener('click', () => modal.classList.remove('lxb-open'));
+    closeBtn.addEventListener('click', () => modal.classList.remove('lxb-open'));
+
+    // Stars
+    const starBtns = document.querySelectorAll('.lxb-star');
+    starBtns.forEach(s => {
+      s.addEventListener('click', () => {
+        pickedRating = +s.dataset.v;
+        starBtns.forEach((b, i) => b.classList.toggle('on', i < pickedRating));
+        if (hint) hint.textContent = starLabels[pickedRating];
+      });
+      s.addEventListener('mouseenter', () => {
+        const v = +s.dataset.v;
+        starBtns.forEach((b, i) => b.classList.toggle('on', i < v));
+      });
+    });
+    document.getElementById('lxbStarPicker')?.addEventListener('mouseleave', () => {
+      starBtns.forEach((b, i) => b.classList.toggle('on', i < pickedRating));
+    });
+
+    // Char count
+    textarea?.addEventListener('input', () => {
+      if (charEl) charEl.textContent = `${textarea.value.length} / 500`;
+    });
+
+    // Submit
+    submitBtn?.addEventListener('click', async () => {
+      const name = document.getElementById('lxbRvName')?.value.trim();
+      const text = textarea?.value.trim();
+      if (!pickedRating)        { showToast('Please select a star rating.', 'error'); return; }
+      if (!name)                { showToast('Please enter your name.', 'error'); return; }
+      if (!text || text.length < 10) { showToast('Please write at least 10 characters.', 'error'); return; }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+      try {
+        const { collection, addDoc, serverTimestamp } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        await addDoc(collection(window.firebaseDb, 'reviews'), {
+          userId:    window.currentUser?.uid || null,
+          name,
+          rating:    pickedRating,
+          text,
+          status:    'pending',
+          createdAt: serverTimestamp()
+        });
+      } catch (e) { /* submit silently */ }
+
+      document.getElementById('lxbWriteForm').style.display = 'none';
+      document.getElementById('lxbWriteSuccess').style.display = 'block';
+    });
+  }
+
+  // Boot
+  onFirebase(() => {
+    loadReviews();
+    initWriteModal();
+  });
 })();

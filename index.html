@@ -255,61 +255,17 @@
     <h2 class="section-title">Find Your Perfect Style</h2>
   </div>
   <div class="categories-grid" id="categoriesGrid">
-    <button class="cat-card active" data-cat="trending">
-      <div class="cat-icon">🔥</div>
-      <span>Trending</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="new">
-      <div class="cat-icon">✨</div>
-      <span>New Arrivals</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="most-booked">
-      <div class="cat-icon">👑</div>
-      <span>Most Booked</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="luxury">
-      <div class="cat-icon">💎</div>
-      <span>Luxury</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="budget">
-      <div class="cat-icon">💸</div>
-      <span>Budget Friendly</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="bridal">
-      <div class="cat-icon">💍</div>
-      <span>Bridal & Events</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="kids">
-      <div class="cat-icon">🎀</div>
-      <span>Kids Styles</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="mens">
-      <div class="cat-icon">✂️</div>
-      <span>Men's Braids</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="quick">
-      <div class="cat-icon">⚡</div>
-      <span>Quick Styles</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="transformations">
-      <div class="cat-icon">🪄</div>
-      <span>Transformations</span>
-      <div class="cat-glow"></div>
-    </button>
-    <button class="cat-card" data-cat="all">
-      <div class="cat-icon">🌟</div>
-      <span>All Styles</span>
-      <div class="cat-glow"></div>
-    </button>
+    <button class="cat-card active" data-cat="trending"><span>Trending</span></button>
+    <button class="cat-card" data-cat="new"><span>New Arrivals</span></button>
+    <button class="cat-card" data-cat="most-booked"><span>Most Booked</span></button>
+    <button class="cat-card" data-cat="luxury"><span>Luxury</span></button>
+    <button class="cat-card" data-cat="budget"><span>Budget Friendly</span></button>
+    <button class="cat-card" data-cat="bridal"><span>Bridal & Events</span></button>
+    <button class="cat-card" data-cat="kids"><span>Kids Styles</span></button>
+    <button class="cat-card" data-cat="mens"><span>Men's Braids</span></button>
+    <button class="cat-card" data-cat="quick"><span>Quick Styles</span></button>
+    <button class="cat-card" data-cat="transformations"><span>Transformations</span></button>
+    <button class="cat-card" data-cat="all"><span>All Styles</span></button>
   </div>
 </section>
 
@@ -406,56 +362,111 @@
   </div>
 </section>
 
+
+<!-- ABOUT SECTION -->
+<section class="about-section" id="about">
+  <div class="about-content-only">
+    <span class="section-eyebrow">Our Story</span>
+    <h2>Crafting <em>Luxury</em><br>One Braid at a Time</h2>
+    <p>LuxeBraids was born from a belief that every woman deserves to feel like royalty. Our master stylists combine traditional braiding techniques with modern luxury to create hairstyles that turn heads and build confidence.</p>
+    <p>From intimate knotless braids to elaborate bridal crowns, every appointment is an experience in self-care and artistry.</p>
+    <a href="#booking" class="btn-about-cta">Book Your Experience</a>
+  </div>
+</section>
+
 <!-- REVIEWS SECTION -->
 <section class="reviews-section" id="reviews">
-  <div class="section-header">
-    <span class="section-eyebrow">Client Love</span>
-    <h2 class="section-title">What Queens Are Saying</h2>
-  </div>
-  <div class="reviews-track-wrap">
-    <div class="reviews-track" id="reviewsTrack">
-      <!-- Reviews injected by JS -->
+  <div class="reviews-section-inner">
+    <div class="section-header">
+      <span class="section-eyebrow">Client Love</span>
+      <h2 class="section-title">What Our <em>Queens</em> Say</h2>
+      <div class="reviews-meta-row">
+        <div class="reviews-avg-block">
+          <span class="reviews-avg-num" id="reviewsAvgNum">4.9</span>
+          <div>
+            <div class="reviews-avg-stars" id="reviewsAvgStars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            </div>
+            <span class="reviews-avg-label" id="reviewsAvgLabel">Verified client reviews</span>
+          </div>
+        </div>
+        <button class="btn-lxb-review" id="btnWriteReview">
+          <i class="fas fa-pen-nib"></i> Write a Review
+        </button>
+      </div>
+    </div>
+
+    <div id="lxbReviewsLoading" class="lxb-reviews-loading">
+      <div class="lxb-spinner"></div><span>Loading reviews…</span>
+    </div>
+
+    <div class="reviews-track-wrap" id="lxbReviewsWrap" style="display:none;">
+      <button class="reviews-scroll-btn prev hidden" id="reviewsPrev" aria-label="Scroll left"><i class="fas fa-chevron-left"></i></button>
+      <div class="reviews-track" id="lxbReviewsTrack"></div>
+      <button class="reviews-scroll-btn next" id="reviewsNext" aria-label="Scroll right"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <div class="lxb-reviews-empty" id="lxbReviewsEmpty" style="display:none;">
+      <span>💬</span><p>Be the first to leave a review!</p>
     </div>
   </div>
 </section>
 
-<!-- ABOUT SECTION -->
-<section class="about-section" id="about">
-  <div class="about-container">
-    <div class="about-visual">
-      <div class="about-img-frame">
-        <div class="about-img-placeholder">
-          <div class="about-crown">👑</div>
-          <div class="about-tagline">Est. 2019</div>
-        </div>
-        <div class="about-badge-float">
-          <span>4.9★ Rating</span>
-        </div>
-      </div>
+<!-- WRITE REVIEW MODAL -->
+<div class="lxb-modal-wrap" id="lxbWriteModal">
+  <div class="lxb-modal-overlay" id="lxbWriteOverlay"></div>
+  <div class="lxb-modal-box">
+    <button class="lxb-modal-close" id="lxbWriteClose"><i class="fas fa-times"></i></button>
+    <div class="lxb-modal-head">
+      <div class="lxb-modal-emoji">✨</div>
+      <h3>Share Your Experience</h3>
+      <p>Your feedback helps other queens find their style</p>
     </div>
-    <div class="about-content">
-      <span class="section-eyebrow">Our Story</span>
-      <h2>Crafting <em>Luxury</em><br>One Braid at a Time</h2>
-      <p>LuxeBraids was born from a belief that every woman deserves to feel like royalty. Our master stylists combine traditional braiding techniques with modern luxury to create hairstyles that turn heads and build confidence.</p>
-      <p>From intimate knotless braids to elaborate bridal crowns, every appointment is an experience in self-care and artistry.</p>
-      <div class="about-numbers">
-        <div class="about-num">
-          <strong>5+</strong>
-          <span>Years Experience</span>
+    <div id="lxbWriteForm">
+      <div class="lxb-star-row">
+        <label>Your rating</label>
+        <div class="lxb-stars" id="lxbStarPicker">
+          <button type="button" class="lxb-star" data-v="1"><i class="fas fa-star"></i></button>
+          <button type="button" class="lxb-star" data-v="2"><i class="fas fa-star"></i></button>
+          <button type="button" class="lxb-star" data-v="3"><i class="fas fa-star"></i></button>
+          <button type="button" class="lxb-star" data-v="4"><i class="fas fa-star"></i></button>
+          <button type="button" class="lxb-star" data-v="5"><i class="fas fa-star"></i></button>
         </div>
-        <div class="about-num">
-          <strong>8</strong>
-          <span>Master Stylists</span>
-        </div>
-        <div class="about-num">
-          <strong>150+</strong>
-          <span>Braid Styles</span>
-        </div>
+        <span class="lxb-star-hint" id="lxbStarHint">Tap to rate</span>
       </div>
-      <a href="#booking" class="btn-about-cta">Book Your Experience</a>
+      <div class="lxb-field">
+        <label>Your Name</label>
+        <input type="text" id="lxbRvName" placeholder="e.g. Amara S." maxlength="40"/>
+      </div>
+      <div class="lxb-field">
+        <label>Style / Service <span style="font-size:.75rem;opacity:.55;font-weight:400;">(optional)</span></label>
+        <input type="text" id="lxbRvStyle" placeholder="e.g. Knotless Braids, Butterfly Locs…" maxlength="60"/>
+      </div>
+      <div class="lxb-field">
+        <label>Your Review</label>
+        <textarea id="lxbRvText" rows="4" maxlength="500" placeholder="Tell us about your experience — the style, the vibe, the result…"></textarea>
+        <span class="lxb-char" id="lxbChar">0 / 500</span>
+      </div>
+      <button type="button" class="btn-lxb-submit" id="lxbSubmitBtn">
+        <i class="fas fa-heart"></i> Submit Review
+        <span class="btn-shimmer"></span>
+      </button>
+      <p class="lxb-note">Reviews appear publicly after approval by our team.</p>
+    </div>
+    <div class="lxb-success" id="lxbWriteSuccess" style="display:none;">
+      <div class="lxb-success-emoji">🎉</div>
+      <h4>Thank You, Queen!</h4>
+      <p>Your review has been submitted and will appear once approved.</p>
+      <button class="btn-lxb-review" onclick="document.getElementById('lxbWriteModal').classList.remove('lxb-open')" style="margin-top:16px;">Done</button>
     </div>
   </div>
-</section>
+</div>
+
+<!-- REVIEW DETAIL MODAL -->
+<div class="lxb-modal-wrap" id="lxbDetailModal">
+  <div class="lxb-modal-overlay" id="lxbDetailOverlay"></div>
+  <div class="lxb-modal-box lxb-detail-box" id="lxbDetailBox"></div>
+</div>
 
 <!-- NEWSLETTER -->
 <section class="newsletter-section">
@@ -485,12 +496,12 @@
     <div class="contact-card">
       <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
       <h4>Studio Location</h4>
-      <p>Westlands, Nairobi<br>Kenya</p>
+      <p>Seattle, Washington<br>USA</p>
     </div>
     <div class="contact-card">
       <div class="contact-icon"><i class="fab fa-whatsapp"></i></div>
       <h4>WhatsApp Us</h4>
-      <p>+254 700 000 000<br>Mon – Sat 8AM–8PM</p>
+      <p>+1 202 424 4894<br>Mon – Sat 8AM–8PM</p>
     </div>
     <div class="contact-card">
       <div class="contact-icon"><i class="fas fa-clock"></i></div>
@@ -545,11 +556,10 @@
       <a href="client-login.html">Login</a>
       <a href="client-login.html#signup">Sign Up</a>
       <a href="client-dashboard.html">My Dashboard</a>
-      <a href="admin-login.html">Admin</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2025 LuxeBraids. All rights reserved. Made with 💕 in Nairobi.</p>
+    <p>© 2026 LuxeBraids. All rights reserved. Made with 💕 in Washington.</p>
     <div class="footer-bottom-links">
       <a href="#">Privacy Policy</a>
       <a href="#">Terms of Service</a>
@@ -558,7 +568,7 @@
 </footer>
 
 <!-- FLOATING WHATSAPP -->
-<a href="https://wa.me/254700000000" class="whatsapp-float" target="_blank" aria-label="WhatsApp">
+<a href="https://wa.me/12024244894" class="whatsapp-float" target="_blank" aria-label="WhatsApp">
   <i class="fab fa-whatsapp"></i>
   <span class="wa-tooltip">Chat with us</span>
 </a>
@@ -581,6 +591,113 @@
       <button class="btn-continue-browsing" id="btnContinueBrowsing">
         <i class="fas fa-arrow-left"></i> Continue Browsing
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING STEPS MODAL (from Style Modal "Book" button) -->
+<div class="booking-steps-modal" id="bookingStepsModal">
+  <div class="bsm-overlay" id="bsmOverlay"></div>
+  <div class="bsm-content" id="bsmContent">
+    <!-- Top bar -->
+    <div class="bsm-topbar">
+      <button class="bsm-back" id="bsmBack"><i class="fas fa-arrow-left"></i></button>
+      <span class="bsm-topbar-title" id="bsmTopbarTitle">Book Appointment</span>
+      <button class="bsm-close" id="bsmClose"><i class="fas fa-times"></i></button>
+    </div>
+    <!-- Step progress -->
+    <div class="bsm-progress">
+      <div class="bsm-step-bar">
+        <div class="bsm-step active" data-step="1">
+          <div class="bsm-step-circle">1</div>
+          <span>Schedule</span>
+        </div>
+        <div class="bsm-step-line"></div>
+        <div class="bsm-step" data-step="2">
+          <div class="bsm-step-circle">2</div>
+          <span>Details</span>
+        </div>
+        <div class="bsm-step-line"></div>
+        <div class="bsm-step" data-step="3">
+          <div class="bsm-step-circle">3</div>
+          <span>Confirm</span>
+        </div>
+      </div>
+    </div>
+    <!-- Body -->
+    <div class="bsm-body" id="bsmBody">
+      <!-- Step 1: Schedule -->
+      <div class="bsm-panel active" id="bsmPanel1">
+        <div class="bsm-panel-header">
+          <div class="bsm-panel-icon">📅</div>
+          <h3>Choose Your Schedule</h3>
+          <p>Pick a date, time and stylist</p>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fas fa-calendar"></i> Date</label>
+          <input type="date" id="bsmDate" class="bsm-input" required/>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fas fa-clock"></i> Time</label>
+          <select id="bsmTime" class="bsm-input" required>
+            <option value="">Choose a time…</option>
+            <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+            <option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option>
+            <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+            <option>5:00 PM</option><option>6:00 PM</option>
+          </select>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fas fa-user-tie"></i> Stylist</label>
+          <select id="bsmStylist" class="bsm-input">
+            <option value="any">Any Available Stylist</option>
+            <option>Zara</option><option>Destiny</option><option>Amara</option>
+            <option>Faith</option><option>Grace</option>
+          </select>
+        </div>
+        <button class="bsm-btn-next" id="bsmNext1">
+          Continue <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <!-- Step 2: Personal Details -->
+      <div class="bsm-panel" id="bsmPanel2">
+        <div class="bsm-panel-header">
+          <div class="bsm-panel-icon">👑</div>
+          <h3>Your Details</h3>
+          <p>So we can confirm your booking</p>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fas fa-user"></i> Full Name</label>
+          <input type="text" id="bsmName" class="bsm-input" placeholder="Your full name" required/>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fab fa-whatsapp"></i> WhatsApp Number</label>
+          <input type="tel" id="bsmPhone" class="bsm-input" placeholder="+254 700 000 000" required/>
+        </div>
+        <div class="bsm-form-group">
+          <label><i class="fas fa-comment"></i> Special Requests (optional)</label>
+          <textarea id="bsmNotes" class="bsm-input bsm-textarea" placeholder="Any notes for your stylist…"></textarea>
+        </div>
+        <button class="bsm-btn-next" id="bsmNext2">
+          Review Booking <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <!-- Step 3: Review & Confirm -->
+      <div class="bsm-panel" id="bsmPanel3">
+        <div class="bsm-panel-header">
+          <div class="bsm-panel-icon">✨</div>
+          <h3>Review & Confirm</h3>
+          <p>Everything looks good? Let's lock it in!</p>
+        </div>
+        <div class="bsm-review-card" id="bsmReviewCard">
+          <!-- Populated by JS -->
+        </div>
+        <p class="bsm-note">🔒 No payment required now. Pay at studio.</p>
+        <button class="bsm-btn-confirm" id="bsmConfirmBtn">
+          <i class="fas fa-crown"></i> Confirm Booking
+          <span class="btn-shimmer"></span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

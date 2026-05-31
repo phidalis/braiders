@@ -20,14 +20,7 @@ const SERVICES = [
   {id:14,name:"Celebrity Braid Crown",emoji:"⭐",price:7200,originalPrice:9000,duration:"7–10 hrs",badge:"Luxury",hairType:"All types",hairLength:"Long",description:"A-list worthy braid crown inspired by celebrity red carpet looks.",bookings:11,rating:5.0},
 ];
 
-const REVIEWS_DATA = [
-  {name:"Amara N.",initial:"A",style:"Goddess Box Braids",text:"Zara literally made me cry — in the best way. I've never felt so beautiful. My braids lasted 3 months!",rating:5,status:"published"},
-  {name:"Destiny K.",initial:"D",style:"Boho Braids",text:"The attention to detail is insane. My bridal braids had everyone at the wedding asking for the studio's contact.",rating:5,status:"published"},
-  {name:"Faith W.",initial:"F",style:"Knotless Braids",text:"Zero tension, zero headache. I slept in perfect comfort from day one. The team is so professional.",rating:5,status:"published"},
-  {name:"Grace M.",initial:"G",style:"Butterfly Locs",text:"I've been to so many studios in Nairobi and LuxeBraids is unmatched.",rating:5,status:"published"},
-  {name:"Purity A.",initial:"P",style:"Fulani Braids",text:"My Fulani braids got so many compliments at work. The gold cuffs were chef's kiss!",rating:5,status:"pending"},
-  {name:"Joy S.",initial:"J",style:"Lemonade Braids",text:"Super fast, super clean, super affordable. I was in and out in under 5 hours looking like a queen!",rating:5,status:"published"},
-];
+// Reviews loaded from Firestore (no hardcoded data)
 
 let announcements = [
   "✨ Today's booking is on offer — 20% off all braids",
@@ -43,6 +36,7 @@ let announcements = [
 let allBookings = [];
 let allClients = [];
 let allNewsletter = [];
+let allReviews = [];
 let filteredBookings = [];
 let currentBookingFilter = 'all';
 let editingServiceId = null;
@@ -62,9 +56,9 @@ function initDashboard() {
   renderServices();
   renderHairTypeTags();
   renderAnnouncements();
-  renderReviews();
   populateStyleSelect();
   setMinDate();
+  startAdminMsgPolling();
 }
 
 function setMinDate() {
@@ -74,7 +68,7 @@ function setMinDate() {
 }
 
 // =========== NAVIGATION ===========
-const panels = { overview:'Dashboard', analytics:'Analytics', bookings:'Bookings', clients:'Clients', services:'Services', stylists:'Stylists', announcements:'Announcements', reviews:'Reviews', newsletter:'Newsletter', settings:'Settings' };
+const panels = { overview:'Dashboard', analytics:'Analytics', bookings:'Bookings', clients:'Clients', services:'Services', stylists:'Stylists', announcements:'Announcements', reviews:'Reviews', newsletter:'Newsletter', messages:'Client Messages', settings:'Settings' };
 function navigateTo(key) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -83,6 +77,7 @@ function navigateTo(key) {
   document.querySelectorAll('.nav-item').forEach(n => { if (n.textContent.trim().toLowerCase().includes(key.toLowerCase()) || n.getAttribute('onclick')?.includes(key)) n.classList.add('active'); });
   document.getElementById('topbar-title').textContent = panels[key] || key;
   if (window.innerWidth <= 900) closeSidebar();
+  if (key === 'messages') loadAdminConversations();
 }
 
 function toggleSidebar() {
@@ -168,10 +163,17 @@ async function loadAllData() {
     allNewsletter = snap.docs.map(d => ({ id:d.id, ...d.data() }));
   } catch(e) { allNewsletter = []; }
 
+  // Reviews
+  try {
+    const snap = await getDocs(collection(db,'reviews'));
+    allReviews = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  } catch(e) { allReviews = []; }
+
   updateStats();
   renderBookingsTable(allBookings);
   renderClientsTable(allClients);
   renderNewsletterTable(allNewsletter);
+  renderReviews();
   renderAnalytics();
   addActivity('Data loaded', 'All Firebase data fetched successfully', 'green');
 }
@@ -202,7 +204,7 @@ function updateStats() {
 
   document.getElementById('stat-bookings').textContent = allBookings.length;
   document.getElementById('stat-clients').textContent = allClients.length || '—';
-  document.getElementById('stat-revenue').textContent = 'KSh '+revenue.toLocaleString();
+  document.getElementById('stat-revenue').textContent = 'USD '+revenue.toLocaleString();
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-subs').textContent = allNewsletter.length;
 
@@ -215,6 +217,20 @@ function updateStats() {
 
   // Sub count
   document.getElementById('sub-count').textContent = allNewsletter.length;
+
+  // Pending reviews badge
+  const pendingReviews = allReviews.filter(r => r.status === 'pending').length;
+  let reviewBadge = document.getElementById('reviews-pending-count');
+  if (!reviewBadge) {
+    // Create badge next to Reviews nav item if not exists
+    const reviewsNav = [...document.querySelectorAll('.nav-item')].find(el => el.textContent.includes('Reviews'));
+    if (reviewsNav && pendingReviews > 0) {
+      reviewsNav.innerHTML = `<i class="fas fa-star"></i> Reviews <span class="nav-badge" id="reviews-pending-count">${pendingReviews}</span>`;
+    }
+  } else {
+    reviewBadge.textContent = pendingReviews;
+    reviewBadge.style.display = pendingReviews > 0 ? 'inline-flex' : 'none';
+  }
 
   // Recent bookings
   renderRecentBookings(allBookings.slice(0,5));
@@ -452,7 +468,7 @@ function renderServices() {
         ? `<img src="${s.imageUrl}" alt="${s.name}" style="width:100%;height:160px;object-fit:cover;border-radius:10px;margin-bottom:10px;display:block;">`
         : `<div style="width:100%;height:160px;border-radius:10px;margin-bottom:10px;background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.25);font-size:.72rem;"><i class="fas fa-camera" style="font-size:1.6rem;opacity:.3;"></i><span>No image uploaded</span></div>`}
       <div class="service-name">${s.name}</div>
-      <div class="service-price">KSh ${s.price.toLocaleString()}${s.originalPrice?` <del style="color:rgba(255,255,255,.3);font-size:.75rem;">KSh ${s.originalPrice.toLocaleString()}</del>`:''}</div>
+      <div class="service-price">USD ${s.price.toLocaleString()}${s.originalPrice?` <del style="color:rgba(255,255,255,.3);font-size:.75rem;">USD ${s.originalPrice.toLocaleString()}</del>`:''}</div>
       <div class="service-meta">
         <span><i class="fas fa-clock"></i> ${s.duration}</span>
         <span><i class="fas fa-star"></i> ${s.rating}</span>
@@ -658,7 +674,7 @@ function populateStyleSelect() {
   const sel = document.getElementById('bk-style');
   if (!sel) return;
   sel.innerHTML = '<option value="">Select style…</option>' +
-    localServices.map(s => `<option value="${s.name}">${s.emoji||'✂️'} ${s.name} — KSh ${s.price.toLocaleString()}</option>`).join('');
+    localServices.map(s => `<option value="${s.name}">${s.emoji||'✂️'} ${s.name} — USD ${s.price.toLocaleString()}</option>`).join('');
 }
 
 // =========== STYLISTS ===========
@@ -732,28 +748,124 @@ async function saveAnnouncements() {
 function renderReviews() {
   const tbody = document.getElementById('reviews-tbody');
   if (!tbody) return;
-  tbody.innerHTML = REVIEWS_DATA.map((r,i) => `
+  if (!allReviews.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:rgba(255,255,255,.3)"><i class="fas fa-star" style="margin-right:8px;"></i> No reviews yet — they will appear here when clients submit them.</td></tr>';
+    return;
+  }
+  // Sort: pending first, then by newest
+  const sorted = [...allReviews].sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (b.status === 'pending' && a.status !== 'pending') return 1;
+    const toMs = v => v?.seconds ? v.seconds * 1000 : (v ? new Date(v).getTime() : 0);
+    return toMs(b.createdAt) - toMs(a.createdAt);
+  });
+  tbody.innerHTML = sorted.map(r => {
+    const initial = (r.name || '?').charAt(0).toUpperCase();
+    const stars = '★'.repeat(Math.min(5, parseInt(r.rating) || 5));
+    const isPending = r.status === 'pending';
+    const isPublished = r.status === 'published';
+    const text = (r.text || r.review || '').substring(0, 90);
+    return `
     <tr>
-      <td><div style="display:flex;align-items:center;gap:8px;"><div class="user-row-avatar" style="background:linear-gradient(135deg,var(--pink-deep),var(--purple));">${r.initial}</div><strong>${r.name}</strong></div></td>
-      <td style="font-size:.78rem;">${r.style}</td>
-      <td style="font-size:.78rem;max-width:220px;">${r.text.substring(0,80)}…</td>
-      <td>${'★'.repeat(r.rating)}</td>
-      <td><span class="status-badge ${r.status==='published'?'confirmed':'pending'}">${cap(r.status)}</span></td>
-      <td style="display:flex;gap:6px;">
-        <button class="btn-icon btn-success" onclick="toggleReview(${i})" title="${r.status==='published'?'Unpublish':'Publish'}"><i class="fas fa-${r.status==='published'?'eye-slash':'eye'}"></i></button>
-        <button class="btn-icon btn-danger" onclick="deleteReview(${i})"><i class="fas fa-trash"></i></button>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="user-row-avatar" style="background:linear-gradient(135deg,var(--pink-deep),var(--purple));">${initial}</div>
+          <div>
+            <strong>${r.name || 'Anonymous'}</strong>
+            ${r.email ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4);">${r.email}</div>` : ''}
+          </div>
+        </div>
       </td>
-    </tr>
-  `).join('');
+      <td style="font-size:.78rem;">${r.style || r.service || '—'}</td>
+      <td style="font-size:.78rem;max-width:220px;color:rgba(255,255,255,.75);">${text}${text.length >= 90 ? '…' : ''}</td>
+      <td style="color:#f9c74f;letter-spacing:2px;">${stars}</td>
+      <td>
+        <span class="status-badge ${isPublished ? 'confirmed' : isPending ? 'pending' : 'cancelled'}">
+          ${isPending ? '⏳ Pending' : isPublished ? '✅ Published' : '🚫 Hidden'}
+        </span>
+      </td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${isPending ? `
+            <button class="btn-primary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="approveReview('${r.id}')" title="Approve & Publish">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn-icon btn-danger" onclick="rejectReview('${r.id}')" title="Reject / Hide">
+              <i class="fas fa-times"></i>
+            </button>
+          ` : isPublished ? `
+            <button class="btn-secondary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="unpublishReview('${r.id}')" title="Unpublish">
+              <i class="fas fa-eye-slash"></i> Hide
+            </button>
+          ` : `
+            <button class="btn-primary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="approveReview('${r.id}')" title="Re-publish">
+              <i class="fas fa-eye"></i> Publish
+            </button>
+          `}
+          <button class="btn-icon btn-danger" onclick="deleteReview('${r.id}')" title="Delete permanently">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
-function toggleReview(i) {
-  REVIEWS_DATA[i].status = REVIEWS_DATA[i].status === 'published' ? 'hidden' : 'published';
-  renderReviews(); showToast('Review status updated.', 'gold');
+async function updateReviewStatus(id, status) {
+  try {
+    const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const db = window._fb?.db;
+    if (!db) throw new Error('Firestore not ready');
+    await updateDoc(doc(db, 'reviews', id), { status });
+    return true;
+  } catch(e) {
+    console.error('Review update failed:', e);
+    showToast('Failed to save — check your connection.', 'error');
+    return false;
+  }
 }
-function deleteReview(i) {
-  if (!confirm('Delete this review?')) return;
-  REVIEWS_DATA.splice(i,1); renderReviews(); showToast('Review deleted.', 'error');
+
+async function approveReview(id) {
+  const ok = await updateReviewStatus(id, 'published');
+  if (ok) {
+    allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'published' } : r);
+    renderReviews();
+    showToast('Review approved & published! ✅', 'success');
+  }
+}
+
+async function unpublishReview(id) {
+  const ok = await updateReviewStatus(id, 'hidden');
+  if (ok) {
+    allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'hidden' } : r);
+    renderReviews();
+    showToast('Review hidden from website.', 'gold');
+  }
+}
+
+async function rejectReview(id) {
+  const ok = await updateReviewStatus(id, 'hidden');
+  if (ok) {
+    allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'hidden' } : r);
+    renderReviews();
+    showToast('Review rejected & hidden.', 'gold');
+  }
+}
+
+async function deleteReview(id) {
+  if (!confirm('Permanently delete this review? This cannot be undone.')) return;
+  try {
+    const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const db = window._fb?.db;
+    if (!db) throw new Error('Firestore not ready');
+    await deleteDoc(doc(db, 'reviews', id));
+    allReviews = allReviews.filter(r => r.id !== id);
+    renderReviews();
+    showToast('Review deleted.', 'error');
+  } catch(e) {
+    console.error('Review delete failed:', e);
+    showToast('Failed to delete — check your connection.', 'error');
+  }
 }
 
 // =========== NEWSLETTER ===========
@@ -806,7 +918,7 @@ function renderAnalytics() {
   });
 
   document.getElementById('an-bookings').textContent = total;
-  document.getElementById('an-revenue').textContent = 'KSh ' + rev.toLocaleString();
+  document.getElementById('an-revenue').textContent = 'USD ' + rev.toLocaleString();
   document.getElementById('an-clients').textContent = allClients.length || (total > 0 ? total : '—');
   document.getElementById('an-confirm').textContent = (total > 0 ? Math.round((confirmed + completed) / total * 100) : 0) + '%';
 
@@ -842,8 +954,8 @@ function renderAnalytics() {
   if (chart) {
     chart.innerHTML = vals.map((v, i) => `
       <div class="rev-bar-wrap">
-        <div class="rev-bar" style="height:${(v/max*100)}%;" title="KSh ${v.toLocaleString()}">
-          <span class="rev-bar-tooltip">KSh ${v.toLocaleString()}</span>
+        <div class="rev-bar" style="height:${(v/max*100)}%;" title="USD ${v.toLocaleString()}">
+          <span class="rev-bar-tooltip">USD ${v.toLocaleString()}</span>
         </div>
         <div class="rev-label">${months[i]}</div>
       </div>
@@ -978,6 +1090,221 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
 });
+
+// =========== ADMIN MESSAGING ===========
+let adminConversations = [];
+let activeConvId = null;
+let adminMsgUnsubscribe = null;
+let adminConvUnsubscribe = null; // FIX: real-time listener for conversation list
+
+// FIX: Lightweight badge-only update — used inside onSnapshot to avoid recursive loop
+async function updateAdminUnreadBadge() {
+  const fb = window._fb; if (!fb) return;
+  try {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'conversations'));
+    let total = 0;
+    await Promise.all(snap.docs.map(async convDoc => {
+      try {
+        const unread = await fb.getDocs(fb.query(
+          fb.collection(fb.db, 'conversations', convDoc.id, 'messages'),
+          fb.where('senderRole', '==', 'client'),
+          fb.where('readByAdmin', '==', false)
+        ));
+        total += unread.size;
+      } catch(e) {}
+    }));
+    const badge = document.getElementById('admin-unread-count');
+    if (badge) { badge.textContent = total; badge.style.display = total > 0 ? 'inline-flex' : 'none'; }
+  } catch(e) {}
+}
+
+// FIX: Render conversation list without re-opening active conv (avoids recursive trigger)
+function renderAdminConvList() {
+  const listEl = document.getElementById('admin-conv-list'); if (!listEl) return;
+  if (!adminConversations.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.25);font-size:.82rem;"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3;"></i>No client messages yet</div>';
+    return;
+  }
+  listEl.innerHTML = adminConversations.map(conv => `
+    <div onclick="openAdminConversation('${conv.id}')" id="conv-item-${conv.id}"
+      style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .2s;${activeConvId===conv.id?'background:rgba(255,159,0,.08);':''}"
+      onmouseover="if('${conv.id}'!==activeConvId)this.style.background='rgba(255,255,255,.03)'"
+      onmouseout="if('${conv.id}'!==activeConvId)this.style.background=''">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-weight:600;font-size:.86rem;color:rgba(255,255,255,.9);">${conv.clientName || 'Client'}</span>
+        ${(conv.unreadCount || 0) > 0 ? `<span style="background:var(--gold);color:#1a0a2e;border-radius:50%;width:18px;height:18px;font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;">${conv.unreadCount}</span>` : ''}
+      </div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.35);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${conv.lastMessage || 'No messages'}</div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.2);margin-top:3px;">${conv.clientEmail || ''}</div>
+    </div>
+  `).join('');
+}
+
+// FIX: Uses onSnapshot for real-time conversation list updates
+async function loadAdminConversations() {
+  const fb = window._fb; if (!fb) return;
+  const listEl = document.getElementById('admin-conv-list'); if (!listEl) return;
+
+  // Only set up the real-time listener once
+  if (adminConvUnsubscribe) {
+    // Already listening — just re-render with current data (e.g. after navigating back)
+    renderAdminConvList();
+    if (activeConvId) {
+      const el = document.getElementById(`conv-item-${activeConvId}`);
+      if (el) el.style.background = 'rgba(255,159,0,.08)';
+    }
+    return;
+  }
+
+  listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+
+  try {
+    // FIX: onSnapshot on conversations collection for live updates
+    adminConvUnsubscribe = fb.onSnapshot(fb.collection(fb.db, 'conversations'), async (snap) => {
+      adminConversations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Count unread per conversation
+      await Promise.all(adminConversations.map(async conv => {
+        try {
+          const msgSnap = await fb.getDocs(fb.query(
+            fb.collection(fb.db, 'conversations', conv.id, 'messages'),
+            fb.where('senderRole', '==', 'client'),
+            fb.where('readByAdmin', '==', false)
+          ));
+          conv.unreadCount = msgSnap.size;
+        } catch(e) { conv.unreadCount = 0; }
+      }));
+
+      const totalUnread = adminConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
+      const badge = document.getElementById('admin-unread-count');
+      if (badge) { badge.textContent = totalUnread; badge.style.display = totalUnread > 0 ? 'inline-flex' : 'none'; }
+
+      renderAdminConvList();
+
+      // Restore active conversation highlight
+      if (activeConvId) {
+        const el = document.getElementById(`conv-item-${activeConvId}`);
+        if (el) el.style.background = 'rgba(255,159,0,.08)';
+      }
+    });
+  } catch(e) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.82rem;">Could not load conversations</div>';
+  }
+}
+
+function openAdminConversation(convId) {
+  activeConvId = convId;
+  const conv = adminConversations.find(c => c.id === convId);
+  if (!conv) return;
+
+  // Highlight selected
+  document.querySelectorAll('[id^="conv-item-"]').forEach(el => el.style.background = '');
+  const el = document.getElementById(`conv-item-${convId}`);
+  if (el) el.style.background = 'rgba(255,159,0,.08)';
+
+  // Update chat header
+  const nameEl = document.getElementById('admin-chat-name');
+  const subEl = document.getElementById('admin-chat-sub');
+  const avatarEl = document.getElementById('admin-chat-avatar');
+  if (nameEl) nameEl.textContent = conv.clientName || 'Client';
+  if (subEl) subEl.textContent = conv.clientEmail || conv.clientId || '';
+  if (avatarEl) avatarEl.textContent = (conv.clientName || 'C').charAt(0).toUpperCase();
+
+  // Unsubscribe previous message listener
+  if (adminMsgUnsubscribe) { adminMsgUnsubscribe(); adminMsgUnsubscribe = null; }
+
+  const fb = window._fb; if (!fb) return;
+  const body = document.getElementById('admin-chat-body');
+  if (body) body.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i></div>';
+
+  const msgsRef = fb.collection(fb.db, 'conversations', convId, 'messages');
+  const q = fb.query(msgsRef, fb.orderBy('createdAt', 'asc'));
+
+  adminMsgUnsubscribe = fb.onSnapshot(q, async (snap) => {
+    const messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAdminChatMessages(messages, convId);
+
+    // Mark unread client messages as read
+    const unread = messages.filter(m => m.senderRole === 'client' && !m.readByAdmin);
+    for (const m of unread) {
+      try {
+        await fb.updateDoc(fb.doc(fb.db, 'conversations', convId, 'messages', m.id), { readByAdmin: true });
+      } catch(e) {}
+    }
+
+    // FIX: Only update badge — do NOT call loadAdminConversations() here (avoids recursive loop)
+    if (unread.length > 0) updateAdminUnreadBadge();
+  });
+}
+
+function renderAdminChatMessages(messages, convId) {
+  const body = document.getElementById('admin-chat-body'); if (!body) return;
+  if (!messages.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.25);font-size:.85rem;">No messages yet — say hello! 👋</div>';
+    return;
+  }
+  body.innerHTML = messages.map(m => {
+    const isAdmin = m.senderRole === 'admin';
+    const time = m.createdAt?.seconds
+      ? new Date(m.createdAt.seconds * 1000).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : 'Just now';
+    return `<div style="display:flex;flex-direction:column;align-items:${isAdmin ? 'flex-end' : 'flex-start'};max-width:75%;align-self:${isAdmin ? 'flex-end' : 'flex-start'};">
+      <div style="padding:10px 14px;border-radius:16px;font-size:.85rem;line-height:1.6;${isAdmin ? 'background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#1a0a2e;border-bottom-right-radius:4px;' : 'background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border-bottom-left-radius:4px;'}">${escapeAdminHtml(m.text)}</div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.25);margin-top:4px;padding:0 4px;">${isAdmin ? 'You' : (m.senderName || 'Client')} · ${time}</div>
+    </div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+async function sendAdminReply() {
+  const inp = document.getElementById('admin-msg-input');
+  const txt = inp?.value.trim(); if (!txt) return;
+  if (!activeConvId) { showToast('Select a conversation first.', 'error'); return; }
+
+  const btn = document.getElementById('btn-admin-send');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+  inp.value = '';
+
+  const fb = window._fb; if (!fb) return;
+  const adminUser = window.adminUser;
+  const adminName = adminUser?.displayName || adminUser?.email?.split('@')[0] || 'LuxeBraids Admin';
+
+  const msgData = {
+    text: txt,
+    senderId: adminUser?.uid || 'admin',
+    senderName: adminName,
+    senderRole: 'admin',
+    createdAt: fb.serverTimestamp(),
+    readByAdmin: true,
+    readByClient: false,
+  };
+
+  try {
+    await fb.addDoc(fb.collection(fb.db, 'conversations', activeConvId, 'messages'), msgData);
+    // Update conversation last message
+    await fb.setDoc(fb.doc(fb.db, 'conversations', activeConvId), {
+      lastMessage: txt,
+      updatedAt: fb.serverTimestamp(),
+    }, { merge: true });
+    addActivity('Message sent', `Reply sent to ${adminConversations.find(c=>c.id===activeConvId)?.clientName||'client'}`, 'gold');
+  } catch(e) {
+    showToast('Failed to send message. Try again.', 'error');
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+}
+
+function escapeAdminHtml(text) {
+  return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// FIX: Poll for unread badge every 60s AND run immediately on login
+// (onSnapshot on conversations handles live updates when messages panel is open;
+//  this polling covers the badge when admin is on other panels)
+function startAdminMsgPolling() {
+  updateAdminUnreadBadge(); // FIX: run immediately so badge shows on login, not after 60s
+  setInterval(updateAdminUnreadBadge, 60000);
+}
 
 // =========== LOGOUT ===========
 async function handleLogout() {

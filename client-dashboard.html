@@ -4,13 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LuxeBraids – Client Login & Dashboard</title>
+<link rel="stylesheet" href="client-dashboard.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
@@ -27,7 +28,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, updatePassword, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp };
+  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, updatePassword, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, updateDoc, serverTimestamp, orderBy, onSnapshot, deleteDoc };
 
   onAuthStateChanged(auth, async (user) => {
     window.currentUser = user;
@@ -42,7 +43,6 @@
     }
   });
 </script>
-<link rel="stylesheet" href="client-dashboard.css"/>
 </head>
 <body>
 
@@ -150,7 +150,7 @@
       <div class="db-nav-spacer"></div>
       <div class="db-nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search styles…" id="styleSearchInput" oninput="filterStyles()"/></div>
       <div class="db-nav-actions">
-        <button class="db-notif-btn" onclick="showToast('You have 2 new messages from your stylist 💬','gold')"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
+        <button class="db-notif-btn" id="db-notif-btn" onclick="navigateTo('messages')"><i class="fas fa-bell"></i><span class="notif-badge" id="notif-badge" style="display:none;">0</span></button>
         <div class="db-user-pill" onclick="navigateTo('profile')"><div class="db-user-avatar" id="nav-avatar">A</div><span class="db-user-name" id="nav-username">Loading…</span></div>
       </div>
     </div>
@@ -161,11 +161,12 @@
     <aside class="db-sidebar" id="db-sidebar">
       <div class="sidebar-section-label">Main Menu</div>
       <div class="sidebar-nav">
-        <button class="sidebar-item active" data-section="home" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
+        <button class="sidebar-item active" data-section="home" onclick="navigateTo('home')"><i class="fas fa-home"></i> Dashboard</button>
+        <button class="sidebar-item" data-section="overview" onclick="navigateTo('overview')"><i class="fas fa-th-large"></i> Styles</button>
         <button class="sidebar-item" data-section="bookings" onclick="navigateTo('bookings')"><i class="fas fa-calendar-check"></i> My Bookings<span class="sidebar-badge" id="bookings-badge">0</span></button>
         <button class="sidebar-item" data-section="favourites" onclick="navigateTo('favourites')"><i class="fas fa-heart"></i> My Favourites<span class="sidebar-badge" id="fav-badge" style="background:var(--gold);color:var(--black);">0</span></button>
         <button class="sidebar-item" data-section="loyalty" onclick="navigateTo('loyalty')"><i class="fas fa-crown"></i> Loyalty Points</button>
-        <button class="sidebar-item" data-section="messages" onclick="navigateTo('messages')"><i class="fas fa-comment-dots"></i> Messages<span class="sidebar-badge">2</span></button>
+        <button class="sidebar-item" data-section="messages" onclick="navigateTo('messages')"><i class="fas fa-comment-dots"></i> Messages<span class="sidebar-badge" id="msg-badge" style="display:none;">0</span></button>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-label">Account</div>
@@ -202,7 +203,7 @@
             <h2>Where Beauty<br><em>Becomes Art</em></h2>
             <p>Luxury braiding experiences crafted for queens. Every strand tells your story.</p>
             <div class="dash-hero-cta">
-              <button class="btn-dash-primary" onclick="navigateTo('home');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),200)"><i class="fas fa-calendar-check"></i> Book Appointment<span class="btn-shimmer"></span></button>
+              <button class="btn-dash-primary" onclick="navigateTo('overview')"><i class="fas fa-th-large"></i> Explore Styles<span class="btn-shimmer"></span></button>
               <button class="btn-dash-secondary" onclick="navigateTo('favourites')">My Favourites <i class="fas fa-heart"></i></button>
             </div>
           </div>
@@ -212,75 +213,42 @@
             <div class="dash-hero-bubble" style="background:rgba(255,45,120,.12);border-color:rgba(255,45,120,.2);">💕</div>
           </div>
         </div>
+        <!-- Quick shortcuts -->
+        <div class="home-shortcuts-grid">
+          <button class="home-shortcut" onclick="navigateTo('overview')"><div class="hs-icon purple"><i class="fas fa-th-large"></i></div><span>Browse Styles</span></button>
+          <button class="home-shortcut" onclick="navigateTo('bookings')"><div class="hs-icon pink"><i class="fas fa-calendar-check"></i></div><span>My Bookings</span></button>
+          <button class="home-shortcut" onclick="navigateTo('favourites')"><div class="hs-icon gold"><i class="fas fa-heart"></i></div><span>Favourites</span></button>
+          <button class="home-shortcut" onclick="navigateTo('loyalty')"><div class="hs-icon green"><i class="fas fa-crown"></i></div><span>Loyalty Points</span></button>
+        </div>
+      </div>
+
+      <!-- OVERVIEW (DASHBOARD) -->
+      <div class="db-panel" id="panel-overview">
+        <div class="db-greeting"><h1>Styles <span>Dashboard</span></h1><p>Browse every collection, explore styles and book in seconds</p></div>
         <!-- Styles Catalog -->
         <div class="dash-eyebrow">Our Styles Collection</div>
         <div class="dash-section-title">Discover Your Next Look</div>
         <div class="dash-section-sub">Browse every category and book in seconds</div>
 
-        <!-- Quick-jump pills scroll to sections -->
+        <!-- Quick-jump pills -->
         <div class="section-header db-categories-header" style="margin-bottom:16px;">
           <span class="section-eyebrow">Explore</span>
           <h2 class="section-title">Find Your Perfect Style</h2>
         </div>
         <div class="categories-grid" id="home-cats">
-          <button class="cat-card active" data-cat="trending" onclick="scrollToCatSection('trending')">
-            <div class="cat-icon">🔥</div>
-            <span>Trending</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="new" onclick="scrollToCatSection('new')">
-            <div class="cat-icon">✨</div>
-            <span>New Arrivals</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="most-booked" onclick="scrollToCatSection('most-booked')">
-            <div class="cat-icon">👑</div>
-            <span>Most Booked</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="luxury" onclick="scrollToCatSection('luxury')">
-            <div class="cat-icon">💎</div>
-            <span>Luxury</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="budget" onclick="scrollToCatSection('budget')">
-            <div class="cat-icon">💸</div>
-            <span>Budget Friendly</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="bridal" onclick="scrollToCatSection('bridal')">
-            <div class="cat-icon">💍</div>
-            <span>Bridal &amp; Events</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="kids" onclick="scrollToCatSection('kids')">
-            <div class="cat-icon">🎀</div>
-            <span>Kids Styles</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="mens" onclick="scrollToCatSection('mens')">
-            <div class="cat-icon">✂️</div>
-            <span>Men's Braids</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="quick" onclick="scrollToCatSection('quick')">
-            <div class="cat-icon">⚡</div>
-            <span>Quick Styles</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="transformations" onclick="scrollToCatSection('transformations')">
-            <div class="cat-icon">🪄</div>
-            <span>Transformations</span>
-            <div class="cat-glow"></div>
-          </button>
-          <button class="cat-card" data-cat="all" onclick="scrollToCatSection('all')">
-            <div class="cat-icon">🌟</div>
-            <span>All Styles</span>
-            <div class="cat-glow"></div>
-          </button>
+          <button class="cat-card active" data-cat="trending" onclick="scrollToCatSection('trending')"><span>Trending</span></button>
+          <button class="cat-card" data-cat="new" onclick="scrollToCatSection('new')"><span>New Arrivals</span></button>
+          <button class="cat-card" data-cat="most-booked" onclick="scrollToCatSection('most-booked')"><span>Most Booked</span></button>
+          <button class="cat-card" data-cat="luxury" onclick="scrollToCatSection('luxury')"><span>Luxury</span></button>
+          <button class="cat-card" data-cat="budget" onclick="scrollToCatSection('budget')"><span>Budget Friendly</span></button>
+          <button class="cat-card" data-cat="bridal" onclick="scrollToCatSection('bridal')"><span>Bridal &amp; Events</span></button>
+          <button class="cat-card" data-cat="kids" onclick="scrollToCatSection('kids')"><span>Kids Styles</span></button>
+          <button class="cat-card" data-cat="mens" onclick="scrollToCatSection('mens')"><span>Men's Braids</span></button>
+          <button class="cat-card" data-cat="quick" onclick="scrollToCatSection('quick')"><span>Quick Styles</span></button>
+          <button class="cat-card" data-cat="transformations" onclick="scrollToCatSection('transformations')"><span>Transformations</span></button>
+          <button class="cat-card" data-cat="all" onclick="scrollToCatSection('all')"><span>All Styles</span></button>
         </div>
 
-        <!-- Catalog container: sections injected by JS -->
         <!-- Hair Type Filter Bar -->
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
           <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;">Hair Type:</span>
@@ -289,10 +257,7 @@
           </div>
         </div>
         <div id="db-catalog-container"></div>
-        <!-- Reviews -->
-        <div class="dash-eyebrow" style="margin-top:8px;">Client Love</div>
-        <div class="dash-section-title" style="margin-bottom:16px;">What Queens Are Saying</div>
-        <div class="reviews-track-wrap"><div class="reviews-track" id="home-reviews-track"></div></div>
+
         <!-- Booking Form -->
         <div id="home-booking-section">
           <div class="dash-eyebrow">Book Now</div>
@@ -301,7 +266,7 @@
           <div class="dash-booking-wrap">
             <form id="dash-booking-form" onsubmit="submitDashBooking(event)">
               <div class="dash-booking-grid">
-                <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option><option value="Goddess Box Braids">Goddess Box Braids — KSh 4,500</option><option value="Knotless Braids">Knotless Braids — KSh 3,800</option><option value="Fulani Braids">Fulani Braids — KSh 4,200</option><option value="Boho Braids">Boho Braids — KSh 5,200</option><option value="Butterfly Locs">Butterfly Locs — KSh 4,800</option><option value="Bridal Crown Braids">Bridal Crown Braids — KSh 8,500</option><option value="Lemonade Braids">Lemonade Braids — KSh 2,800</option><option value="Faux Locs">Faux Locs — KSh 4,000</option><option value="Senegalese Twists">Senegalese Twists — KSh 2,500</option><option value="Ghana Braids">Ghana Braids — KSh 2,200</option><option value="Kids Princess Braids">Kids Princess Braids — KSh 1,500</option><option value="Men's Cornrow Designs">Men's Cornrow Designs — KSh 1,800</option><option value="Passion Twists">Passion Twists — KSh 3,600</option></select></div>
+                <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option></select></div>
                 <div class="form-group"><label>Date</label><input type="date" id="db-bookDate"/></div>
                 <div class="form-group"><label>Time</label><select id="db-bookTime"><option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option></select></div>
                 <div class="form-group"><label>Stylist</label><select id="db-bookStylist"><option>Any Available Stylist</option><option>Zara — Box Braids</option><option>Amina — Locs & Twists</option><option>Destiny — Bridal</option><option>Kezia — Kids & Quick</option></select></div>
@@ -313,6 +278,7 @@
             </form>
           </div>
         </div>
+
         <!-- About -->
         <div class="dash-about reveal">
           <div class="dash-about-visual">👑</div>
@@ -328,6 +294,7 @@
             </div>
           </div>
         </div>
+
         <!-- Contact -->
         <div class="dash-eyebrow">Get in Touch</div>
         <div class="dash-section-title" style="margin-bottom:16px;">Visit Us or Say Hello</div>
@@ -349,9 +316,58 @@
             <button class="filter-btn" onclick="filterBookings('confirmed',this)">Confirmed</button>
             <button class="filter-btn" onclick="filterBookings('completed',this)">Completed</button>
           </div>
-          <button class="btn-new-booking" onclick="navigateTo('home');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),300)"><i class="fas fa-plus"></i> New Booking</button>
+          <button class="btn-new-booking" onclick="navigateTo('overview');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),300)"><i class="fas fa-plus"></i> New Booking</button>
         </div>
         <div id="bookings-list"></div>
+
+        <!-- REVIEW PROMPT — shown only when completed bookings exist -->
+        <div class="lxb-rp-card" id="lxbRpCard" style="display:none;">
+          <div class="lxb-rp-icon">👑</div>
+          <div class="lxb-rp-text">
+            <div class="lxb-rp-title">How was your experience?</div>
+            <div class="lxb-rp-sub">Share your thoughts — it only takes a moment.</div>
+          </div>
+          <button class="lxb-rp-btn" id="lxbRpBtn"><i class="fas fa-star"></i> Leave a Review</button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD REVIEW MODAL -->
+      <div class="lxb-modal-wrap" id="lxbDbModal">
+        <div class="lxb-modal-overlay" id="lxbDbOverlay"></div>
+        <div class="lxb-modal-box">
+          <button class="lxb-modal-close" id="lxbDbClose"><i class="fas fa-times"></i></button>
+          <div class="lxb-modal-head">
+            <div class="lxb-modal-emoji">✨</div>
+            <h3>Rate Your Visit</h3>
+            <p>Tell us how it went — it only takes a second</p>
+          </div>
+          <div id="lxbDbFormWrap">
+            <div class="lxb-star-row">
+              <label>Your rating</label>
+              <div class="lxb-stars" id="lxbDbStars">
+                <button type="button" class="lxb-star" data-v="1"><i class="fas fa-star"></i></button>
+                <button type="button" class="lxb-star" data-v="2"><i class="fas fa-star"></i></button>
+                <button type="button" class="lxb-star" data-v="3"><i class="fas fa-star"></i></button>
+                <button type="button" class="lxb-star" data-v="4"><i class="fas fa-star"></i></button>
+                <button type="button" class="lxb-star" data-v="5"><i class="fas fa-star"></i></button>
+              </div>
+              <span class="lxb-star-hint" id="lxbDbHint">Tap to rate</span>
+            </div>
+            <div class="lxb-field">
+              <label>Your review</label>
+              <textarea id="lxbDbText" rows="4" maxlength="500" placeholder="What did you love? Any style you'd recommend?…"></textarea>
+            </div>
+            <button type="button" class="lxb-db-submit" id="lxbDbSubmit">
+              <i class="fas fa-heart"></i> Submit Review
+            </button>
+          </div>
+          <div class="lxb-success" id="lxbDbSuccess" style="display:none;">
+            <div class="lxb-success-emoji">🎉</div>
+            <h4>Thank You, Queen!</h4>
+            <p>Your review will appear once approved by our team.</p>
+            <button class="lxb-rp-btn" onclick="document.getElementById('lxbDbModal').classList.remove('lxb-open')" style="margin-top:16px;">Done</button>
+          </div>
+        </div>
       </div>
 
       <!-- FAVOURITES -->
@@ -377,7 +393,7 @@
         </div>
         <div class="loyalty-perks-grid">
           <div class="loyalty-perk-card reveal"><div class="lp-icon">🎁</div><div class="lp-title">Free Style Upgrade</div><div class="lp-desc">Upgrade your style free on your next appointment</div><div class="lp-req">200 points</div></div>
-          <div class="loyalty-perk-card reveal"><div class="lp-icon">💰</div><div class="lp-title">KSh 500 Discount</div><div class="lp-desc">Convert points into a discount on any booking</div><div class="lp-req">300 points</div></div>
+          <div class="loyalty-perk-card reveal"><div class="lp-icon">💰</div><div class="lp-title">USD 500 Discount</div><div class="lp-desc">Convert points into a discount on any booking</div><div class="lp-req">300 points</div></div>
           <div class="loyalty-perk-card reveal"><div class="lp-icon">👑</div><div class="lp-title">Priority Booking</div><div class="lp-desc">Gold members get first pick of weekend slots</div><div class="lp-req">Gold tier perk</div></div>
           <div class="loyalty-perk-card reveal"><div class="lp-icon">💆</div><div class="lp-title">Free Scalp Treatment</div><div class="lp-desc">Complimentary scalp treatment session</div><div class="lp-req">400 points</div></div>
           <div class="loyalty-perk-card reveal"><div class="lp-icon">🎀</div><div class="lp-title">Referral Bonus</div><div class="lp-desc">Earn 50 bonus points for every friend you refer</div><div class="lp-req">Refer a friend</div></div>
@@ -388,18 +404,41 @@
 
       <!-- MESSAGES -->
       <div class="db-panel" id="panel-messages">
-        <div class="db-greeting"><h1>My <span>Messages</span> 💬</h1><p>Chat with your stylist and the LuxeBraids team</p></div>
+        <div class="db-greeting"><h1>My <span>Messages</span> 💬</h1><p>Chat directly with the LuxeBraids team</p></div>
         <div class="messages-layout">
           <div class="msg-list">
             <div class="msg-list-header"><h3>Conversations</h3></div>
-            <div class="msg-thread active" id="thread-zara" onclick="selectThread('zara',this)"><div class="msg-thread-top"><span class="msg-thread-name">Zara (Stylist)</span><span class="msg-thread-time">2m ago</span></div><div class="msg-thread-preview"><span class="msg-unread-dot"></span>Your braids are ready!</div></div>
-            <div class="msg-thread" id="thread-studio" onclick="selectThread('studio',this)"><div class="msg-thread-top"><span class="msg-thread-name">LuxeBraids Studio</span><span class="msg-thread-time">1h ago</span></div><div class="msg-thread-preview">Booking confirmed for Saturday</div></div>
-            <div class="msg-thread" id="thread-amina" onclick="selectThread('amina',this)"><div class="msg-thread-top"><span class="msg-thread-name">Amina (Stylist)</span><span class="msg-thread-time">Yesterday</span></div><div class="msg-thread-preview">Thank you for your kind review 💕</div></div>
+            <!-- Single real thread with admin -->
+            <div class="msg-thread active" id="thread-admin" onclick="selectAdminThread(this)">
+              <div class="msg-thread-top">
+                <span class="msg-thread-name">LuxeBraids Studio</span>
+                <span class="msg-thread-time" id="admin-thread-time">—</span>
+              </div>
+              <div class="msg-thread-preview" id="admin-thread-preview">
+                <span class="msg-unread-dot" id="admin-unread-dot" style="display:none;"></span>
+                <span id="admin-thread-preview-text">Start a conversation…</span>
+              </div>
+            </div>
           </div>
           <div class="msg-chat">
-            <div class="msg-chat-header"><div class="msg-chat-avatar"><i class="fas fa-user"></i></div><div><div class="msg-chat-name" id="msg-chat-name">Zara (Stylist)</div><div class="msg-chat-status" id="msg-chat-status">● Online</div></div></div>
-            <div class="msg-chat-body" id="msg-chat-body"></div>
-            <div class="msg-chat-input"><input type="text" id="msg-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage()"/><button class="btn-msg-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div>
+            <div class="msg-chat-header">
+              <div class="msg-chat-avatar"><i class="fas fa-crown"></i></div>
+              <div>
+                <div class="msg-chat-name">LuxeBraids Studio</div>
+                <div class="msg-chat-status" id="msg-chat-status">● Available Mon–Sat 8AM–8PM</div>
+              </div>
+              <button class="btn-msg-refresh" onclick="loadAdminMessages(true)" title="Refresh messages" style="margin-left:auto;background:none;border:none;color:var(--grey);cursor:pointer;font-size:1rem;padding:6px;"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div class="msg-chat-body" id="msg-chat-body">
+              <div class="msg-loading" id="msg-loading" style="text-align:center;padding:40px;color:var(--grey);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading messages…</div>
+            </div>
+            <div class="msg-chat-input">
+              <div class="msg-you-label"><i class="fas fa-user" style="font-size:.65rem;"></i> You</div>
+              <div class="msg-input-row">
+              <input type="text" id="msg-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendAdminMessage()"/>
+              <button class="btn-msg-send" onclick="sendAdminMessage()" id="btn-msg-send"><i class="fas fa-paper-plane"></i></button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -454,19 +493,16 @@
     </main>
   </div>
 
-  <!-- Style Modal (Fullscreen) -->
-  <div class="db-modal" id="style-modal">
-    <div class="db-modal-overlay" onclick="closeStyleModal()"></div>
-    <div class="db-modal-box">
-      <!-- Top bar -->
-      <div class="db-modal-topbar">
-        <span class="db-modal-topbar-title" id="db-modal-topbar-title">Style Details</span>
-        <button class="db-modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button>
+  <!-- Style Modal (Fullscreen) — matches index.html layout -->
+  <div class="style-modal" id="style-modal">
+    <div class="modal-overlay" id="db-modalOverlay"></div>
+    <div class="modal-content" id="db-modalContent">
+      <div class="modal-topbar">
+        <span class="modal-topbar-title" id="db-modal-topbar-title">Style Details</span>
+        <button class="modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button>
       </div>
-      <!-- Scrollable body (gallery + details) -->
-      <div class="modal-body-inner" id="modal-body-inner"></div>
-      <!-- Sticky continue browsing bar -->
-      <div class="db-modal-continue-bar">
+      <div class="modal-body" id="modal-body-inner"></div>
+      <div class="modal-continue-bar">
         <button class="btn-continue-browsing" onclick="closeStyleModal()">
           <i class="fas fa-arrow-left"></i> Continue Browsing
         </button>
@@ -474,15 +510,81 @@
     </div>
   </div>
 
-  <!-- Confirm Modal -->
-  <div class="confirm-modal" id="confirm-modal">
-    <div class="confirm-content"><div class="confirm-icon">✅</div><h3>Booking Confirmed!</h3><p id="confirm-msg">Your appointment has been successfully booked. We'll WhatsApp you shortly.</p><button class="btn-confirm-close" onclick="document.getElementById('confirm-modal').classList.remove('open')">Perfect, Thank You! 👑</button></div>
+  <!-- BOOKING STEPS MODAL — matches index.html 3-step BSM -->
+  <div class="booking-steps-modal" id="db-booking-steps-modal">
+    <div class="bsm-overlay" id="db-bsmOverlay"></div>
+    <div class="bsm-content" id="db-bsmContent">
+      <div class="bsm-topbar">
+        <button class="bsm-back" id="db-bsmBack"><i class="fas fa-arrow-left"></i></button>
+        <span class="bsm-topbar-title" id="db-bsm-topbar-title">Book Appointment</span>
+        <button class="bsm-close" id="db-bsmClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="bsm-progress">
+        <div class="bsm-step-bar">
+          <div class="bsm-step active" data-step="1"><div class="bsm-step-circle">1</div><span>Schedule</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="2"><div class="bsm-step-circle">2</div><span>Details</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="3"><div class="bsm-step-circle">3</div><span>Confirm</span></div>
+        </div>
+      </div>
+      <div class="bsm-body" id="db-bsmBody">
+        <!-- Step 1 -->
+        <div class="bsm-panel active" id="db-bsmPanel1">
+          <div class="bsm-panel-header"><div class="bsm-panel-icon">📅</div><h3>Choose Your Schedule</h3><p>Pick a date, time and stylist</p></div>
+          <div class="bsm-form-group"><label><i class="fas fa-calendar"></i> Date</label><input type="date" id="db-bsmDate" class="bsm-input" required/></div>
+          <div class="bsm-form-group"><label><i class="fas fa-clock"></i> Time</label>
+            <select id="db-bsmTime" class="bsm-input" required>
+              <option value="">Choose a time…</option>
+              <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+              <option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option>
+              <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+              <option>5:00 PM</option><option>6:00 PM</option>
+            </select>
+          </div>
+          <div class="bsm-form-group"><label><i class="fas fa-user-tie"></i> Stylist</label>
+            <select id="db-bsmStylist" class="bsm-input">
+              <option value="any">Any Available Stylist</option>
+              <option>Zara</option><option>Destiny</option><option>Amara</option>
+              <option>Faith</option><option>Grace</option>
+            </select>
+          </div>
+          <button class="bsm-btn-next" id="db-bsmNext1">Continue <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <!-- Step 2 -->
+        <div class="bsm-panel" id="db-bsmPanel2">
+          <div class="bsm-panel-header"><div class="bsm-panel-icon">👑</div><h3>Your Details</h3><p>So we can confirm your booking</p></div>
+          <div class="bsm-form-group"><label><i class="fas fa-user"></i> Full Name</label><input type="text" id="db-bsmName" class="bsm-input" placeholder="Your full name" required/></div>
+          <div class="bsm-form-group"><label><i class="fab fa-whatsapp"></i> WhatsApp Number</label><input type="tel" id="db-bsmPhone" class="bsm-input" placeholder="+254 700 000 000" required/></div>
+          <div class="bsm-form-group"><label><i class="fas fa-comment"></i> Special Requests (optional)</label><textarea id="db-bsmNotes" class="bsm-input bsm-textarea" placeholder="Any notes for your stylist…"></textarea></div>
+          <button class="bsm-btn-next" id="db-bsmNext2">Review Booking <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <!-- Step 3 -->
+        <div class="bsm-panel" id="db-bsmPanel3">
+          <div class="bsm-panel-header"><div class="bsm-panel-icon">✨</div><h3>Review & Confirm</h3><p>Everything looks good? Let's lock it in!</p></div>
+          <div class="bsm-review-card" id="db-bsmReviewCard"></div>
+          <p class="bsm-note">🔒 No payment required now. Pay at studio.</p>
+          <button class="bsm-btn-confirm" id="db-bsmConfirmBtn">
+            <i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
 <!-- WhatsApp Float -->
 <a href="https://wa.me/254700000000" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i><span class="wa-tooltip">Chat with us</span></a>
 <div class="toast-container" id="toast-container"></div>
+
+<!-- Confirm Modal -->
+<div class="confirm-modal" id="confirm-modal">
+  <div class="confirm-content">
+    <div class="confirm-icon">✅</div>
+    <h3>Booking Confirmed!</h3>
+    <p id="confirm-msg">Your appointment has been successfully booked. We'll WhatsApp you shortly.</p>
+    <button class="btn-confirm-close" onclick="document.getElementById('confirm-modal').classList.remove('open');document.body.style.overflow=''">Perfect, Thank You! 👑</button>
+  </div>
+</div>
 
 <script src="client-dashboard.js"></script>
 </body>

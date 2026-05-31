@@ -3,53 +3,14 @@
    Standalone: Firestore Auth + Full Dashboard
    ============================================ */
 
-const hairstyles = [
-  {id:1,name:"Goddess Box Braids",category:["trending","most-booked","luxury","all"],price:4500,originalPrice:5500,duration:"6–8 hrs",emoji:"👑",rating:4.9,reviews:142,bookings:89,badge:"Trending",hairType:"All types",hairLength:"Medium–Long",description:"Elegant goddess box braids with subtle curled ends. Perfect for queens who want length, volume, and timeless beauty. Includes free edge treatment."},
-  {id:2,name:"Knotless Braids",category:["trending","most-booked","all","new"],price:3800,originalPrice:null,duration:"5–7 hrs",emoji:"✨",rating:4.8,reviews:218,bookings:156,badge:"Most Booked",hairType:"All types",hairLength:"Any",description:"Knotless braids start from your roots with zero tension. More natural look, less stress on your scalp. Our most popular style."},
-  {id:3,name:"Fulani Braids",category:["trending","new","all"],price:4200,originalPrice:null,duration:"5–6 hrs",emoji:"🌟",rating:4.9,reviews:97,bookings:63,badge:"New",hairType:"Natural",hairLength:"Short–Long",description:"Inspired by West African Fulani women. Features a central cornrow, side braids, and gold cuffs for a regal, cultural look."},
-  {id:4,name:"Boho Braids",category:["trending","luxury","all"],price:5200,originalPrice:6000,duration:"7–9 hrs",emoji:"🌺",rating:5.0,reviews:74,bookings:48,badge:"Hot 🔥",hairType:"All types",hairLength:"Long",description:"Romantic boho braids with loose wavy ends and floral accessories. Dreamy, feminine, and absolutely unforgettable."},
-  {id:5,name:"Butterfly Locs",category:["most-booked","new","all"],price:4800,originalPrice:5500,duration:"6–8 hrs",emoji:"🦋",rating:4.7,reviews:105,bookings:72,badge:"On Offer",hairType:"All types",hairLength:"Medium–Long",description:"Distressed locs with a whimsical, butterfly-wing texture. Bold, artistic, and deeply personal."},
-  {id:6,name:"Bridal Crown Braids",category:["bridal","luxury","all"],price:8500,originalPrice:null,duration:"8–10 hrs",emoji:"💍",rating:5.0,reviews:38,bookings:22,badge:"Premium",hairType:"All types",hairLength:"Long",description:"Intricate bridal braided crown with gold cuffs, floral pins, and cascading twists. Your wedding day deserves perfection."},
-  {id:7,name:"Lemonade Braids",category:["trending","budget","all"],price:2800,originalPrice:null,duration:"4–5 hrs",emoji:"🍋",rating:4.6,reviews:183,bookings:134,badge:null,hairType:"Natural",hairLength:"Any",description:"Side-swept cornrow braids inspired by Beyoncé. Sleek, stylish, and ultra-modern. Quick and affordable."},
-  {id:8,name:"Faux Locs",category:["most-booked","all"],price:4000,originalPrice:4800,duration:"6–8 hrs",emoji:"🔮",rating:4.8,reviews:129,bookings:91,badge:"On Offer",hairType:"All types",hairLength:"Medium–Long",description:"Natural-looking faux locs wrapped in soft hair for a distressed, earthy, goddess look that lasts months."},
-  {id:9,name:"Senegalese Twists",category:["budget","all"],price:2500,originalPrice:null,duration:"3–4 hrs",emoji:"🌾",rating:4.5,reviews:95,bookings:78,badge:null,hairType:"All types",hairLength:"Medium",description:"Slim, silky Senegalese twists using high-quality kanekalon hair. Low maintenance and incredibly versatile."},
-  {id:10,name:"Ghana Braids",category:["most-booked","all"],price:2200,originalPrice:null,duration:"3–4 hrs",emoji:"🌍",rating:4.7,reviews:167,bookings:112,badge:null,hairType:"Natural",hairLength:"Any",description:"Bold straight-back cornrow braids inspired by Ghanaian heritage. Classic, clean, and regal."},
-  {id:11,name:"Kids Princess Braids",category:["kids","all"],price:1500,originalPrice:null,duration:"2–3 hrs",emoji:"🎀",rating:4.9,reviews:54,bookings:41,badge:"Kids",hairType:"All types",hairLength:"Any",description:"Gentle, fun braids for little queens. Uses only soft, child-safe hair. Beads and bows available."},
-  {id:12,name:"Men's Cornrow Designs",category:["mens","all"],price:1800,originalPrice:null,duration:"2–3 hrs",emoji:"✂️",rating:4.6,reviews:43,bookings:38,badge:"Men's",hairType:"Natural",hairLength:"Short–Med",description:"Sharp, geometric cornrow designs for men who take their hair seriously. From simple straight-backs to intricate patterns."},
-  {id:13,name:"Client Transformation",category:["transformations","all"],price:3500,originalPrice:null,duration:"Varies",emoji:"🪄",rating:4.8,reviews:29,bookings:19,badge:"Before & After",hairType:"All types",hairLength:"Consultation",description:"Complete hair transformation package. Share your inspiration photo and our stylists will create your dream look."},
-  {id:14,name:"Celebrity Braid Crown",category:["luxury","all"],price:7200,originalPrice:9000,duration:"7–10 hrs",emoji:"⭐",rating:5.0,reviews:17,bookings:11,badge:"Luxury",hairType:"All types",hairLength:"Long",description:"A-list worthy braid crown inspired by celebrity red carpet looks. Includes custom accessories and a finish consultation."},
-  {id:15,name:"Passion Twists",category:["new","trending","all"],price:3600,originalPrice:null,duration:"5–6 hrs",emoji:"💕",rating:4.7,reviews:62,bookings:44,badge:"New",hairType:"All types",hairLength:"Medium–Long",description:"Soft, curly passion twists with a romantic, effortless feel. Using water wave hair for a natural texture."},
-];
+// Hairstyles loaded from Firestore (same source as index.js)
+let hairstyles = [];
 
-const reviewsData = [
-  {name:"Amara N.",style:"Goddess Box Braids",text:"Zara literally made me cry — in the best way. I've never felt so beautiful. My braids lasted 3 months!",rating:5,initial:"A"},
-  {name:"Destiny K.",style:"Boho Braids",text:"The attention to detail is insane. My bridal braids had everyone at the wedding asking for the studio's contact.",rating:5,initial:"D"},
-  {name:"Faith W.",style:"Knotless Braids",text:"Zero tension, zero headache. I slept in perfect comfort from day one. The team is so professional.",rating:5,initial:"F"},
-  {name:"Grace M.",style:"Butterfly Locs",text:"I've been to so many studios in Nairobi and LuxeBraids is unmatched. The ambiance, the skill, the results.",rating:5,initial:"G"},
-  {name:"Purity A.",style:"Fulani Braids",text:"My Fulani braids got so many compliments at work. The gold cuffs were chef's kiss. I'm never going anywhere else.",rating:5,initial:"P"},
-  {name:"Joy S.",style:"Lemonade Braids",text:"Super fast, super clean, super affordable. I was in and out in under 5 hours looking like a queen!",rating:5,initial:"J"},
-  {name:"Naomi T.",style:"Faux Locs",text:"I asked for the distressed look and they nailed it perfectly. My locs have texture, bounce, and everyone thinks they're real.",rating:5,initial:"N"},
-  {name:"Sharon O.",style:"Bridal Crown Braids",text:"My wedding hairstyle was beyond anything I'd imagined. Destiny at LuxeBraids is a true artist.",rating:5,initial:"S"},
-];
 
-const msgThreads = {
-  zara:{name:"Zara (Stylist)",status:"Online",messages:[
-    {from:"incoming",text:"Hi Queen! Your Goddess Box Braids appointment is confirmed for Saturday 10AM 👑",time:"Yesterday 2:00 PM"},
-    {from:"outgoing",text:"Thank you Zara! I'm so excited. Should I come with pre-washed hair?",time:"Yesterday 2:15 PM"},
-    {from:"incoming",text:"Yes please! Freshly washed and blow-dried if possible. Also bring any accessories you'd like added 💕",time:"Yesterday 2:20 PM"},
-    {from:"outgoing",text:"Perfect! Will do. See you Saturday!",time:"Yesterday 2:22 PM"},
-    {from:"incoming",text:"Your braids are ready! The result is absolutely stunning ✨",time:"2 min ago"},
-  ]},
-  studio:{name:"LuxeBraids Studio",status:"Available Mon–Sat 8AM–8PM",messages:[
-    {from:"incoming",text:"Welcome to LuxeBraids! We're thrilled to have you with us 💕",time:"3 days ago"},
-    {from:"incoming",text:"Booking confirmed for Saturday at 10AM with Zara. Your reference: BK-2025",time:"1h ago"},
-  ]},
-  amina:{name:"Amina (Stylist)",status:"Busy — responds within 2 hrs",messages:[
-    {from:"incoming",text:"Hello! I noticed you saved Butterfly Locs 🦋 I specialise in those and have slots next week!",time:"2 days ago"},
-    {from:"outgoing",text:"Oh amazing! I'll definitely book soon.",time:"2 days ago"},
-    {from:"incoming",text:"Thank you for your kind review 💕 It means the world to me!",time:"Yesterday"},
-  ]},
-};
+// Real-time messaging state
+let msgUnsubscribe = null;
+let clientMessages = [];
+let unreadMsgCount = 0;
 
 // STATE
 let currentCatFilter = 'trending';
@@ -57,18 +18,79 @@ let homeVisibleCount = 10;
 let likedCards = new Set(JSON.parse(localStorage.getItem('lb_likes')||'[]'));
 let userBookings = [];
 let userLoyaltyPoints = 0;
-let activeThread = 'zara';
+
+// =================== FIRESTORE LIVE DATA ===================
+// Reads services from Firestore settings/services — same document index.js uses
+async function loadLiveServicesFromFirestore() {
+  try {
+    const fb = window._fb;
+    if (!fb || !fb.db || !fb.getDoc || !fb.doc) return;
+    const svcSnap = await fb.getDoc(fb.doc(fb.db, 'settings', 'services'));
+    if (svcSnap.exists()) {
+      const list = svcSnap.data().list;
+      if (Array.isArray(list) && list.length) {
+        hairstyles = list.map((s, i) => ({
+          id:            s.id || (i + 1),
+          name:          s.name,
+          imageUrl:      s.imageUrl || '',
+          imageUrls:     Array.isArray(s.imageUrls) && s.imageUrls.length ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []),
+          category:      Array.isArray(s.category) ? s.category : ['all'],
+          price:         +s.price || 0,
+          originalPrice: s.originalPrice ? +s.originalPrice : null,
+          duration:      s.duration || '—',
+          rating:        s.rating   || 5.0,
+          reviews:       s.reviews  || 0,
+          bookings:      s.bookings || 0,
+          badge:         s.badge    || null,
+          emoji:         s.emoji    || '✨',
+          hairType:      s.hairType   || 'All types',
+          hairLength:    s.hairLength || '—',
+          description:   s.description || '',
+        }));
+        const overviewPanel = document.getElementById('panel-overview');
+        if (overviewPanel && overviewPanel.classList.contains('active')) renderHomeStyles();
+        updateBookingStyleSelect();
+      }
+    }
+    // Announcements
+    const annSnap = await fb.getDoc(fb.doc(fb.db, 'settings', 'announcements'));
+    if (annSnap.exists()) {
+      const list = annSnap.data().list;
+      if (Array.isArray(list) && list.length) {
+        const track = document.querySelector('.announcement-track');
+        if (track) {
+          const doubled = [...list, ...list];
+          track.innerHTML = doubled.map(a => `<span>${a}</span>`).join('');
+        }
+      }
+    }
+  } catch(e) { console.warn('Firestore load failed, using empty catalog', e); }
+}
+
+function updateBookingStyleSelect() {
+  // Update the dashboard booking form select
+  const sel = document.getElementById('db-bookStyle');
+  if (sel && hairstyles.length) {
+    sel.innerHTML = '<option value="">Choose a style…</option>' +
+      hairstyles.map(s => `<option value="${s.name}">${s.name} — USD ${(+s.price).toLocaleString()}</option>`).join('');
+  }
+  // Also update BSM stylist select if modal is present
+}
 
 // INIT
 document.addEventListener('DOMContentLoaded', () => {
   if (window.location.hash === '#signup') switchTab('signup');
-  const waitFb = setInterval(() => { if (window._fb) { clearInterval(waitFb); hideLdr(); } }, 100);
+  const waitFb = setInterval(() => {
+    if (window._fb) {
+      clearInterval(waitFb);
+      hideLdr();
+      loadLiveServicesFromFirestore();
+    }
+  }, 100);
   setTimeout(() => { hideLdr(); }, 3500);
   setMinDate();
-  renderHomeStyles();
-  renderHomeReviews();
-  selectThread('zara', document.getElementById('thread-zara'));
   initScrollReveal();
+  initDbBookingStepsModal();
 });
 
 function hideLdr() {
@@ -82,6 +104,23 @@ function showDashboard(user) {
   populateUserUI(user);
   loadUserBookings();
   loadUserLoyalty();
+  startMsgPolling();
+  // Initial unread count check
+  setTimeout(() => {
+    const fb = window._fb; if (!fb || !user) return;
+    const convId = getConversationId(user.uid);
+    fb.getDocs(fb.query(
+      fb.collection(fb.db, 'conversations', convId, 'messages'),
+      fb.where('senderRole', '==', 'admin'),
+      fb.where('readByClient', '==', false)
+    )).then(snap => {
+      const count = snap.size;
+      const badge = document.getElementById('notif-badge');
+      const msgBadge = document.getElementById('msg-badge');
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+      if (msgBadge) { msgBadge.textContent = count; msgBadge.style.display = count > 0 ? 'flex' : 'none'; }
+    }).catch(() => {});
+  }, 2000);
 }
 
 function populateUserUI(user) {
@@ -151,8 +190,8 @@ async function loadUserBookings() {
   } catch(e) {
     // Demo bookings as fallback
     userBookings = [
-      {id:'BK001',style:'Goddess Box Braids — KSh 4,500',date:'2025-05-31',time:'10:00 AM',stylist:'Zara',status:'confirmed',emoji:'👑'},
-      {id:'BK002',style:'Knotless Braids — KSh 3,800',date:'2025-05-10',time:'2:00 PM',stylist:'Amina',status:'completed',emoji:'✨'},
+      {id:'BK001',style:'Goddess Box Braids — USD 4,500',date:'2025-05-31',time:'10:00 AM',stylist:'Zara',status:'confirmed',emoji:'👑'},
+      {id:'BK002',style:'Knotless Braids — USD 3,800',date:'2025-05-10',time:'2:00 PM',stylist:'Amina',status:'completed',emoji:'✨'},
     ];
   }
   renderBookings('all');
@@ -189,7 +228,7 @@ function updateLoyaltyUI() {
     {type:'earn',desc:'Booked Goddess Box Braids',pts:'+50',date:'28 May 2025'},
     {type:'earn',desc:'Welcome bonus',pts:'+50',date:'20 May 2025'},
     {type:'earn',desc:'Referral: Amara S.',pts:'+50',date:'15 May 2025'},
-    {type:'redeem',desc:'KSh 200 discount redeemed',pts:'-100',date:'10 May 2025'},
+    {type:'redeem',desc:'USD 200 discount redeemed',pts:'-100',date:'10 May 2025'},
     {type:'earn',desc:'Completed: Knotless Braids',pts:'+50',date:'10 May 2025'},
   ].map(t=>`<div class="loyalty-txn"><div class="txn-icon ${t.type}"><i class="fas fa-${t.type==='earn'?'arrow-down':'arrow-up'}"></i></div><div class="txn-desc"><strong>${t.desc}</strong><span>${t.date}</span></div><div class="txn-pts ${t.type}">${t.pts} pts</div></div>`).join('');
 }
@@ -201,9 +240,11 @@ function navigateTo(section) {
   const panel = document.getElementById('panel-'+section); if(panel) panel.classList.add('active');
   const si = document.querySelector(`.sidebar-item[data-section="${section}"]`); if(si) si.classList.add('active');
   closeSidebar();
+  if (section==='overview') { renderHomeStyles(); }
   if (section==='favourites') renderFavourites();
   if (section==='loyalty') updateLoyaltyUI();
   if (section==='bookings') renderBookings('all');
+  if (section==='messages') { loadAdminMessages(false); markMessagesRead(); }
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(initScrollReveal, 100);
 }
@@ -304,10 +345,7 @@ function renderHomeStyles() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const nm = btn.dataset.style;
-      const sel = document.getElementById('db-bookStyle');
-      if (sel) for (let o of sel.options) { if (o.text.startsWith(nm)) { sel.value = o.value; break; } }
-      document.getElementById('home-booking-section').scrollIntoView({ behavior: 'smooth' });
-      showToast(nm + ' selected 👑', 'gold');
+      openDbBookingStepsModal(nm);
     });
   });
 
@@ -346,20 +384,19 @@ function initOfferTimer() {
 }
 
 function dbCardHTML(h, theme = '') {
-  const stars = '★'.repeat(Math.floor(h.rating));
   const badgeClass = h.badge === 'Luxury' || h.badge === 'Premium' ? 'gold' :
                      h.badge === 'New' ? 'new' :
                      h.badge === 'On Offer' ? 'offer' :
                      h.badge === 'Kids' ? 'kids' :
                      h.badge === "Men's" ? 'mens' : '';
   const badge = h.badge ? `<div class="card-badge badge-${badgeClass}">${h.badge}</div>` : '';
-  const price = h.originalPrice
-    ? `<div class="card-price">KSh ${h.price.toLocaleString()} <span class="original">KSh ${h.originalPrice.toLocaleString()}</span></div>`
-    : `<div class="card-price">KSh ${h.price.toLocaleString()}</div>`;
+  const imgHTML = h.imageUrl
+    ? `<img src="${h.imageUrl}" alt="${h.name}" class="card-img" loading="lazy">`
+    : `<div class="card-img-no-image"><i class="fas fa-camera"></i><span>Image Coming Soon</span></div>`;
   return `
     <div class="style-card" data-id="${h.id}">
       <div class="card-img-wrap">
-        <div class="card-img-placeholder">${h.emoji}</div>
+        ${imgHTML}
         ${badge}
         <button class="card-like ${likedCards.has(h.id) ? 'liked' : ''}" data-id="${h.id}">
           <i class="${likedCards.has(h.id) ? 'fas' : 'far'} fa-heart"></i>
@@ -368,11 +405,6 @@ function dbCardHTML(h, theme = '') {
       </div>
       <div class="card-body">
         <div class="card-title">${h.name}</div>
-        <div class="card-meta">
-          <div class="card-rating">${stars} <span class="review-count">(${h.reviews})</span></div>
-          <div class="card-bookings">🔥 ${h.bookings}</div>
-        </div>
-        ${price}
         <button class="btn-card-book" data-style="${h.name}">
           <i class="fas fa-calendar-check"></i> Book Now
         </button>
@@ -396,23 +428,66 @@ function toggleLike(id, btn) {
   updateStats();
 }
 
-// REVIEWS
-function renderHomeReviews() {
-  const track = document.getElementById('home-reviews-track'); if(!track) return;
-  const all=[...reviewsData,...reviewsData];
-  track.innerHTML=all.map(r=>`<div class="review-card"><div class="review-stars">${'★'.repeat(r.rating)}</div><p class="review-text">"${r.text}"</p><div class="review-author"><div class="review-avatar">${r.initial}</div><div><div class="review-name">${r.name}</div><div class="review-style">${r.style}</div></div><div class="verified-badge">✓ Verified</div></div></div>`).join('');
-}
-
 // BOOKINGS RENDER
 function renderBookings(filter) {
   const list = document.getElementById('bookings-list'); if(!list) return;
   const shown = filter==='all' ? userBookings : userBookings.filter(b=>b.status===filter);
-  if(!shown.length) { list.innerHTML=`<div class="empty-state"><div class="empty-emoji">📅</div><h3>No ${filter==='all'?'':filter} bookings yet</h3><p>Your appointments will appear here once you book a style</p></div>`; return; }
-  list.innerHTML=shown.map(b=>`<div class="booking-card"><div class="booking-emoji">${b.emoji||'✂️'}</div><div class="booking-info"><h4>${b.style||'Hair Appointment'}</h4><div class="booking-meta"><span><i class="fas fa-calendar-alt"></i> ${b.date||'—'}</span><span><i class="fas fa-clock"></i> ${b.time||'—'}</span><span><i class="fas fa-user"></i> ${b.stylist||'Stylist TBD'}</span><span><i class="fas fa-tag"></i> ${b.id||'—'}</span></div></div><div class="booking-status status-${b.status||'pending'}">${b.status||'Pending'}</div></div>`).join('');
+  if(!shown.length) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-emoji">📅</div><h3>No ${filter==='all'?'':filter+' '}bookings yet</h3><p>Your appointments will appear here once you book a style</p><button class="btn-dash-primary" onclick="navigateTo('overview')" style="margin-top:16px;"><i class="fas fa-plus"></i> Book a Style</button></div>`;
+    return;
+  }
+  const statusConfig = {
+    pending:   { icon:'fas fa-clock',       color:'#f59e0b', label:'Pending'   },
+    confirmed: { icon:'fas fa-check-circle',color:'#10b981', label:'Confirmed' },
+    completed: { icon:'fas fa-star',         color:'#8b5cf6', label:'Completed' },
+    cancelled: { icon:'fas fa-times-circle', color:'#ef4444', label:'Cancelled' },
+  };
+  list.innerHTML = shown.map(b => {
+    const s = statusConfig[b.status] || statusConfig.pending;
+    const formattedDate = b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('en-KE', {weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—';
+    const canCancel = b.status === 'pending' || b.status === 'confirmed';
+    return `
+    <div class="booking-card" data-status="${b.status||'pending'}">
+      <div class="booking-emoji">${b.emoji||'✂️'}</div>
+      <div class="booking-info">
+        <h4>${b.style||'Hair Appointment'}</h4>
+        <div class="booking-meta">
+          <span><i class="fas fa-calendar-alt"></i> ${formattedDate}</span>
+          <span><i class="fas fa-clock"></i> ${b.time||'—'}</span>
+          <span><i class="fas fa-user"></i> ${b.stylist||'Stylist TBD'}</span>
+          <span><i class="fas fa-hashtag"></i> ${b.id||'—'}</span>
+          ${b.price ? `<span><i class="fas fa-tag"></i> USD ${Number(b.price).toLocaleString()}</span>` : ''}
+        </div>
+        ${b.notes ? `<div class="booking-notes"><i class="fas fa-comment"></i> ${b.notes}</div>` : ''}
+      </div>
+      <div class="booking-right">
+        <div class="booking-status status-${b.status||'pending'}">
+          <i class="${s.icon}"></i> ${s.label}
+        </div>
+        ${canCancel ? `<button class="btn-cancel-booking" onclick="cancelBooking('${b.id}',this)" title="Cancel booking"><i class="fas fa-times"></i> Cancel</button>` : ''}
+        ${b.status==='completed' ? `<button class="btn-rebook" onclick="navigateTo('overview')" title="Book again"><i class="fas fa-redo"></i> Book Again</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 function filterBookings(filter, btn) {
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); renderBookings(filter);
+}
+
+async function cancelBooking(id, btn) {
+  if (!confirm('Cancel this booking?')) return;
+  const bk = userBookings.find(b => b.id === id); if (!bk) return;
+  const orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+  bk.status = 'cancelled';
+  try {
+    if (window._fb && id && !id.startsWith('BK')) {
+      await window._fb.updateDoc(window._fb.doc(window._fb.db, 'bookings', id), { status: 'cancelled' });
+    }
+    showToast('Booking cancelled.', 'error');
+  } catch(e) { showToast('Cancelled locally.', 'gold'); }
+  renderBookings('all');
+  updateStats();
 }
 
 // FAVOURITES
@@ -424,7 +499,7 @@ function renderFavourites() {
   grid.innerHTML=favs.map(h=>dbCardHTML(h)).join('');
   grid.querySelectorAll('.style-card').forEach(c=>{c.addEventListener('click',e=>{if(e.target.closest('.card-like')||e.target.closest('.btn-card-book'))return;openStyleModal(+c.dataset.id);});});
   grid.querySelectorAll('.card-like').forEach(btn=>{const id=+btn.dataset.id;btn.addEventListener('click',e=>{e.stopPropagation();toggleLike(id,btn);renderFavourites();});});
-  grid.querySelectorAll('.btn-card-book').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();navigateTo('home');setTimeout(()=>{document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'});showToast(btn.dataset.style+' selected 👑','gold');},300);});});
+  grid.querySelectorAll('.btn-card-book').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();openDbBookingStepsModal(btn.dataset.style);});});
 }
 
 // BOOKING FORM
@@ -465,67 +540,579 @@ async function submitDashBooking(e) {
   document.getElementById('confirm-modal').classList.add('open');
 }
 
-// STYLE MODAL
+// STYLE MODAL — matches index.js layout (fullscreen, image gallery, BSM booking)
 function openStyleModal(id) {
-  const h=hairstyles.find(s=>s.id===id); if(!h) return;
-  const related=hairstyles.filter(s=>s.id!==id&&s.category.some(c=>h.category.includes(c))).slice(0,3);
-  document.getElementById('modal-body-inner').innerHTML=`
-    <div class="modal-gallery">${h.emoji}</div>
-    <div class="modal-details">
-      <h2>${h.name}</h2>
-      <div class="modal-price">KSh ${h.price.toLocaleString()}${h.originalPrice?` <span style="text-decoration:line-through;color:#9ca3af;font-size:.9rem">KSh ${h.originalPrice.toLocaleString()}</span>`:''}</div>
-      <div class="modal-tags">${h.category.map(c=>`<span class="modal-tag">${c}</span>`).join('')}</div>
-      <p class="modal-desc">${h.description}</p>
-      <div class="modal-info-grid">
-        <div class="modal-info-item"><label>Duration</label><span>${h.duration}</span></div>
-        <div class="modal-info-item"><label>Hair Type</label><span>${h.hairType}</span></div>
-        <div class="modal-info-item"><label>Length</label><span>${h.hairLength}</span></div>
-        <div class="modal-info-item"><label>Rating</label><span>${h.rating}★ (${h.reviews})</span></div>
-      </div>
-      <div style="background:var(--pink-soft);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--pink-deep);font-weight:500;">🔥 ${h.bookings} people booked this style</div>
-      <button class="btn-modal-book" onclick="bookFromModal('${h.name.replace(/'/g,"\\'")}')"><i class="fas fa-calendar-check"></i> Book This Style</button>
-      ${related.length?`<div style="margin-top:20px;"><p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:10px;">You May Also Like</p><div style="display:flex;gap:8px;flex-wrap:wrap;">${related.map(r=>`<div onclick="openStyleModal(${r.id})" style="background:var(--white-off);border:1px solid rgba(244,184,200,.3);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.8rem;font-weight:500;display:flex;align-items:center;gap:6px;">${r.emoji} ${r.name}</div>`).join('')}</div></div>`:''}
-    </div>`;
-  document.getElementById('style-modal').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closeStyleModal() { document.getElementById('style-modal').classList.remove('open'); document.body.style.overflow=''; }
-function bookFromModal(name) {
-  closeStyleModal();
-  navigateTo('home');
-  setTimeout(()=>{ document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}); showToast(name+' selected 👑','gold'); },300);
-}
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeStyleModal(); document.getElementById('confirm-modal').classList.remove('open'); } });
+  const style = hairstyles.find(s => s.id === id); if (!style) return;
 
-// MESSAGES
-function selectThread(key, el) {
-  activeThread=key;
-  document.querySelectorAll('.msg-thread').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  const t=msgThreads[key]; if(!t) return;
-  document.getElementById('msg-chat-name').textContent=t.name;
-  document.getElementById('msg-chat-status').textContent='● '+t.status;
-  const body=document.getElementById('msg-chat-body');
-  body.innerHTML=t.messages.map(m=>`<div class="msg-bubble ${m.from}"><div class="msg-bubble-text">${m.text}</div><div class="msg-bubble-time">${m.time}</div></div>`).join('');
-  body.scrollTop=body.scrollHeight;
+  const modal = document.getElementById('style-modal');
+  const body  = document.getElementById('modal-body-inner');
+
+  // Images
+  const images = Array.isArray(style.imageUrls) && style.imageUrls.length
+    ? style.imageUrls
+    : style.imageUrl ? [style.imageUrl] : [];
+
+  // Update topbar title
+  const topbarTitle = document.getElementById('db-modal-topbar-title');
+  if (topbarTitle) topbarTitle.textContent = style.name;
+
+  // Gallery slides HTML
+  let galleryInnerHTML = '';
+  if (images.length) {
+    images.forEach(url => {
+      galleryInnerHTML += `<div class="modal-gallery-slide"><img src="${url}" alt="${style.name}" loading="lazy"></div>`;
+    });
+  } else {
+    galleryInnerHTML = `<div class="modal-gallery-slide"><span class="gallery-emoji-placeholder">${style.emoji || '💇'}</span></div>`;
+  }
+
+  const showArrows = images.length > 1;
+  const showDots   = images.length > 1;
+
+  const relatedStyles = hairstyles
+    .filter(h => h.id !== id && h.category.some(c => style.category.includes(c)))
+    .slice(0, 3);
+
+  body.innerHTML = `
+    <div class="modal-gallery" id="db-modalGallery">
+      <div class="modal-gallery-track" id="db-modalGalleryTrack">
+        ${galleryInnerHTML}
+      </div>
+      ${showArrows ? `
+        <button class="modal-gallery-arrow prev" id="db-galleryPrev"><i class="fas fa-chevron-left"></i></button>
+        <button class="modal-gallery-arrow next" id="db-galleryNext"><i class="fas fa-chevron-right"></i></button>
+      ` : ''}
+      ${showDots ? `
+        <div class="modal-gallery-dots" id="db-galleryDots">
+          ${images.map((_, i) => `<div class="modal-gallery-dot ${i===0?'active':''}" data-idx="${i}"></div>`).join('')}
+        </div>
+      ` : ''}
+      ${images.length > 1 ? `<div class="modal-img-count" id="db-galleryCount">1 / ${images.length}</div>` : ''}
+    </div>
+    <div class="modal-details">
+      <h2>${style.name}</h2>
+      <div class="modal-price">USD ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">USD ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
+      <div class="modal-tags">
+        ${style.category.map(c => `<span class="modal-tag">${c}</span>`).join('')}
+      </div>
+      <p class="modal-desc">${style.description}</p>
+      <div class="modal-info-grid">
+        <div class="modal-info-item"><label>Duration</label><span>${style.duration}</span></div>
+        <div class="modal-info-item"><label>Hair Type</label><span>${style.hairType}</span></div>
+        <div class="modal-info-item"><label>Length</label><span>${style.hairLength}</span></div>
+        <div class="modal-info-item"><label>Rating</label><span>${style.rating} ★ (${style.reviews} reviews)</span></div>
+      </div>
+      <div style="background:#fce8ef;border-radius:10px;padding:12px;margin-bottom:20px;font-size:0.82rem;color:#c0394d;font-weight:500;">
+        🔥 ${style.bookings} people have booked this style
+      </div>
+      <button class="btn-modal-book" onclick="dbBookFromModal('${style.name.replace(/'/g,"\\'")}')">
+        <i class="fas fa-calendar-check"></i> Book This Style
+      </button>
+      ${relatedStyles.length ? `
+        <div style="margin-top:28px;margin-bottom:24px;">
+          <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;margin-bottom:14px;">You May Also Like</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            ${relatedStyles.map(r => `
+              <div onclick="openStyleModal(${r.id})" style="background:#fdf9fb;border:1px solid #f4b8c8;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:0.82rem;font-weight:500;display:flex;align-items:center;gap:8px;transition:all 0.2s;">
+                <span>${r.emoji || ''}</span> ${r.name}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  // Init carousel
+  let currentSlide = 0;
+  const track   = document.getElementById('db-modalGalleryTrack');
+  const prevBtn = document.getElementById('db-galleryPrev');
+  const nextBtn = document.getElementById('db-galleryNext');
+  const dots    = document.querySelectorAll('#db-galleryDots .modal-gallery-dot');
+  const countEl = document.getElementById('db-galleryCount');
+  const total   = images.length;
+
+  function goToSlide(idx) {
+    if (idx < 0 || idx >= total) return;
+    currentSlide = idx;
+    if (track) track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    if (countEl) countEl.textContent = `${currentSlide + 1} / ${total}`;
+    if (prevBtn) prevBtn.classList.toggle('hidden', currentSlide === 0);
+    if (nextBtn) nextBtn.classList.toggle('hidden', currentSlide === total - 1);
+  }
+
+  prevBtn?.addEventListener('click', () => goToSlide(currentSlide - 1));
+  nextBtn?.addEventListener('click', () => goToSlide(currentSlide + 1));
+  dots.forEach(d => d.addEventListener('click', () => goToSlide(+d.dataset.idx)));
+
+  if (prevBtn) prevBtn.classList.add('hidden');
+  if (nextBtn && total <= 1) nextBtn.classList.add('hidden');
+
+  // Touch swipe
+  let touchStartX = 0;
+  const galleryEl = document.getElementById('db-modalGallery');
+  galleryEl?.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  galleryEl?.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) goToSlide(dx < 0 ? currentSlide + 1 : currentSlide - 1);
+  });
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
-function sendMessage() {
-  const inp=document.getElementById('msg-input'); const txt=inp.value.trim(); if(!txt) return;
-  const t=msgThreads[activeThread]; if(!t) return;
-  const now=new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
-  const body=document.getElementById('msg-chat-body');
-  const b=document.createElement('div'); b.className='msg-bubble outgoing';
-  b.innerHTML=`<div class="msg-bubble-text">${txt}</div><div class="msg-bubble-time">${now}</div>`;
-  body.appendChild(b); body.scrollTop=body.scrollHeight; inp.value='';
-  t.messages.push({from:'outgoing',text:txt,time:now});
-  setTimeout(()=>{
-    const replies=["Sure, I'll check on that for you! 💕","Thanks for reaching out. I'll get back to you shortly 👑","Of course! See you soon 🌟","That sounds perfect! Looking forward to seeing you ✨","Absolutely! We've noted that down 💅"];
-    const reply=replies[Math.floor(Math.random()*replies.length)];
-    t.messages.push({from:'incoming',text:reply,time:'Just now'});
-    const rb=document.createElement('div'); rb.className='msg-bubble incoming';
-    rb.innerHTML=`<div class="msg-bubble-text">${reply}</div><div class="msg-bubble-time">Just now</div>`;
-    body.appendChild(rb); body.scrollTop=body.scrollHeight;
-  },1400);
+
+function closeStyleModal() {
+  document.getElementById('style-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function dbBookFromModal(name) {
+  closeStyleModal();
+  openDbBookingStepsModal(name);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeStyleModal();
+    closeDbBsmModal();
+    document.getElementById('confirm-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+// =================== DB BOOKING STEPS MODAL ===================
+let dbBsmCurrentStep = 1;
+let dbBsmStyleName   = '';
+
+function openDbBookingStepsModal(styleName) {
+  dbBsmStyleName   = styleName;
+  dbBsmCurrentStep = 1;
+
+  const modal = document.getElementById('db-booking-steps-modal');
+  if (!modal) return;
+
+  document.getElementById('db-bsm-topbar-title').textContent = styleName;
+  goToDbBsmStep(1);
+
+  // Reset fields
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const dateInput = document.getElementById('db-bsmDate');
+  if (dateInput) { dateInput.min = `${yyyy}-${mm}-${dd}`; dateInput.value = ''; }
+  const timeEl = document.getElementById('db-bsmTime'); if (timeEl) timeEl.value = '';
+  const stylistEl = document.getElementById('db-bsmStylist'); if (stylistEl) stylistEl.value = 'any';
+  const nameEl = document.getElementById('db-bsmName');
+  if (nameEl) nameEl.value = window.currentUser?.displayName || (window.userProfile?.firstName ? (window.userProfile.firstName+' '+(window.userProfile.lastName||'')).trim() : '');
+  const phoneEl = document.getElementById('db-bsmPhone');
+  if (phoneEl) phoneEl.value = window.userProfile?.phone || '';
+  const notesEl = document.getElementById('db-bsmNotes'); if (notesEl) notesEl.value = '';
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDbBsmModal() {
+  const modal = document.getElementById('db-booking-steps-modal');
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function goToDbBsmStep(step) {
+  dbBsmCurrentStep = step;
+  document.querySelectorAll('#db-booking-steps-modal .bsm-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === step);
+  });
+  document.querySelectorAll('#db-booking-steps-modal .bsm-step').forEach((s, i) => {
+    const n = i + 1;
+    s.classList.remove('active', 'done');
+    if (n === step) s.classList.add('active');
+    else if (n < step) s.classList.add('done');
+  });
+  document.querySelectorAll('#db-booking-steps-modal .bsm-step-line').forEach((l, i) => {
+    l.classList.toggle('done', i + 1 < step);
+  });
+  const backBtn = document.getElementById('db-bsmBack');
+  if (backBtn) backBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+  if (step === 3) buildDbBsmReview();
+}
+
+function buildDbBsmReview() {
+  const date    = document.getElementById('db-bsmDate').value;
+  const time    = document.getElementById('db-bsmTime').value;
+  const stylist = document.getElementById('db-bsmStylist').value;
+  const name    = document.getElementById('db-bsmName').value;
+  const phone   = document.getElementById('db-bsmPhone').value;
+  const notes   = document.getElementById('db-bsmNotes')?.value || '';
+
+  const matched = hairstyles.find(s => s.name === dbBsmStyleName);
+  const priceStr = matched ? `USD ${matched.price.toLocaleString()}` : '';
+
+  const rows = [
+    { icon: 'fas fa-scissors',  label: 'Style',    value: `${matched?.emoji || '✨'} ${dbBsmStyleName}${priceStr ? ' — ' + priceStr : ''}` },
+    { icon: 'fas fa-calendar',  label: 'Date',     value: formatDate(date) || date },
+    { icon: 'fas fa-clock',     label: 'Time',     value: time },
+    { icon: 'fas fa-user-tie',  label: 'Stylist',  value: stylist === 'any' ? 'Any Available Stylist' : stylist },
+    { icon: 'fas fa-user',      label: 'Name',     value: name },
+    { icon: 'fab fa-whatsapp',  label: 'WhatsApp', value: phone },
+    ...(notes ? [{ icon: 'fas fa-comment', label: 'Notes', value: notes }] : []),
+  ];
+
+  document.getElementById('db-bsmReviewCard').innerHTML = rows.map(r => `
+    <div class="bsm-review-row">
+      <div class="bsm-review-icon"><i class="${r.icon}"></i></div>
+      <div><div class="bsm-review-label">${r.label}</div><div class="bsm-review-value">${r.value}</div></div>
+    </div>
+  `).join('');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function initDbBookingStepsModal() {
+  document.getElementById('db-bsmClose')?.addEventListener('click', closeDbBsmModal);
+  document.getElementById('db-bsmOverlay')?.addEventListener('click', closeDbBsmModal);
+  document.getElementById('db-bsmBack')?.addEventListener('click', () => {
+    if (dbBsmCurrentStep > 1) goToDbBsmStep(dbBsmCurrentStep - 1);
+  });
+
+  document.getElementById('db-bsmNext1')?.addEventListener('click', () => {
+    const date = document.getElementById('db-bsmDate').value;
+    const time = document.getElementById('db-bsmTime').value;
+    if (!date) { showToast('Please choose a date 📅', 'error'); return; }
+    if (!time) { showToast('Please choose a time ⏰', 'error'); return; }
+    goToDbBsmStep(2);
+  });
+
+  document.getElementById('db-bsmNext2')?.addEventListener('click', () => {
+    const name  = document.getElementById('db-bsmName').value.trim();
+    const phone = document.getElementById('db-bsmPhone').value.trim();
+    if (!name)  { showToast('Please enter your name 👤', 'error'); return; }
+    if (!phone) { showToast('Please enter your WhatsApp number 📱', 'error'); return; }
+    goToDbBsmStep(3);
+  });
+
+  document.getElementById('db-bsmConfirmBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('db-bsmConfirmBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
+    btn.disabled = true;
+
+    const user = window.currentUser;
+    if (!user) { showToast('Please sign in to book.', 'error'); btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>'; btn.disabled = false; return; }
+
+    const date    = document.getElementById('db-bsmDate').value;
+    const time    = document.getElementById('db-bsmTime').value;
+    const stylist = document.getElementById('db-bsmStylist').value;
+    const name    = document.getElementById('db-bsmName').value;
+    const phone   = document.getElementById('db-bsmPhone').value;
+    const notes   = document.getElementById('db-bsmNotes')?.value || '';
+    const matched = hairstyles.find(s => s.name === dbBsmStyleName);
+    const bookingRef = 'BK' + Date.now();
+
+    const booking = {
+      userId: user.uid, style: dbBsmStyleName, date, time, stylist, name, phone, notes,
+      status: 'confirmed', emoji: matched?.emoji || '✨', price: matched?.price || null,
+      bookingRef, createdAt: new Date().toISOString(), id: bookingRef,
+    };
+
+    try {
+      await window._fb.addDoc(window._fb.collection(window._fb.db, 'bookings'), booking);
+      const newPts = userLoyaltyPoints + 50;
+      userLoyaltyPoints = newPts;
+      await window._fb.updateDoc(window._fb.doc(window._fb.db, 'users', user.uid), { loyaltyPoints: newPts, totalBookings: userBookings.length + 1 });
+      showToast('🎉 +50 Loyalty Points earned!', 'gold');
+    } catch(err) {
+      const stored = JSON.parse(localStorage.getItem('lb_bk_' + user.uid) || '[]');
+      stored.push(booking); localStorage.setItem('lb_bk_' + user.uid, JSON.stringify(stored));
+      userLoyaltyPoints += 50;
+    }
+
+    userBookings.unshift(booking); updateStats(); updateLoyaltyUI();
+    btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+    btn.disabled = false;
+
+    closeDbBsmModal();
+
+    const cm = document.getElementById('confirm-msg');
+    if (cm) cm.textContent = `Your ${dbBsmStyleName} on ${formatDate(date)} at ${time} is confirmed! We'll WhatsApp you at ${phone}. Ref: ${bookingRef}`;
+    document.getElementById('confirm-modal').classList.add('open');
+  });
+}
+
+// =================== REAL FIRESTORE MESSAGES ===================
+function getConversationId(userId) {
+  return `conv_${userId}`;
+}
+
+async function loadAdminMessages(showRefreshToast) {
+  const user = window.currentUser; if (!user) return;
+  const fb = window._fb; if (!fb) return;
+  const convId = getConversationId(user.uid);
+  const body = document.getElementById('msg-chat-body');
+  if (!body) return;
+
+  // Show loading only on first open
+  const loadingEl = document.getElementById('msg-loading');
+  if (loadingEl) loadingEl.style.display = 'block';
+
+  // Unsubscribe previous listener
+  if (msgUnsubscribe) { msgUnsubscribe(); msgUnsubscribe = null; }
+
+  try {
+    const msgsRef = fb.collection(fb.db, 'conversations', convId, 'messages');
+    const q = fb.query(msgsRef, fb.orderBy('createdAt', 'asc'));
+
+    msgUnsubscribe = fb.onSnapshot(q, (snap) => {
+      clientMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAdminMessages();
+      updateUnreadCount();
+      if (showRefreshToast) showToast('Messages refreshed! 🔄', 'success');
+    });
+  } catch(e) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--grey);font-size:.85rem;"><i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4;"></i>Start a conversation with LuxeBraids below 💬</div>';
+  }
+}
+
+function renderAdminMessages() {
+  const body = document.getElementById('msg-chat-body');
+  const loadingEl = document.getElementById('msg-loading');
+  if (!body) return;
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  const user = window.currentUser;
+  if (!clientMessages.length) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--grey);font-size:.85rem;">
+      <i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4;"></i>
+      No messages yet. Say hello! 👋
+    </div>`;
+    updateThreadPreview('Start a conversation…', null);
+    return;
+  }
+
+  let html = '';
+  let lastDateLabel = '';
+
+  clientMessages.forEach((m, idx) => {
+    // true = message sent by the client (YOU) → right side
+    // false = message sent by admin → left side
+    const isMe = m.senderRole === 'client' || m.senderId === user?.uid;
+
+    const msgDate = m.createdAt?.seconds ? new Date(m.createdAt.seconds * 1000) : new Date();
+    const time = msgDate.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // ── Date separator ──
+    const today = new Date();
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    let dateLabel;
+    if (msgDate.toDateString() === today.toDateString()) dateLabel = 'Today';
+    else if (msgDate.toDateString() === yesterday.toDateString()) dateLabel = 'Yesterday';
+    else dateLabel = msgDate.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+
+    if (dateLabel !== lastDateLabel) {
+      html += `<div style="display:flex;align-items:center;gap:10px;margin:10px 0;font-size:.7rem;color:var(--grey);">
+        <div style="flex:1;height:1px;background:var(--grey-light);"></div>
+        <span style="padding:2px 12px;border-radius:20px;border:1px solid var(--grey-light);background:var(--white-off);letter-spacing:.03em;">${dateLabel}</span>
+        <div style="flex:1;height:1px;background:var(--grey-light);"></div>
+      </div>`;
+      lastDateLabel = dateLabel;
+    }
+
+    // ── Bubble styles ──
+    const wrapAlign  = isMe ? 'flex-end'   : 'flex-start';
+    const itemAlign  = isMe ? 'flex-end'   : 'flex-start';
+    const bubbleStyle = isMe
+      ? 'background:linear-gradient(135deg,var(--pink-deep),var(--pink-neon));color:#fff;border-radius:18px;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(255,45,120,.22);'
+      : 'background:var(--grey-light);color:var(--black-soft);border-radius:18px;border-bottom-left-radius:4px;';
+
+    // ── Read receipt (only on my messages) ──
+    let receipt = '';
+    if (isMe) {
+      receipt = m.readByAdmin
+        ? `<span style="font-size:.65rem;color:#22c55e;display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-check-double"></i> Seen</span>`
+        : `<span style="font-size:.65rem;color:var(--grey);display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-check"></i> Sent</span>`;
+    }
+
+    // ── Sender name label (show for admin messages when sender changes) ──
+    const prevMsg = idx > 0 ? clientMessages[idx - 1] : null;
+    const prevIsMe = prevMsg ? (prevMsg.senderRole === 'client' || prevMsg.senderId === user?.uid) : null;
+    const showLabel = !isMe && prevIsMe !== false;
+    const labelHtml = showLabel
+      ? `<div style="font-size:.7rem;font-weight:600;color:var(--purple);margin-bottom:3px;padding:0 4px;display:flex;align-items:center;gap:4px;"><i class="fas fa-crown" style="font-size:.6rem;"></i> LuxeBraids Studio</div>`
+      : '';
+
+    html += `
+      <div style="display:flex;flex-direction:column;align-self:${wrapAlign};align-items:${itemAlign};max-width:72%;">
+        ${labelHtml}
+        <div style="padding:10px 15px;font-size:.87rem;line-height:1.6;word-break:break-word;${bubbleStyle}">${escapeHtml(m.text)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding:0 4px;${isMe ? 'justify-content:flex-end;' : ''}">
+          <span style="font-size:.68rem;color:var(--grey);">${isMe ? 'You' : (m.senderName || 'LuxeBraids')} · ${time}</span>
+          ${receipt}
+        </div>
+      </div>`;
+  });
+
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
+
+  // Update thread preview with latest message
+  const last = clientMessages[clientMessages.length - 1];
+  const lastTime = last.createdAt?.seconds
+    ? timeAgo(new Date(last.createdAt.seconds * 1000))
+    : 'Just now';
+  updateThreadPreview(last.text, lastTime);
+}
+
+function updateThreadPreview(text, time) {
+  const preview = document.getElementById('admin-thread-preview-text');
+  const timeEl = document.getElementById('admin-thread-time');
+  if (preview) preview.textContent = text.length > 35 ? text.slice(0, 35) + '…' : text;
+  if (timeEl && time) timeEl.textContent = time;
+}
+
+function updateUnreadCount() {
+  const user = window.currentUser;
+  if (!user) return;
+  // Count messages from admin (not sent by client) that are unread
+  const unread = clientMessages.filter(m => m.senderId !== user.uid && !m.readByClient).length;
+  unreadMsgCount = unread;
+
+  // Update notification badge
+  const badge = document.getElementById('notif-badge');
+  const msgBadge = document.getElementById('msg-badge');
+  const unreadDot = document.getElementById('admin-unread-dot');
+
+  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
+  if (msgBadge) { msgBadge.textContent = unread; msgBadge.style.display = unread > 0 ? 'flex' : 'none'; }
+  if (unreadDot) unreadDot.style.display = unread > 0 ? 'inline-block' : 'none';
+}
+
+async function markMessagesRead() {
+  const user = window.currentUser; if (!user) return;
+  const fb = window._fb; if (!fb) return;
+  const convId = getConversationId(user.uid);
+  // Mark all admin messages as read
+  const unreadMsgs = clientMessages.filter(m => m.senderId !== user.uid && !m.readByClient);
+  for (const m of unreadMsgs) {
+    try {
+      await fb.updateDoc(fb.doc(fb.db, 'conversations', convId, 'messages', m.id), { readByClient: true });
+    } catch(e) {}
+  }
+  unreadMsgCount = 0;
+  const badge = document.getElementById('notif-badge');
+  const msgBadge = document.getElementById('msg-badge');
+  const unreadDot = document.getElementById('admin-unread-dot');
+  if (badge) badge.style.display = 'none';
+  if (msgBadge) msgBadge.style.display = 'none';
+  if (unreadDot) unreadDot.style.display = 'none';
+}
+
+async function sendAdminMessage() {
+  const inp = document.getElementById('msg-input');
+  const txt = inp?.value.trim(); if (!txt) return;
+  const user = window.currentUser; if (!user) { showToast('Please sign in to message.', 'error'); return; }
+  const fb = window._fb; if (!fb) { showToast('Still connecting — try again in a moment.', 'error'); return; }
+
+  const btn = document.getElementById('btn-msg-send');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+  // FIX: Do NOT clear input before the save succeeds — clear only on success so message isn't lost on error
+
+  const convId = getConversationId(user.uid);
+  const userName = window.userProfile?.firstName
+    ? (window.userProfile.firstName + ' ' + (window.userProfile.lastName || '')).trim()
+    : (user.displayName || user.email?.split('@')[0] || 'Client');
+
+  const msgData = {
+    text: txt,
+    senderId: user.uid,
+    senderName: userName,
+    senderRole: 'client',
+    createdAt: fb.serverTimestamp(),
+    readByAdmin: false,
+    readByClient: true,
+  };
+
+  try {
+    // Ensure conversation doc exists
+    await fb.setDoc(fb.doc(fb.db, 'conversations', convId), {
+      clientId: user.uid,
+      clientName: userName,
+      clientEmail: user.email || '',
+      updatedAt: fb.serverTimestamp(),
+      lastMessage: txt,
+    }, { merge: true });
+
+    await fb.addDoc(fb.collection(fb.db, 'conversations', convId, 'messages'), msgData);
+
+    // FIX: Only clear input after confirmed save to Firestore
+    inp.value = '';
+  } catch(e) {
+    // FIX: Log the real error so it's visible in DevTools console
+    console.error('[LuxeBraids] Message save failed:', e?.code, e?.message, e);
+
+    // FIX: Show the actual error code in the toast so it's diagnosable
+    const reason = e?.code === 'permission-denied'
+      ? 'Permission denied — check Firestore rules.'
+      : e?.code === 'unavailable'
+      ? 'No connection — check your internet.'
+      : e?.code
+      ? `Error: ${e.code}`
+      : 'Could not send message. Try again.';
+    showToast(reason, 'error');
+
+    // Re-enable button and restore input so user can retry
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+    return;
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+}
+
+function selectAdminThread(el) {
+  document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadAdminMessages(false);
+  markMessagesRead();
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(date) {
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return date.toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
+}
+
+// Poll for unread messages every 30 seconds (even when not on messages tab)
+function startMsgPolling() {
+  setInterval(async () => {
+    const user = window.currentUser; if (!user) return;
+    const fb = window._fb; if (!fb) return;
+    // Only count unread from Firestore without loading full chat
+    try {
+      const convId = getConversationId(user.uid);
+      const snap = await fb.getDocs(fb.query(
+        fb.collection(fb.db, 'conversations', convId, 'messages'),
+        fb.where('senderRole', '==', 'admin'),
+        fb.where('readByClient', '==', false)
+      ));
+      const count = snap.size;
+      unreadMsgCount = count;
+      const badge = document.getElementById('notif-badge');
+      const msgBadge = document.getElementById('msg-badge');
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+      if (msgBadge) { msgBadge.textContent = count; msgBadge.style.display = count > 0 ? 'flex' : 'none'; }
+    } catch(e) {}
+  }, 30000);
 }
 
 // PROFILE SAVE
@@ -578,3 +1165,89 @@ function showToast(msg, type) {
 
 // Check hash
 if(window.location.hash==='#signup') switchTab('signup');
+// =================== DASHBOARD REVIEW PROMPT (lxb- namespaced) ===================
+(function () {
+  'use strict';
+  let dbRating = 0;
+  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Absolutely Amazing! 🌟'];
+
+  function openDbModal() {
+    dbRating = 0;
+    document.querySelectorAll('#lxbDbStars .lxb-star').forEach(s => s.classList.remove('on'));
+    const hint = document.getElementById('lxbDbHint');
+    if (hint) hint.textContent = 'Tap to rate';
+    const ta = document.getElementById('lxbDbText');
+    if (ta) ta.value = '';
+    const sub = document.getElementById('lxbDbSubmit');
+    if (sub) { sub.disabled = false; sub.innerHTML = '<i class="fas fa-heart"></i> Submit Review'; }
+    document.getElementById('lxbDbFormWrap').style.display = 'block';
+    document.getElementById('lxbDbSuccess').style.display = 'none';
+    document.getElementById('lxbDbModal').classList.add('lxb-open');
+  }
+
+  function initDbModal() {
+    document.getElementById('lxbRpBtn')?.addEventListener('click', openDbModal);
+    document.getElementById('lxbDbOverlay')?.addEventListener('click', () => document.getElementById('lxbDbModal').classList.remove('lxb-open'));
+    document.getElementById('lxbDbClose')?.addEventListener('click', () => document.getElementById('lxbDbModal').classList.remove('lxb-open'));
+
+    const stars = document.querySelectorAll('#lxbDbStars .lxb-star');
+    const hint  = document.getElementById('lxbDbHint');
+    stars.forEach(s => {
+      s.addEventListener('click', () => {
+        dbRating = +s.dataset.v;
+        stars.forEach((b, i) => b.classList.toggle('on', i < dbRating));
+        if (hint) hint.textContent = starLabels[dbRating];
+      });
+      s.addEventListener('mouseenter', () => stars.forEach((b, i) => b.classList.toggle('on', i < +s.dataset.v)));
+    });
+    document.getElementById('lxbDbStars')?.addEventListener('mouseleave', () => {
+      stars.forEach((b, i) => b.classList.toggle('on', i < dbRating));
+    });
+
+    document.getElementById('lxbDbSubmit')?.addEventListener('click', async () => {
+      const text = document.getElementById('lxbDbText')?.value.trim();
+      if (!dbRating)             { showToast('Please select a star rating.', 'error'); return; }
+      if (!text || text.length < 10) { showToast('Please write at least 10 characters.', 'error'); return; }
+
+      const sub = document.getElementById('lxbDbSubmit');
+      sub.disabled = true;
+      sub.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+      try {
+        const { collection, addDoc, serverTimestamp } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const db   = window._fb?.db || window.firebaseDb;
+        const user = window.currentUser;
+        const name = window.userProfile?.firstName
+          ? `${window.userProfile.firstName} ${(window.userProfile.lastName || '')[0] || ''}`.trim()
+          : (user?.displayName || 'Verified Client');
+
+        await addDoc(collection(db, 'reviews'), {
+          userId:    user?.uid || null,
+          name,
+          rating:    dbRating,
+          text,
+          status:    'pending',
+          createdAt: serverTimestamp()
+        });
+      } catch (e) { /* submit silently */ }
+
+      document.getElementById('lxbDbFormWrap').style.display = 'none';
+      document.getElementById('lxbDbSuccess').style.display = 'block';
+    });
+  }
+
+  // Show review prompt when completed bookings are detected.
+  // Hooks into the existing renderBookings function without overwriting it.
+  const _origRender = window.renderBookings;
+  window.renderBookings = function (filter) {
+    if (typeof _origRender === 'function') _origRender(filter);
+    // Check if any bookings in the list have status "completed"
+    const hasCompleted = Array.isArray(window.userBookings) &&
+      window.userBookings.some(b => (b.status || '').toLowerCase() === 'completed');
+    const card = document.getElementById('lxbRpCard');
+    if (card) card.style.display = hasCompleted ? 'flex' : 'none';
+  };
+
+  initDbModal();
+})();

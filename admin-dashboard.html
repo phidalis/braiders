@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LuxeBraids — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="stylesheet" href="admin-dashboard.css"/>
+
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="page-loader">
+  <div class="loader-logo">LuxeBraids</div>
+  <div class="loader-ring"></div>
+</div>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announcement-bar">
+  <div class="ann-track" id="adminAnnTrack">
+    <span>⚙️ Admin Dashboard — LuxeBraids Management System</span>
+    <span>👑 Welcome back, Admin</span>
+    <span>📊 Monitor bookings, manage services & grow the studio</span>
+    <span>🔒 All changes are saved securely to Firebase</span>
+    <span>⚙️ Admin Dashboard — LuxeBraids Management System</span>
+    <span>👑 Welcome back, Admin</span>
+    <span>📊 Monitor bookings, manage services & grow the studio</span>
+    <span>🔒 All changes are saved securely to Firebase</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">L</div>
+      <div class="logo-text">
+        <div class="logo-name">LuxeBraids</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <div class="sidebar-admin-info">
+      <div class="admin-avatar" id="admin-initial">A</div>
+      <div class="admin-info-text">
+        <div class="admin-info-name" id="admin-name">Admin</div>
+        <div class="admin-info-role">👑 Super Admin</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="navigateTo('overview')"><i class="fas fa-chart-line"></i> Dashboard</div>
+      <div class="nav-item" onclick="navigateTo('analytics')"><i class="fas fa-chart-bar"></i> Analytics</div>
+
+      <div class="nav-section-label">Management</div>
+      <div class="nav-item" onclick="navigateTo('bookings')"><i class="fas fa-calendar-check"></i> Bookings <span class="nav-badge" id="pending-count">0</span></div>
+      <div class="nav-item" onclick="navigateTo('clients')"><i class="fas fa-users"></i> Clients</div>
+      <div class="nav-item" onclick="navigateTo('services')"><i class="fas fa-cut"></i> Services</div>
+      <div class="nav-item" onclick="navigateTo('stylists')"><i class="fas fa-user-tie"></i> Stylists</div>
+
+      <div class="nav-section-label">Content</div>
+      <div class="nav-item" onclick="navigateTo('hero')"><i class="fas fa-images"></i> Hero Section</div>
+      <div class="nav-item" onclick="navigateTo('announcements')"><i class="fas fa-bullhorn"></i> Announcements</div>
+      <div class="nav-item" onclick="navigateTo('reviews')"><i class="fas fa-star"></i> Reviews</div>
+      <div class="nav-item" onclick="navigateTo('newsletter')"><i class="fas fa-envelope"></i> Newsletter <span class="nav-badge gold" id="sub-count">0</span></div>
+      <div class="nav-item" onclick="navigateTo('messages')"><i class="fas fa-comment-dots"></i> Client Messages <span class="nav-badge" id="admin-unread-count" style="display:none;">0</span></div>
+
+      <div class="nav-section-label">Settings</div>
+      <div class="nav-item" onclick="navigateTo('settings')"><i class="fas fa-cog"></i> Site Settings</div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a href="index.html" class="btn-secondary" style="width:100%;margin-bottom:8px;justify-content:center;">
+        <i class="fas fa-external-link-alt"></i> View Site
+      </a>
+      <button class="btn-sidebar-logout" onclick="handleLogout()">
+        <i class="fas fa-sign-out-alt"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="btn-topbar-icon hamburger-btn" onclick="toggleSidebar()" style="display:flex;">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn-topbar-icon" onclick="refreshData()" title="Refresh data">
+          <i class="fas fa-sync-alt" id="refresh-icon"></i>
+        </button>
+        <button class="btn-topbar-icon" onclick="navigateTo('bookings')" title="Pending bookings">
+          <i class="fas fa-bell"></i>
+          <div class="notif-dot" id="notif-dot" style="display:none;"></div>
+        </button>
+        <a href="index.html" class="btn-primary" style="font-size:0.76rem;padding:7px 14px;">
+          <i class="fas fa-eye"></i> View Site
+        </a>
+      </div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="main-content">
+
+      <!-- ===== OVERVIEW ===== -->
+      <div class="panel active" id="panel-overview">
+        <div class="panel-header">
+          <h1>Welcome back, <span id="greeting-name">Admin</span> 👑</h1>
+          <p>Here's what's happening at LuxeBraids today.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon gold"><i class="fas fa-calendar-check"></i></div>
+            <div><div class="stat-num" id="stat-bookings">—</div><div class="stat-label">Total Bookings</div><div class="stat-change up"><i class="fas fa-arrow-up"></i> Loading…</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon pink"><i class="fas fa-users"></i></div>
+            <div><div class="stat-num" id="stat-clients">—</div><div class="stat-label">Registered Clients</div><div class="stat-change up" id="clients-change"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-money-bill-wave"></i></div>
+            <div><div class="stat-num" id="stat-revenue">—</div><div class="stat-label">Est. Revenue (USD)</div><div class="stat-change up"><i class="fas fa-arrow-up"></i> This month</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-clock"></i></div>
+            <div><div class="stat-num" id="stat-pending">—</div><div class="stat-label">Pending Bookings</div><div class="stat-change"><i class="fas fa-circle" style="font-size:.5rem;"></i> Needs action</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-envelope"></i></div>
+            <div><div class="stat-num" id="stat-subs">—</div><div class="stat-label">Newsletter Subs</div><div class="stat-change up"><i class="fas fa-arrow-up"></i> Growing</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="fas fa-star"></i></div>
+            <div><div class="stat-num">4.9★</div><div class="stat-label">Avg Rating</div><div class="stat-change up"><i class="fas fa-crown"></i> Top Studio</div></div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="admin-card">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <div class="quick-action" onclick="openModal('add-booking')"><div class="qa-icon">📅</div><div class="qa-label">New Booking</div></div>
+            <div class="quick-action" onclick="navigateTo('services');setTimeout(()=>openAddServiceModal(),300)"><div class="qa-icon">✂️</div><div class="qa-label">Add Service</div></div>
+            <div class="quick-action" onclick="navigateTo('announcements')"><div class="qa-icon">📢</div><div class="qa-label">Edit Announcements</div></div>
+            <div class="quick-action" onclick="navigateTo('clients')"><div class="qa-icon">👥</div><div class="qa-label">View Clients</div></div>
+            <div class="quick-action" onclick="navigateTo('bookings')"><div class="qa-icon">🔥</div><div class="qa-label">Pending Queue</div></div>
+            <div class="quick-action" onclick="navigateTo('newsletter')"><div class="qa-icon">📧</div><div class="qa-label">Newsletter List</div></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <!-- Recent Bookings -->
+          <div class="admin-card">
+            <h3>Recent Bookings <div class="card-actions"><button class="btn-secondary btn-sm" onclick="navigateTo('bookings')">View All</button></div></h3>
+            <table class="data-table">
+              <thead><tr><th>Client</th><th>Style</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody id="recent-bookings-tbody">
+                <tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,.3)"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Activity Feed -->
+          <div class="admin-card">
+            <h3>Activity Feed</h3>
+            <div id="activity-feed">
+              <div class="activity-item"><div class="activity-dot gold"></div><div class="activity-text"><strong>Dashboard Loaded</strong><p>All systems operational</p></div><div class="activity-time">Now</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS ===== -->
+      <div class="panel" id="panel-analytics">
+        <div class="panel-header"><h1><span>Analytics</span> & Reports</h1><p>Performance overview for LuxeBraids Studio</p></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-chart-line"></i></div><div><div class="stat-num" id="an-bookings">—</div><div class="stat-label">Total Bookings</div></div></div>
+          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-coins"></i></div><div><div class="stat-num" id="an-revenue">—</div><div class="stat-label">Total Revenue</div></div></div>
+          <div class="stat-card"><div class="stat-icon pink"><i class="fas fa-users"></i></div><div><div class="stat-num" id="an-clients">—</div><div class="stat-label">Total Clients</div></div></div>
+          <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-percentage"></i></div><div><div class="stat-num" id="an-confirm">—%</div><div class="stat-label">Confirmation Rate</div></div></div>
+        </div>
+        <div class="two-col">
+          <div class="admin-card">
+            <h3>Revenue by Month (USD)</h3>
+            <div class="rev-chart" id="rev-chart"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+              <span id="rev-labels" style="display:flex;gap:16px;"></span>
+            </div>
+          </div>
+          <div class="admin-card">
+            <h3>Bookings by Style</h3>
+            <div id="style-breakdown"></div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>Stylist Performance</h3>
+          <table class="data-table">
+            <thead><tr><th>Stylist</th><th>Specialty</th><th>Bookings</th><th>Completion Rate</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(255,255,255,.3);"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== BOOKINGS ===== -->
+      <div class="panel" id="panel-bookings">
+        <div class="panel-header">
+          <h1>Manage <span>Bookings</span></h1>
+          <p>View, confirm, or cancel all studio appointments</p>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div class="tab-row" style="max-width:460px;flex:1;">
+            <button class="tab-btn active" onclick="filterBookings('all',this)">All</button>
+            <button class="tab-btn" onclick="filterBookings('pending',this)">Pending</button>
+            <button class="tab-btn" onclick="filterBookings('confirmed',this)">Confirmed</button>
+            <button class="tab-btn" onclick="filterBookings('completed',this)">Completed</button>
+            <button class="tab-btn" onclick="filterBookings('cancelled',this)">Cancelled</button>
+          </div>
+          <button class="btn-primary" onclick="openModal('add-booking')"><i class="fas fa-plus"></i> Add Booking</button>
+        </div>
+        <div class="search-bar-wrap">
+          <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search by client name, style, phone…" oninput="searchBookings(this.value)"/></div>
+        </div>
+        <div class="admin-card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Client</th><th>Style</th><th>Stylist</th><th>Date</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="bookings-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:30px;color:rgba(255,255,255,.3)"><i class="fas fa-spinner fa-spin"></i> Loading bookings…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== CLIENTS ===== -->
+      <div class="panel" id="panel-clients">
+        <div class="panel-header"><h1>Manage <span>Clients</span></h1><p>All registered LuxeBraids members</p></div>
+        <div class="search-bar-wrap">
+          <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search clients by name or email…" oninput="searchClients(this.value)"/></div>
+        </div>
+        <div class="admin-card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Bookings</th><th>Points</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="clients-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:rgba(255,255,255,.3)"><i class="fas fa-spinner fa-spin"></i> Loading clients…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== SERVICES ===== -->
+      <div class="panel" id="panel-services">
+        <div class="panel-header"><h1>Manage <span>Services</span></h1><p>Add, edit or remove braiding styles from your menu</p></div>
+
+        <!-- Hair Types Manager -->
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:14px;"><i class="fas fa-tag" style="color:var(--gold);margin-right:8px;"></i> Hair Types <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:6px;">— used as filters on the website</span></h3>
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <input class="form-control" id="new-hairtype-input" placeholder="e.g. Natural, Relaxed, 4C…" style="flex:1;"/>
+            <button class="btn-primary" onclick="addHairType()" style="white-space:nowrap;"><i class="fas fa-plus"></i> Add</button>
+          </div>
+          <div id="hairtype-tags" style="display:flex;flex-wrap:wrap;gap:8px;min-height:36px;"></div>
+          <button class="btn-primary" onclick="saveHairTypes()" style="margin-top:14px;width:100%;justify-content:center;"><i class="fas fa-save"></i> Save Hair Types</button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn-primary" onclick="openAddServiceModal()"><i class="fas fa-plus"></i> Add Service</button>
+        </div>
+        <div class="three-col" id="services-grid">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+      <!-- ===== STYLISTS ===== -->
+      <div class="panel" id="panel-stylists">
+        <div class="panel-header"><h1>Manage <span>Stylists</span></h1><p>Your team of master braiders</p></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn-primary" onclick="openModal('add-stylist')"><i class="fas fa-plus"></i> Add Stylist</button>
+        </div>
+        <div class="admin-card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Specialty</th><th>Bookings</th><th>Rating</th><th>Availability</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="stylists-tbody">
+              <tr><td>Zara</td><td>Box Braids</td><td>89</td><td>★ 4.9</td><td>Mon–Sat</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Zara')">Edit</button></td></tr>
+              <tr><td>Amina</td><td>Locs & Twists</td><td>72</td><td>★ 4.8</td><td>Mon–Fri</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Amina')">Edit</button></td></tr>
+              <tr><td>Destiny</td><td>Bridal Styles</td><td>38</td><td>★ 5.0</td><td>Wed–Sun</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Destiny')">Edit</button></td></tr>
+              <tr><td>Kezia</td><td>Kids & Quick</td><td>54</td><td>★ 4.9</td><td>Mon–Sat</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Kezia')">Edit</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== HERO SECTION MANAGEMENT ===== -->
+      <div class="panel" id="panel-hero">
+        <div class="panel-header">
+          <h1>Hero <span>Section</span></h1>
+          <p>Manage your homepage hero slides — images, text, and buttons</p>
+        </div>
+
+        <!-- Slide list -->
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:16px;"><i class="fas fa-layer-group" style="color:var(--gold);margin-right:8px;"></i> Hero Slides <div class="card-actions"><button class="btn-primary" onclick="openHeroSlideModal()"><i class="fas fa-plus"></i> Add Slide</button></div></h3>
+          <div id="hero-slides-list" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);"><i class="fas fa-spinner fa-spin"></i> Loading slides…</div>
+          </div>
+          <button class="btn-primary" onclick="saveHeroSlides()" style="margin-top:18px;width:100%;justify-content:center;"><i class="fas fa-save"></i> Save & Publish All Slides</button>
+        </div>
+
+        <!-- Global Hero Content Controls -->
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:6px;"><i class="fas fa-heading" style="color:var(--gold);margin-right:8px;"></i> Hero Content Blocks
+            <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:8px;">— shown over the slider (title, subtitle, stats)</span>
+          </h3>
+
+          <!-- Title Lines -->
+          <div style="margin-top:18px;">
+            <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:8px;display:block;">Hero Title Lines</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;margin-bottom:8px;">
+              <input class="form-control" id="hero-title-line1" placeholder="Line 1 e.g. Where Beauty" style="flex:1;"/>
+              <input class="form-control" id="hero-title-line2" placeholder="Line 2 (accent) e.g. Becomes Art" style="flex:1;"/>
+              <label class="toggle-switch" title="Show title"><input type="checkbox" id="hero-show-title" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+
+          <!-- Subtitle -->
+          <div style="margin-top:14px;">
+            <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:8px;display:block;">Subtitle Text</label>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
+              <input class="form-control" id="hero-subtitle" placeholder="e.g. Luxury braiding experiences crafted for queens…"/>
+              <label class="toggle-switch" title="Show subtitle"><input type="checkbox" id="hero-show-subtitle" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+
+          <!-- Badge text -->
+          <div style="margin-top:14px;">
+            <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:8px;display:block;">Badge Text (small eyebrow)</label>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
+              <input class="form-control" id="hero-badge-text" placeholder="e.g. Premium Braiding Studio — Est. 2019"/>
+              <label class="toggle-switch" title="Show badge"><input type="checkbox" id="hero-show-badge" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Buttons -->
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:14px;"><i class="fas fa-mouse-pointer" style="color:var(--gold);margin-right:8px;"></i> CTA Buttons</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;margin-bottom:10px;">
+            <div>
+              <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;">Primary Button Label</label>
+              <input class="form-control" id="hero-btn1-label" placeholder="e.g. Book Appointment"/>
+            </div>
+            <div>
+              <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;">Primary Button Link</label>
+              <input class="form-control" id="hero-btn1-link" placeholder="#booking"/>
+            </div>
+            <div style="margin-top:24px;">
+              <label class="toggle-switch" title="Show primary button"><input type="checkbox" id="hero-show-btn1" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;">
+            <div>
+              <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;">Secondary Button Label</label>
+              <input class="form-control" id="hero-btn2-label" placeholder="e.g. Join The Club"/>
+            </div>
+            <div>
+              <label style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;">Secondary Button Link</label>
+              <input class="form-control" id="hero-btn2-link" placeholder="client-login.html#signup"/>
+            </div>
+            <div style="margin-top:24px;">
+              <label class="toggle-switch" title="Show secondary button"><input type="checkbox" id="hero-show-btn2" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:14px;"><i class="fas fa-chart-bar" style="color:var(--gold);margin-right:8px;"></i> Hero Stats
+            <div class="card-actions"><label class="toggle-switch" title="Show stats block"><input type="checkbox" id="hero-show-stats" checked/><span class="toggle-slider"></span></label></div>
+          </h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="hero-stats-inputs">
+            <div>
+              <label style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;">Stat 1 Number</label>
+              <input class="form-control" id="hero-stat1-num" placeholder="2,400+" style="margin-top:4px;"/>
+              <input class="form-control" id="hero-stat1-label" placeholder="Happy Clients" style="margin-top:6px;"/>
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;">Stat 2 Number</label>
+              <input class="form-control" id="hero-stat2-num" placeholder="150+" style="margin-top:4px;"/>
+              <input class="form-control" id="hero-stat2-label" placeholder="Braid Styles" style="margin-top:6px;"/>
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;">Stat 3 Number</label>
+              <input class="form-control" id="hero-stat3-num" placeholder="4.9★" style="margin-top:4px;"/>
+              <input class="form-control" id="hero-stat3-label" placeholder="Average Rating" style="margin-top:6px;"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save all content -->
+        <button class="btn-primary" onclick="saveHeroContent()" style="width:100%;justify-content:center;margin-bottom:24px;padding:14px;font-size:.92rem;">
+          <i class="fas fa-save"></i> Save & Publish Hero Content
+        </button>
+      </div>
+
+      <!-- ===== ANNOUNCEMENTS ===== -->
+      <div class="panel" id="panel-announcements">
+        <div class="panel-header"><h1>Edit <span>Announcements</span></h1><p>These scroll across the top bar on your website</p></div>
+        <div class="admin-card">
+          <h3>Announcement Messages <div class="card-actions"><button class="btn-primary" onclick="addAnnouncement()"><i class="fas fa-plus"></i> Add New</button></div></h3>
+          <div id="ann-list"></div>
+          <button class="btn-primary" onclick="saveAnnouncements()" style="margin-top:16px;width:100%;justify-content:center;">
+            <i class="fas fa-save"></i> Save & Publish Announcements
+          </button>
+        </div>
+        <div class="admin-card">
+          <h3>Preview</h3>
+          <div style="background:linear-gradient(90deg,#6600cc,#9b00ff,#c354ff,#6600cc);border-radius:8px;overflow:hidden;height:34px;display:flex;align-items:center;">
+            <div id="ann-preview-track" style="white-space:nowrap;color:#ffe0ff;font-size:.75rem;font-weight:500;padding:0 20px;">Preview will show here…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== REVIEWS ===== -->
+      <div class="panel" id="panel-reviews">
+        <div class="panel-header"><h1>Manage <span>Reviews</span></h1><p>Client testimonials shown on the website</p></div>
+        <div class="admin-card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>Client</th><th>Style</th><th>Review</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="reviews-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== NEWSLETTER ===== -->
+      <div class="panel" id="panel-newsletter">
+        <div class="panel-header"><h1><span>Newsletter</span> Subscribers</h1><p>Everyone who signed up for email updates</p></div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-envelope"></i></div><div><div class="stat-num" id="nl-total">—</div><div class="stat-label">Total Subscribers</div></div></div>
+          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-calendar-week"></i></div><div><div class="stat-num" id="nl-week">—</div><div class="stat-label">This Week</div></div></div>
+          <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-chart-line"></i></div><div><div class="stat-num">Growing</div><div class="stat-label">Trend</div></div></div>
+        </div>
+        <div class="search-bar-wrap">
+          <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search subscribers…" oninput="searchNewsletter(this.value)"/></div>
+          <button class="btn-secondary" onclick="exportNewsletter()"><i class="fas fa-download"></i> Export CSV</button>
+        </div>
+        <div class="admin-card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Email</th><th>Subscribed</th><th>Actions</th></tr></thead>
+            <tbody id="newsletter-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:30px;color:rgba(255,255,255,.3)"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== MESSAGES ===== -->
+      <div class="panel" id="panel-messages">
+        <div class="panel-header"><h1>Client <span>Messages</span> 💬</h1><p>View and reply to client conversations</p></div>
+        <div class="admin-messages-layout" id="admin-messages-layout">
+          <!-- Conversations list -->
+          <div class="admin-conv-col">
+            <div class="admin-conv-col-header">
+              <h3>Conversations</h3>
+              <button onclick="loadAdminConversations()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="admin-conv-list">
+              <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+            </div>
+          </div>
+          <!-- Chat area -->
+          <div class="admin-chat-col">
+            <div class="admin-chat-col-header" id="admin-chat-header">
+              <button class="admin-back-btn" id="admin-back-btn" onclick="adminCloseChat()" title="Back to conversations"><i class="fas fa-arrow-left"></i></button>
+              <div class="admin-chat-col-header-avatar" id="admin-chat-avatar">?</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="admin-chat-name">Select a conversation</div>
+                <div style="font-size:.72rem;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="admin-chat-sub">Choose a client from the left</div>
+              </div>
+            </div>
+            <div id="admin-chat-body">
+              <div style="text-align:center;padding:40px;color:rgba(255,255,255,.25);font-size:.85rem;"><i class="fas fa-comment-dots" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.3;"></i>Select a conversation to start replying</div>
+            </div>
+            <div class="admin-chat-input-bar">
+              <input type="text" id="admin-msg-input" placeholder="Type a reply…" onkeydown="if(event.key==='Enter')sendAdminReply()"/>
+              <button class="admin-send-btn" onclick="sendAdminReply()" id="btn-admin-send"><i class="fas fa-paper-plane"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="panel" id="panel-settings">
+        <div class="panel-header"><h1>Site <span>Settings</span></h1><p>Control your website configuration</p></div>
+        <div class="two-col">
+          <div class="admin-card">
+            <h3>Studio Information</h3>
+            <div class="form-group"><label>Studio Name</label><input class="form-control" id="set-studio-name" value="LuxeBraids" placeholder="Studio name"/></div>
+            <div class="form-group"><label>Tagline</label><input class="form-control" id="set-tagline" value="Where Beauty Becomes Art" placeholder="Tagline"/></div>
+            <div class="form-group"><label>Phone / WhatsApp</label><input class="form-control" id="set-phone" value="+254 700 000 000" placeholder="+254 7XX XXX XXX"/></div>
+            <div class="form-group"><label>Email</label><input class="form-control" id="set-email" value="hello@luxebraids.com" placeholder="contact email"/></div>
+            <div class="form-group"><label>Location</label><input class="form-control" id="set-location" value="Westlands, Nairobi, Kenya" placeholder="Studio address"/></div>
+            <button class="btn-primary" onclick="saveSettings()" style="width:100%;justify-content:center;"><i class="fas fa-save"></i> Save Settings</button>
+          </div>
+          <div class="admin-card">
+            <h3>Hours of Operation</h3>
+            <div class="form-group"><label>Monday – Friday</label><input class="form-control" id="set-hours-wk" value="8:00 AM – 8:00 PM"/></div>
+            <div class="form-group"><label>Saturday – Sunday</label><input class="form-control" id="set-hours-wknd" value="9:00 AM – 6:00 PM"/></div>
+            <div class="form-group"><label>Booking Lead Time (minutes)</label><input class="form-control" id="set-lead" type="number" value="60"/></div>
+            <h3 style="margin-top:20px;">Feature Toggles</h3>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.85rem;color:rgba(255,255,255,.7)">Online Bookings</span>
+                <label class="toggle-switch"><input type="checkbox" checked id="toggle-bookings"/><span class="toggle-slider"></span></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.85rem;color:rgba(255,255,255,.7)">Live Popups</span>
+                <label class="toggle-switch"><input type="checkbox" checked id="toggle-popups"/><span class="toggle-slider"></span></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.85rem;color:rgba(255,255,255,.7)">Newsletter Signup</span>
+                <label class="toggle-switch"><input type="checkbox" checked id="toggle-newsletter"/><span class="toggle-slider"></span></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.85rem;color:rgba(255,255,255,.7)">Show Discount Prices</span>
+                <label class="toggle-switch"><input type="checkbox" checked id="toggle-discounts"/><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveSettings()" style="width:100%;justify-content:center;margin-top:18px;"><i class="fas fa-save"></i> Save Settings</button>
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>Admin Account</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Display Name</label><input class="form-control" id="set-admin-name" placeholder="Your name"/></div>
+            <div class="form-group"><label>Email (read-only)</label><input class="form-control" id="set-admin-email" disabled/></div>
+          </div>
+          <button class="btn-danger" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out of Admin</button>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /main-area -->
+</div><!-- /admin-layout -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- ADD BOOKING MODAL -->
+<div class="modal-overlay" id="modal-add-booking">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📅 New Booking</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-booking')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Client Name</label><input class="form-control" id="bk-name" placeholder="Full name"/></div>
+      <div class="form-group"><label>Phone</label><input class="form-control" id="bk-phone" placeholder="+254 7XX XXX XXX"/></div>
+    </div>
+    <div class="form-group"><label>Style</label>
+      <select class="form-control" id="bk-style">
+        <option value="">Select style…</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Stylist</label>
+        <select class="form-control" id="bk-stylist">
+          <option>Zara — Box Braids</option><option>Amina — Locs & Twists</option><option>Destiny — Bridal Styles</option><option>Kezia — Kids & Quick</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="bk-date"/></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select class="form-control" id="bk-status">
+        <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="saveBooking()" style="width:100%;justify-content:center;margin-top:8px;"><i class="fas fa-save"></i> Save Booking</button>
+  </div>
+</div>
+
+<!-- ADD SERVICE MODAL -->
+<div class="modal-overlay" id="modal-add-service">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✂️ Add/Edit Service</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-service')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Service Name</label><input class="form-control" id="svc-name" placeholder="e.g. Goddess Box Braids"/></div>
+    </div>
+    <div class="form-group">
+      <label>Service Images <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;">(up to 5 images — first image is the main display)</span></label>
+      <div id="svc-multi-img-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px;">
+        <!-- Image slots injected by JS -->
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <label for="svc-image-file" id="svc-add-img-label" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;padding:9px 16px;border-radius:8px;border:1px dashed rgba(255,159,0,.5);background:rgba(255,159,0,.06);font-size:.82rem;color:rgba(255,200,80,.85);font-weight:500;transition:all .2s;">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>Add Image</span>
+        </label>
+        <input type="file" id="svc-image-file" accept="image/*" multiple style="display:none;" onchange="handleMultiImageSelect(this)"/>
+      </div>
+      <input type="hidden" id="svc-image-url"/>
+      <input type="hidden" id="svc-image-urls-json" value="[]"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Price (USD)</label><input class="form-control" type="number" id="svc-price" placeholder="4500"/></div>
+      <div class="form-group"><label>Original Price (USD)</label><input class="form-control" type="number" id="svc-oprice" placeholder="5500 (leave blank if no discount)"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Duration</label><input class="form-control" id="svc-duration" placeholder="6–8 hrs"/></div>
+      <div class="form-group"><label>Display Badge</label><input class="form-control" id="svc-badge" placeholder="e.g. Trending, On Offer…"/></div>
+    </div>
+    <div class="form-group">
+      <label>Categories <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;">(select all that apply)</span></label>
+      <div id="svc-categories-wrap" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;">
+        <label class="cat-check-pill"><input type="checkbox" value="trending"/> 🔥 Trending</label>
+        <label class="cat-check-pill"><input type="checkbox" value="new"/> ✨ New Arrivals</label>
+        <label class="cat-check-pill"><input type="checkbox" value="most-booked"/> 👑 Most Booked</label>
+        <label class="cat-check-pill"><input type="checkbox" value="luxury"/> 💎 Luxury</label>
+        <label class="cat-check-pill"><input type="checkbox" value="budget"/> 💸 Budget Friendly</label>
+        <label class="cat-check-pill"><input type="checkbox" value="bridal"/> 💍 Bridal & Events</label>
+        <label class="cat-check-pill"><input type="checkbox" value="kids"/> 🎀 Kids Styles</label>
+        <label class="cat-check-pill"><input type="checkbox" value="mens"/> ✂️ Men's Braids</label>
+        <label class="cat-check-pill"><input type="checkbox" value="quick"/> ⚡ Quick Styles</label>
+        <label class="cat-check-pill"><input type="checkbox" value="transformations"/> 🪄 Transformations</label>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea class="form-control" id="svc-desc" rows="3" placeholder="Describe the style…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Hair Type</label>
+        <select class="form-control" id="svc-hairtype">
+          <option value="">Select hair type…</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Hair Length</label><input class="form-control" id="svc-hairlen" placeholder="Medium–Long"/></div>
+    </div>
+    <button class="btn-primary" onclick="saveService()" style="width:100%;justify-content:center;margin-top:8px;"><i class="fas fa-save"></i> Save Service</button>
+  </div>
+</div>
+
+<!-- ADD STYLIST MODAL -->
+<div class="modal-overlay" id="modal-add-stylist">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>💅 Add/Edit Stylist</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-stylist')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Name</label><input class="form-control" id="stl-name" placeholder="Stylist name"/></div>
+      <div class="form-group"><label>Specialty</label><input class="form-control" id="stl-spec" placeholder="Box Braids, Locs…"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone</label><input class="form-control" id="stl-phone" placeholder="+254 7XX XXX XXX"/></div>
+      <div class="form-group"><label>Availability</label><input class="form-control" id="stl-avail" placeholder="Mon–Sat"/></div>
+    </div>
+    <div class="form-group"><label>Bio</label><textarea class="form-control" id="stl-bio" rows="2" placeholder="Brief description…"></textarea></div>
+    <button class="btn-primary" onclick="saveStylist()" style="width:100%;justify-content:center;margin-top:8px;"><i class="fas fa-save"></i> Save Stylist</button>
+  </div>
+</div>
+
+<!-- BOOKING DETAIL MODAL -->
+<div class="modal-overlay" id="modal-booking-detail">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📋 Booking Details</h3>
+      <button class="modal-close" onclick="closeModal('modal-booking-detail')"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="booking-detail-body"></div>
+  </div>
+</div>
+
+<!-- HERO SLIDE MODAL -->
+<div class="modal-overlay" id="modal-hero-slide">
+  <div class="modal-box" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>🖼️ Add / Edit Hero Slide</h3>
+      <button class="modal-close" onclick="closeModal('modal-hero-slide')"><i class="fas fa-times"></i></button>
+    </div>
+
+    <input type="hidden" id="hero-slide-index" value="-1"/>
+
+    <!-- Image upload -->
+    <div class="form-group">
+      <label>Slide Image <span style="font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;">(uploaded to Cloudinary → stored in Firestore)</span></label>
+      <div id="hero-slide-img-preview" style="width:100%;height:160px;border-radius:10px;background:rgba(255,255,255,.06);border:1px dashed rgba(255,159,0,.3);display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;position:relative;">
+        <span style="color:rgba(255,255,255,.25);font-size:.82rem;" id="hero-img-placeholder-text"><i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No image yet</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label for="hero-slide-file" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;padding:9px 16px;border-radius:8px;border:1px dashed rgba(255,159,0,.5);background:rgba(255,159,0,.06);font-size:.82rem;color:rgba(255,200,80,.85);font-weight:500;">
+          <i class="fas fa-cloud-upload-alt"></i> Upload Image
+        </label>
+        <input type="file" id="hero-slide-file" accept="image/*" style="display:none;" onchange="handleHeroSlideImageSelect(this)"/>
+        <span id="hero-slide-upload-status" style="font-size:.78rem;color:rgba(255,255,255,.4);"></span>
+      </div>
+      <input type="hidden" id="hero-slide-img-url"/>
+    </div>
+
+    <!-- Background gradient -->
+    <div class="form-group">
+      <label>Background Gradient <span style="font-size:.72rem;color:rgba(255,255,255,.4);">— used if no image / behind image overlay</span></label>
+      <input class="form-control" id="hero-slide-gradient" placeholder="linear-gradient(135deg, #1a0a0f 0%, #3d0a2a 40%, #1a0a0f 100%)"/>
+    </div>
+
+    <!-- Slide order -->
+    <div class="form-group">
+      <label>Slide Order (position)</label>
+      <input class="form-control" type="number" id="hero-slide-order" value="0" min="0"/>
+    </div>
+
+    <button class="btn-primary" onclick="saveHeroSlide()" style="width:100%;justify-content:center;margin-top:8px;"><i class="fas fa-save"></i> Save Slide</button>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, orderBy, serverTimestamp, setDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+    authDomain: "braiders-9cc89.firebaseapp.com",
+    databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+    projectId: "braiders-9cc89",
+    storageBucket: "braiders-9cc89.appspot.com",
+    messagingSenderId: "444617114412",
+    appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    measurementId: "G-J60EW3KX9D"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window._fb = { auth, db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, orderBy, serverTimestamp, setDoc, where, onSnapshot, signOut };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'admin-login.html'; return; }
+    let isAdmin = false;
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && snap.data().role === 'admin') isAdmin = true;
+    } catch(e) {
+      console.error('Admin role check failed:', e);
+    }
+    if (!isAdmin) { await signOut(auth); window.location.href = 'admin-login.html'; return; }
+
+    window.adminUser = user;
+    document.getElementById('admin-name').textContent = user.displayName || user.email?.split('@')[0] || 'Admin';
+    document.getElementById('admin-initial').textContent = (user.displayName || user.email || 'A').charAt(0).toUpperCase();
+    document.getElementById('page-loader').style.opacity = '0';
+    setTimeout(() => { document.getElementById('page-loader')?.remove(); initDashboard(); }, 500);
+  });
+</script>
+<script src="admin-dashboard.js"></script>
+</body>
+</html>

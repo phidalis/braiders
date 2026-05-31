@@ -59,6 +59,7 @@ function initDashboard() {
   populateStyleSelect();
   setMinDate();
   startAdminMsgPolling();
+  loadHeroData();
 }
 
 function setMinDate() {
@@ -68,7 +69,7 @@ function setMinDate() {
 }
 
 // =========== NAVIGATION ===========
-const panels = { overview:'Dashboard', analytics:'Analytics', bookings:'Bookings', clients:'Clients', services:'Services', stylists:'Stylists', announcements:'Announcements', reviews:'Reviews', newsletter:'Newsletter', messages:'Client Messages', settings:'Settings' };
+const panels = { overview:'Dashboard', analytics:'Analytics', bookings:'Bookings', clients:'Clients', services:'Services', stylists:'Stylists', hero:'Hero Section', announcements:'Announcements', reviews:'Reviews', newsletter:'Newsletter', messages:'Client Messages', settings:'Settings' };
 function navigateTo(key) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -78,6 +79,7 @@ function navigateTo(key) {
   document.getElementById('topbar-title').textContent = panels[key] || key;
   if (window.innerWidth <= 900) closeSidebar();
   if (key === 'messages') loadAdminConversations();
+  if (key === 'hero') loadHeroData();
 }
 
 function toggleSidebar() {
@@ -1192,10 +1194,19 @@ async function loadAdminConversations() {
   }
 }
 
+function adminCloseChat() {
+  var layout = document.getElementById('admin-messages-layout');
+  if (layout) layout.classList.remove('conv-open');
+}
+
 function openAdminConversation(convId) {
   activeConvId = convId;
   const conv = adminConversations.find(c => c.id === convId);
   if (!conv) return;
+
+  // On mobile: hide conv list, show full chat
+  var layout = document.getElementById('admin-messages-layout');
+  if (layout) layout.classList.add('conv-open');
 
   // Highlight selected
   document.querySelectorAll('[id^="conv-item-"]').forEach(el => el.style.background = '');
@@ -1243,18 +1254,50 @@ function renderAdminChatMessages(messages, convId) {
     body.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.25);font-size:.85rem;">No messages yet — say hello! 👋</div>';
     return;
   }
-  body.innerHTML = messages.map(m => {
+
+  let html = '';
+  let lastDateLabel = '';
+
+  messages.forEach((m, idx) => {
     const isAdmin = m.senderRole === 'admin';
-    const time = m.createdAt?.seconds
-      ? new Date(m.createdAt.seconds * 1000).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: true })
-      : 'Just now';
-    return `<div style="display:flex;flex-direction:column;align-items:${isAdmin ? 'flex-end' : 'flex-start'};max-width:75%;align-self:${isAdmin ? 'flex-end' : 'flex-start'};">
-      <div style="padding:10px 14px;border-radius:16px;font-size:.85rem;line-height:1.6;${isAdmin ? 'background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#1a0a2e;border-bottom-right-radius:4px;' : 'background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border-bottom-left-radius:4px;'}">${escapeAdminHtml(m.text)}</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.25);margin-top:4px;padding:0 4px;">${isAdmin ? 'You' : (m.senderName || 'Client')} · ${time}</div>
-    </div>`;
-  }).join('');
+    const side = isAdmin ? 'adm-out' : 'adm-in';
+
+    const msgDate = m.createdAt?.seconds ? new Date(m.createdAt.seconds * 1000) : new Date();
+    const time = msgDate.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Date separator
+    const today = new Date();
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    let dateLabel;
+    if (msgDate.toDateString() === today.toDateString()) dateLabel = 'Today';
+    else if (msgDate.toDateString() === yesterday.toDateString()) dateLabel = 'Yesterday';
+    else dateLabel = msgDate.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+
+    if (dateLabel !== lastDateLabel) {
+      html += `<div class="adm-date-sep"><span>${dateLabel}</span></div>`;
+      lastDateLabel = dateLabel;
+    }
+
+    // Sender label: show client name above first bubble in each incoming group
+    const prevMsg = idx > 0 ? messages[idx - 1] : null;
+    const prevIsAdmin = prevMsg ? prevMsg.senderRole === 'admin' : true;
+    const showLabel = !isAdmin && prevIsAdmin;
+    const labelHtml = showLabel
+      ? `<div class="adm-sender-label">${escapeAdminHtml(m.senderName || 'Client')}</div>`
+      : '';
+
+    html += `
+      <div class="adm-bubble-wrap ${side}">
+        ${labelHtml}
+        <div class="adm-bubble-text">${escapeAdminHtml(m.text)}</div>
+        <div class="adm-bubble-meta">${isAdmin ? 'You' : escapeAdminHtml(m.senderName || 'Client')} · ${time}</div>
+      </div>`;
+  });
+
+  body.innerHTML = html;
   body.scrollTop = body.scrollHeight;
 }
+
 
 async function sendAdminReply() {
   const inp = document.getElementById('admin-msg-input');
@@ -1304,6 +1347,240 @@ function escapeAdminHtml(text) {
 function startAdminMsgPolling() {
   updateAdminUnreadBadge(); // FIX: run immediately so badge shows on login, not after 60s
   setInterval(updateAdminUnreadBadge, 60000);
+}
+
+// =========== HERO SECTION MANAGEMENT ===========
+
+const CLOUDINARY_CLOUD_NAME = 'luxebraids'; // ← replace with your Cloudinary cloud name
+const CLOUDINARY_UPLOAD_PRESET = 'luxebraids_unsigned'; // ← replace with your unsigned upload preset
+
+let heroSlides = [];
+
+async function loadHeroData() {
+  if (!window._fb) { setTimeout(loadHeroData, 600); return; }
+  const { db, doc, getDoc } = window._fb;
+
+  // Load slides
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'heroSlides'));
+    if (snap.exists()) {
+      heroSlides = snap.data().list || [];
+    } else {
+      heroSlides = [];
+    }
+  } catch(e) { heroSlides = []; }
+  renderHeroSlidesList();
+
+  // Load content (title, subtitle, buttons, stats)
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'heroContent'));
+    if (snap.exists()) {
+      const d = snap.data();
+      if (d.titleLine1) document.getElementById('hero-title-line1').value = d.titleLine1;
+      if (d.titleLine2) document.getElementById('hero-title-line2').value = d.titleLine2;
+      if (d.subtitle) document.getElementById('hero-subtitle').value = d.subtitle;
+      if (d.badgeText) document.getElementById('hero-badge-text').value = d.badgeText;
+      if (d.btn1Label) document.getElementById('hero-btn1-label').value = d.btn1Label;
+      if (d.btn1Link) document.getElementById('hero-btn1-link').value = d.btn1Link;
+      if (d.btn2Label) document.getElementById('hero-btn2-label').value = d.btn2Label;
+      if (d.btn2Link) document.getElementById('hero-btn2-link').value = d.btn2Link;
+      if (d.stat1Num) document.getElementById('hero-stat1-num').value = d.stat1Num;
+      if (d.stat1Label) document.getElementById('hero-stat1-label').value = d.stat1Label;
+      if (d.stat2Num) document.getElementById('hero-stat2-num').value = d.stat2Num;
+      if (d.stat2Label) document.getElementById('hero-stat2-label').value = d.stat2Label;
+      if (d.stat3Num) document.getElementById('hero-stat3-num').value = d.stat3Num;
+      if (d.stat3Label) document.getElementById('hero-stat3-label').value = d.stat3Label;
+
+      // Toggles
+      if (typeof d.showTitle !== 'undefined') document.getElementById('hero-show-title').checked = d.showTitle;
+      if (typeof d.showSubtitle !== 'undefined') document.getElementById('hero-show-subtitle').checked = d.showSubtitle;
+      if (typeof d.showBadge !== 'undefined') document.getElementById('hero-show-badge').checked = d.showBadge;
+      if (typeof d.showBtn1 !== 'undefined') document.getElementById('hero-show-btn1').checked = d.showBtn1;
+      if (typeof d.showBtn2 !== 'undefined') document.getElementById('hero-show-btn2').checked = d.showBtn2;
+      if (typeof d.showStats !== 'undefined') document.getElementById('hero-show-stats').checked = d.showStats;
+    }
+  } catch(e) {}
+}
+
+function renderHeroSlidesList() {
+  const list = document.getElementById('hero-slides-list');
+  if (!list) return;
+  if (!heroSlides.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);">No slides yet — add your first hero slide above.</div>';
+    return;
+  }
+  list.innerHTML = heroSlides
+    .sort((a,b) => (a.order||0) - (b.order||0))
+    .map((slide, i) => {
+      const imgPreview = slide.imageUrl
+        ? `<img src="${slide.imageUrl}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;"/>`
+        : `<div style="width:80px;height:56px;background:rgba(255,255,255,.07);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:.7rem;">No img</div>`;
+      return `
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;">
+          ${imgPreview}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.8rem;font-weight:600;color:rgba(255,255,255,.85);">Slide ${i+1}${slide.imageUrl ? ' — has image' : ' — gradient only'}</div>
+            <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slide.gradient || 'No gradient set'}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn-icon btn-secondary" onclick="editHeroSlide(${i})" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon btn-danger" onclick="deleteHeroSlide(${i})" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+function openHeroSlideModal(index) {
+  document.getElementById('hero-slide-index').value = (index !== undefined) ? index : -1;
+  document.getElementById('hero-slide-file').value = '';
+  document.getElementById('hero-slide-img-url').value = '';
+  document.getElementById('hero-slide-gradient').value = '';
+  document.getElementById('hero-slide-order').value = heroSlides.length;
+  document.getElementById('hero-slide-upload-status').textContent = '';
+  // Reset preview
+  const preview = document.getElementById('hero-slide-img-preview');
+  preview.innerHTML = '<span style="color:rgba(255,255,255,.25);font-size:.82rem;" id="hero-img-placeholder-text"><i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No image yet</span>';
+  openModal('hero-slide');
+}
+
+function editHeroSlide(index) {
+  const slide = heroSlides[index];
+  if (!slide) return;
+  document.getElementById('hero-slide-index').value = index;
+  document.getElementById('hero-slide-img-url').value = slide.imageUrl || '';
+  document.getElementById('hero-slide-gradient').value = slide.gradient || '';
+  document.getElementById('hero-slide-order').value = slide.order !== undefined ? slide.order : index;
+  document.getElementById('hero-slide-upload-status').textContent = slide.imageUrl ? '✓ Image saved' : '';
+  // Show current image in preview
+  const preview = document.getElementById('hero-slide-img-preview');
+  if (slide.imageUrl) {
+    preview.innerHTML = `<img src="${slide.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"/>`;
+  } else {
+    preview.innerHTML = '<span style="color:rgba(255,255,255,.25);font-size:.82rem;" id="hero-img-placeholder-text"><i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No image yet</span>';
+  }
+  openModal('hero-slide');
+}
+
+function deleteHeroSlide(index) {
+  if (!confirm('Delete this slide?')) return;
+  heroSlides.splice(index, 1);
+  renderHeroSlidesList();
+  showToast('Slide removed. Click "Save & Publish" to apply.', 'gold');
+}
+
+async function handleHeroSlideImageSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('hero-slide-upload-status');
+  const preview = document.getElementById('hero-slide-img-preview');
+
+  status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading to Cloudinary…';
+  preview.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.8rem;"><i class="fas fa-spinner fa-spin"></i> Uploading…</div>';
+
+  try {
+    const url = await uploadToCloudinary(file);
+    document.getElementById('hero-slide-img-url').value = url;
+    status.innerHTML = '<span style="color:#4caf50;">✓ Uploaded successfully</span>';
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"/>`;
+    showToast('Image uploaded to Cloudinary! 🎉', 'success');
+  } catch(e) {
+    status.innerHTML = `<span style="color:#f44336;">✗ Upload failed: ${e.message}</span>`;
+    preview.innerHTML = '<span style="color:rgba(255,255,255,.25);font-size:.82rem;" id="hero-img-placeholder-text"><i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:8px;"></i>Upload failed</span>';
+    showToast('Cloudinary upload failed. Check cloud name & preset.', 'error');
+  }
+}
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'luxebraids/hero');
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+function saveHeroSlide() {
+  const indexVal = parseInt(document.getElementById('hero-slide-index').value);
+  const imageUrl = document.getElementById('hero-slide-img-url').value.trim();
+  const gradient = document.getElementById('hero-slide-gradient').value.trim();
+  const order = parseInt(document.getElementById('hero-slide-order').value) || 0;
+
+  if (!imageUrl && !gradient) {
+    showToast('Please upload an image or set a background gradient.', 'error');
+    return;
+  }
+
+  const slideData = { imageUrl: imageUrl || null, gradient: gradient || null, order };
+
+  if (indexVal === -1) {
+    heroSlides.push(slideData);
+    showToast('Slide added! Click "Save & Publish" to go live.', 'success');
+  } else {
+    heroSlides[indexVal] = slideData;
+    showToast('Slide updated! Click "Save & Publish" to go live.', 'success');
+  }
+
+  renderHeroSlidesList();
+  closeModal('modal-hero-slide');
+}
+
+async function saveHeroSlides() {
+  if (!window._fb) { showToast('Firebase not ready', 'error'); return; }
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'settings', 'heroSlides'), { list: heroSlides });
+    showToast('Hero slides saved & published! 🚀', 'success');
+    addActivity('Hero slides updated', `${heroSlides.length} slides now live`, 'gold');
+  } catch(e) {
+    showToast('Failed to save slides: ' + e.message, 'error');
+  }
+}
+
+async function saveHeroContent() {
+  if (!window._fb) { showToast('Firebase not ready', 'error'); return; }
+  const { db, doc, setDoc } = window._fb;
+
+  const content = {
+    titleLine1: document.getElementById('hero-title-line1').value.trim(),
+    titleLine2: document.getElementById('hero-title-line2').value.trim(),
+    subtitle: document.getElementById('hero-subtitle').value.trim(),
+    badgeText: document.getElementById('hero-badge-text').value.trim(),
+    showTitle: document.getElementById('hero-show-title').checked,
+    showSubtitle: document.getElementById('hero-show-subtitle').checked,
+    showBadge: document.getElementById('hero-show-badge').checked,
+    btn1Label: document.getElementById('hero-btn1-label').value.trim(),
+    btn1Link: document.getElementById('hero-btn1-link').value.trim(),
+    showBtn1: document.getElementById('hero-show-btn1').checked,
+    btn2Label: document.getElementById('hero-btn2-label').value.trim(),
+    btn2Link: document.getElementById('hero-btn2-link').value.trim(),
+    showBtn2: document.getElementById('hero-show-btn2').checked,
+    stat1Num: document.getElementById('hero-stat1-num').value.trim(),
+    stat1Label: document.getElementById('hero-stat1-label').value.trim(),
+    stat2Num: document.getElementById('hero-stat2-num').value.trim(),
+    stat2Label: document.getElementById('hero-stat2-label').value.trim(),
+    stat3Num: document.getElementById('hero-stat3-num').value.trim(),
+    stat3Label: document.getElementById('hero-stat3-label').value.trim(),
+    showStats: document.getElementById('hero-show-stats').checked,
+  };
+
+  try {
+    await setDoc(doc(db, 'settings', 'heroContent'), content);
+    showToast('Hero content saved & published! ✨', 'success');
+    addActivity('Hero content updated', 'Title, buttons & stats refreshed', 'gold');
+  } catch(e) {
+    showToast('Failed to save hero content: ' + e.message, 'error');
+  }
 }
 
 // =========== LOGOUT ===========

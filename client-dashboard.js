@@ -150,7 +150,7 @@ function populateUserUI(user) {
 
 async function handleLogout() {
   await window._fb.signOut(window._fb.auth);
-  window.location.href = 'client-login.html';
+  window.location.href = 'index.html';
 }
 
 // PASSWORD STRENGTH — no minimum restriction, visual only
@@ -211,7 +211,6 @@ function updateStats() {
   ['stat-points','ps-points','sl-points-val'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=userLoyaltyPoints; });
   ['stat-favs','ps-favs'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=fCount; });
   const bb = document.getElementById('bookings-badge'); if(bb) bb.textContent = userBookings.filter(b=>b.status==='pending'||b.status==='confirmed').length;
-  const fb = document.getElementById('fav-badge'); if(fb) fb.textContent = fCount;
 }
 
 function updateLoyaltyUI() {
@@ -891,7 +890,7 @@ function renderAdminMessages() {
       <i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4;"></i>
       No messages yet. Say hello! 👋
     </div>`;
-    updateThreadPreview('Start a conversation…', null);
+    updateThreadPreview('Start a conversation\u2026', null);
     return;
   }
 
@@ -899,9 +898,11 @@ function renderAdminMessages() {
   let lastDateLabel = '';
 
   clientMessages.forEach((m, idx) => {
-    // true = message sent by the client (YOU) → right side
-    // false = message sent by admin → left side
-    const isMe = m.senderRole === 'client' || m.senderId === user?.uid;
+    // true  = message sent by THIS client (YOU) → right / outgoing
+    // false = message sent by admin/studio      → left  / incoming
+    const isMe = m.senderRole === 'client' ||
+                 (m.senderRole !== 'admin' && m.senderId === user?.uid);
+    const side = isMe ? 'outgoing' : 'incoming';
 
     const msgDate = m.createdAt?.seconds ? new Date(m.createdAt.seconds * 1000) : new Date();
     const time = msgDate.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -915,43 +916,35 @@ function renderAdminMessages() {
     else dateLabel = msgDate.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
 
     if (dateLabel !== lastDateLabel) {
-      html += `<div style="display:flex;align-items:center;gap:10px;margin:10px 0;font-size:.7rem;color:var(--grey);">
-        <div style="flex:1;height:1px;background:var(--grey-light);"></div>
-        <span style="padding:2px 12px;border-radius:20px;border:1px solid var(--grey-light);background:var(--white-off);letter-spacing:.03em;">${dateLabel}</span>
-        <div style="flex:1;height:1px;background:var(--grey-light);"></div>
-      </div>`;
+      html += `<div class="msg-date-separator"><span>${dateLabel}</span></div>`;
       lastDateLabel = dateLabel;
     }
 
-    // ── Bubble styles ──
-    const wrapAlign  = isMe ? 'flex-end'   : 'flex-start';
-    const itemAlign  = isMe ? 'flex-end'   : 'flex-start';
-    const bubbleStyle = isMe
-      ? 'background:linear-gradient(135deg,var(--pink-deep),var(--pink-neon));color:#fff;border-radius:18px;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(255,45,120,.22);'
-      : 'background:var(--grey-light);color:var(--black-soft);border-radius:18px;border-bottom-left-radius:4px;';
+    // ── Read receipt (outgoing only) ──
+    const receipt = isMe
+      ? (m.readByAdmin
+          ? `<span class="msg-read-receipt read"><i class="fas fa-check-double"></i> Seen</span>`
+          : `<span class="msg-read-receipt sent"><i class="fas fa-check"></i> Sent</span>`)
+      : '';
 
-    // ── Read receipt (only on my messages) ──
-    let receipt = '';
-    if (isMe) {
-      receipt = m.readByAdmin
-        ? `<span style="font-size:.65rem;color:#22c55e;display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-check-double"></i> Seen</span>`
-        : `<span style="font-size:.65rem;color:var(--grey);display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-check"></i> Sent</span>`;
-    }
-
-    // ── Sender name label (show for admin messages when sender changes) ──
-    const prevMsg = idx > 0 ? clientMessages[idx - 1] : null;
-    const prevIsMe = prevMsg ? (prevMsg.senderRole === 'client' || prevMsg.senderId === user?.uid) : null;
-    const showLabel = !isMe && prevIsMe !== false;
+    // ── Sender label: show "LuxeBraids Studio" at the top of each incoming group ──
+    const prevMsg  = idx > 0 ? clientMessages[idx - 1] : null;
+    const prevIsMe = prevMsg
+      ? (prevMsg.senderRole === 'client' || (prevMsg.senderRole !== 'admin' && prevMsg.senderId === user?.uid))
+      : true;
+    const showLabel = !isMe && prevIsMe === true;
     const labelHtml = showLabel
-      ? `<div style="font-size:.7rem;font-weight:600;color:var(--purple);margin-bottom:3px;padding:0 4px;display:flex;align-items:center;gap:4px;"><i class="fas fa-crown" style="font-size:.6rem;"></i> LuxeBraids Studio</div>`
+      ? `<div class="msg-sender-label"><i class="fas fa-crown" style="font-size:.6rem;"></i> LuxeBraids Studio</div>`
       : '';
 
     html += `
-      <div style="display:flex;flex-direction:column;align-self:${wrapAlign};align-items:${itemAlign};max-width:72%;">
+      <div class="msg-bubble-wrap ${side}">
         ${labelHtml}
-        <div style="padding:10px 15px;font-size:.87rem;line-height:1.6;word-break:break-word;${bubbleStyle}">${escapeHtml(m.text)}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding:0 4px;${isMe ? 'justify-content:flex-end;' : ''}">
-          <span style="font-size:.68rem;color:var(--grey);">${isMe ? 'You' : (m.senderName || 'LuxeBraids')} · ${time}</span>
+        <div class="msg-bubble">
+          <div class="msg-bubble-text">${escapeHtml(m.text)}</div>
+        </div>
+        <div class="msg-bubble-meta">
+          <span class="msg-bubble-time">${isMe ? 'You' : (m.senderName || 'LuxeBraids')} · ${time}</span>
           ${receipt}
         </div>
       </div>`;
@@ -978,8 +971,8 @@ function updateThreadPreview(text, time) {
 function updateUnreadCount() {
   const user = window.currentUser;
   if (!user) return;
-  // Count messages from admin (not sent by client) that are unread
-  const unread = clientMessages.filter(m => m.senderId !== user.uid && !m.readByClient).length;
+  // Count messages from admin (senderRole === 'admin') that are unread
+  const unread = clientMessages.filter(m => m.senderRole === 'admin' && !m.readByClient).length;
   unreadMsgCount = unread;
 
   // Update notification badge
@@ -997,7 +990,7 @@ async function markMessagesRead() {
   const fb = window._fb; if (!fb) return;
   const convId = getConversationId(user.uid);
   // Mark all admin messages as read
-  const unreadMsgs = clientMessages.filter(m => m.senderId !== user.uid && !m.readByClient);
+  const unreadMsgs = clientMessages.filter(m => m.senderRole === 'admin' && !m.readByClient);
   for (const m of unreadMsgs) {
     try {
       await fb.updateDoc(fb.doc(fb.db, 'conversations', convId, 'messages', m.id), { readByClient: true });

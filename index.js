@@ -27,7 +27,7 @@ let activeHairTypeFilter = 'all'; // hair type filter state
 // =================== INIT ===================
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
-  initHeroSlider();
+  loadHeroFromFirestore(); // loads slides & content from Firestore, then starts slider
   initCategories();
   initBookingForm();
   initModals();
@@ -71,17 +71,183 @@ function initNavbar() {
   });
 }
 
+// =================== HERO — FIRESTORE POWERED ===================
+async function loadHeroFromFirestore() {
+  // Wait for Firebase to be ready
+  let tries = 0;
+  while (!window._fbGetDoc && tries < 20) { await new Promise(r => setTimeout(r, 300)); tries++; }
+  if (!window._fbGetDoc) { initHeroSlider(); return; } // fallback
+
+  const getDoc = window._fbGetDoc;
+  const docRef = window._fbDoc;
+  const db = window.firebaseDb;
+
+  // ---- Load Hero Slides ----
+  try {
+    const snap = await getDoc(docRef(db, 'settings', 'heroSlides'));
+    if (snap.exists()) {
+      const list = (snap.data().list || []).sort((a,b) => (a.order||0)-(b.order||0));
+      if (list.length) {
+        buildHeroSlides(list);
+      }
+    }
+  } catch(e) { /* keep default static slides */ }
+
+  // ---- Load Hero Content ----
+  try {
+    const snap = await getDoc(docRef(db, 'settings', 'heroContent'));
+    if (snap.exists()) {
+      applyHeroContent(snap.data());
+    }
+  } catch(e) { /* keep default static content */ }
+
+  initHeroSlider();
+}
+
+function buildHeroSlides(slides) {
+  const slider = document.getElementById('heroSlider');
+  const dotsContainer = document.querySelector('.slider-dots');
+  if (!slider) return;
+
+  slider.innerHTML = slides.map((slide, i) => {
+    const bgStyle = slide.gradient || 'linear-gradient(135deg, #1a0a0f 0%, #3d0a2a 40%, #1a0a0f 100%)';
+    const activeClass = i === 0 ? ' active' : '';
+    if (slide.imageUrl) {
+      // Full-bleed image slide — image sits below hero-overlay so text remains readable
+      return `<div class="hero-slide${activeClass}" style="background:${bgStyle};overflow:hidden;">
+        <img src="${slide.imageUrl}" alt="Hero slide ${i+1}"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.72;z-index:0;"/>
+      </div>`;
+    } else {
+      // Gradient-only slide with decorative braid art
+      return `<div class="hero-slide${activeClass}" style="background:${bgStyle};">
+        <div class="slide-visual">
+          <div class="slide-img-placeholder">
+            <div class="braid-art">
+              <div class="braid-circle c1"></div>
+              <div class="braid-circle c2"></div>
+              <div class="braid-circle c3"></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  // Rebuild dots to match new slide count
+  if (dotsContainer) {
+    dotsContainer.innerHTML = slides.map((_, i) =>
+      `<button class="dot${i===0?' active':''}" data-slide="${i}"></button>`
+    ).join('');
+  }
+  heroSlideIndex = 0;
+}
+
+function applyHeroContent(d) {
+  // Title
+  if (typeof d.showTitle !== 'undefined' && !d.showTitle) {
+    const titleEl = document.querySelector('.hero-title');
+    if (titleEl) titleEl.style.display = 'none';
+  } else {
+    const line1 = document.querySelector('.hero-title .title-line:first-child');
+    const line2 = document.querySelector('.hero-title .title-line.accent');
+    if (line1 && d.titleLine1) line1.textContent = d.titleLine1;
+    if (line2 && d.titleLine2) line2.textContent = d.titleLine2;
+  }
+
+  // Subtitle
+  const subtitleEl = document.querySelector('.hero-subtitle');
+  if (subtitleEl) {
+    if (typeof d.showSubtitle !== 'undefined' && !d.showSubtitle) {
+      subtitleEl.style.display = 'none';
+    } else if (d.subtitle) {
+      subtitleEl.textContent = d.subtitle;
+    }
+  }
+
+  // Badge
+  const badgeEl = document.querySelector('.hero-badge');
+  if (badgeEl) {
+    if (typeof d.showBadge !== 'undefined' && !d.showBadge) {
+      badgeEl.style.display = 'none';
+    } else {
+      const badgeTxt = badgeEl.querySelector('span:last-child');
+      if (badgeTxt && d.badgeText) badgeTxt.textContent = d.badgeText;
+    }
+  }
+
+  // Buttons
+  const ctaEl = document.querySelector('.hero-cta');
+  if (ctaEl) {
+    const btn1 = ctaEl.querySelector('.btn-hero-primary');
+    const btn2 = ctaEl.querySelector('.btn-hero-secondary');
+
+    if (btn1) {
+      if (typeof d.showBtn1 !== 'undefined' && !d.showBtn1) {
+        btn1.style.display = 'none';
+      } else {
+        // btn1 structure: <i class icon></i> TEXT <span class shimmer></span>
+        // safely update only the text node between icon and shimmer
+        if (d.btn1Label) {
+          const iconEl = btn1.querySelector('i');
+          const shimmerEl = btn1.querySelector('.btn-shimmer');
+          btn1.innerHTML = '';
+          if (iconEl) btn1.appendChild(iconEl);
+          btn1.appendChild(document.createTextNode(' ' + d.btn1Label + ' '));
+          if (shimmerEl) btn1.appendChild(shimmerEl);
+          else btn1.insertAdjacentHTML('beforeend', '<span class="btn-shimmer"></span>');
+        }
+        if (d.btn1Link) btn1.href = d.btn1Link;
+      }
+    }
+    if (btn2) {
+      if (typeof d.showBtn2 !== 'undefined' && !d.showBtn2) {
+        btn2.style.display = 'none';
+      } else {
+        // btn2 structure: TEXT <i class arrow></i>
+        if (d.btn2Label) {
+          const iconEl = btn2.querySelector('i');
+          btn2.innerHTML = '';
+          btn2.appendChild(document.createTextNode(d.btn2Label + ' '));
+          if (iconEl) btn2.appendChild(iconEl);
+          else btn2.insertAdjacentHTML('beforeend', '<i class="fas fa-arrow-right"></i>');
+        }
+        if (d.btn2Link) btn2.href = d.btn2Link;
+      }
+    }
+  }
+
+  // Stats
+  const statsEl = document.querySelector('.hero-stats');
+  if (statsEl) {
+    if (typeof d.showStats !== 'undefined' && !d.showStats) {
+      statsEl.style.display = 'none';
+    } else {
+      const nums = statsEl.querySelectorAll('.stat-num');
+      const labels = statsEl.querySelectorAll('.stat-label');
+      if (nums[0] && d.stat1Num) nums[0].textContent = d.stat1Num;
+      if (labels[0] && d.stat1Label) labels[0].textContent = d.stat1Label;
+      if (nums[1] && d.stat2Num) nums[1].textContent = d.stat2Num;
+      if (labels[1] && d.stat2Label) labels[1].textContent = d.stat2Label;
+      if (nums[2] && d.stat3Num) nums[2].textContent = d.stat3Num;
+      if (labels[2] && d.stat3Label) labels[2].textContent = d.stat3Label;
+    }
+  }
+}
+
 // =================== HERO SLIDER ===================
 function initHeroSlider() {
   const slides = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.dot');
+  if (!slides.length) return;
 
   function goToSlide(index) {
+    if (!slides[heroSlideIndex] || !slides[index]) return;
     slides[heroSlideIndex].classList.remove('active');
-    dots[heroSlideIndex].classList.remove('active');
+    if (dots[heroSlideIndex]) dots[heroSlideIndex].classList.remove('active');
     heroSlideIndex = index;
     slides[heroSlideIndex].classList.add('active');
-    dots[heroSlideIndex].classList.add('active');
+    if (dots[heroSlideIndex]) dots[heroSlideIndex].classList.add('active');
   }
 
   dots.forEach((dot, i) => {
@@ -92,8 +258,6 @@ function initHeroSlider() {
     goToSlide((heroSlideIndex + 1) % slides.length);
   }, 5000);
 }
-
-// =================== CATEGORIES ===================
 function initCategories() {
   // Category nav clicking is handled inside renderStyles after catalog is built
 }

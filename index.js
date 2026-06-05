@@ -1,5 +1,5 @@
 /* ============================================
-   LUXEBRAIDS — index.js
+   ANI BRAIDS — index.js
    Main website JavaScript
    ============================================ */
 

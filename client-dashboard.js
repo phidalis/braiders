@@ -1,5 +1,5 @@
 /* ============================================
-   LUXEBRAIDS — client-login.html JS
+   ANI BRAIDS — client-login.html JS
    Standalone: Firestore Auth + Full Dashboard
    ============================================ */
 
@@ -15,7 +15,7 @@ let unreadMsgCount = 0;
 // STATE
 let currentCatFilter = 'trending';
 let homeVisibleCount = 10;
-let likedCards = new Set(JSON.parse(localStorage.getItem('lb_likes')||'[]'));
+let likedCards = new Set(JSON.parse(localStorage.getItem('ab_likes')||'[]'));
 let userBookings = [];
 let userLoyaltyPoints = 0;
 
@@ -423,7 +423,7 @@ function filterStyles() { renderHomeStyles(); }
 function toggleLike(id, btn) {
   if(likedCards.has(id)){likedCards.delete(id);btn.classList.remove('liked');btn.innerHTML='<i class="far fa-heart"></i>';showToast('Removed from favourites','');}
   else{likedCards.add(id);btn.classList.add('liked');btn.innerHTML='<i class="fas fa-heart"></i>';showToast('Saved to favourites 💕','success');}
-  localStorage.setItem('lb_likes',JSON.stringify([...likedCards]));
+  localStorage.setItem('ab_likes',JSON.stringify([...likedCards]));
   updateStats();
 }
 
@@ -527,8 +527,8 @@ async function submitDashBooking(e) {
     await window._fb.updateDoc(window._fb.doc(window._fb.db,'users',user.uid), {loyaltyPoints:newPts, totalBookings: userBookings.length+1});
     showToast('🎉 +50 Loyalty Points earned!','gold');
   } catch(err) {
-    const stored=JSON.parse(localStorage.getItem('lb_bk_'+user.uid)||'[]');
-    stored.push(booking); localStorage.setItem('lb_bk_'+user.uid,JSON.stringify(stored));
+    const stored=JSON.parse(localStorage.getItem('ab_bk_'+user.uid)||'[]');
+    stored.push(booking); localStorage.setItem('ab_bk_'+user.uid,JSON.stringify(stored));
     userLoyaltyPoints += 50;
   }
   userBookings.unshift(booking); updateStats(); updateLoyaltyUI();
@@ -826,8 +826,8 @@ function initDbBookingStepsModal() {
       await window._fb.updateDoc(window._fb.doc(window._fb.db, 'users', user.uid), { loyaltyPoints: newPts, totalBookings: userBookings.length + 1 });
       showToast('🎉 +50 Loyalty Points earned!', 'gold');
     } catch(err) {
-      const stored = JSON.parse(localStorage.getItem('lb_bk_' + user.uid) || '[]');
-      stored.push(booking); localStorage.setItem('lb_bk_' + user.uid, JSON.stringify(stored));
+      const stored = JSON.parse(localStorage.getItem('ab_bk_' + user.uid) || '[]');
+      stored.push(booking); localStorage.setItem('ab_bk_' + user.uid, JSON.stringify(stored));
       userLoyaltyPoints += 50;
     }
 
@@ -874,7 +874,7 @@ async function loadAdminMessages(showRefreshToast) {
     });
   } catch(e) {
     if (loadingEl) loadingEl.style.display = 'none';
-    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--grey);font-size:.85rem;"><i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4;"></i>Start a conversation with LuxeBraids below 💬</div>';
+    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--grey);font-size:.85rem;"><i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4;"></i>Start a conversation with Ani Braids below 💬</div>';
   }
 }
 
@@ -934,7 +934,7 @@ function renderAdminMessages() {
       : true;
     const showLabel = !isMe && prevIsMe === true;
     const labelHtml = showLabel
-      ? `<div class="msg-sender-label"><i class="fas fa-crown" style="font-size:.6rem;"></i> LuxeBraids Studio</div>`
+      ? `<div class="msg-sender-label"><i class="fas fa-crown" style="font-size:.6rem;"></i> Ani Braids Studio</div>`
       : '';
 
     html += `
@@ -944,7 +944,7 @@ function renderAdminMessages() {
           <div class="msg-bubble-text">${escapeHtml(m.text)}</div>
         </div>
         <div class="msg-bubble-meta">
-          <span class="msg-bubble-time">${isMe ? 'You' : (m.senderName || 'LuxeBraids')} · ${time}</span>
+          <span class="msg-bubble-time">${isMe ? 'You' : (m.senderName || 'Ani Braids')} · ${time}</span>
           ${receipt}
         </div>
       </div>`;
@@ -1046,7 +1046,7 @@ async function sendAdminMessage() {
     inp.value = '';
   } catch(e) {
     // FIX: Log the real error so it's visible in DevTools console
-    console.error('[LuxeBraids] Message save failed:', e?.code, e?.message, e);
+    console.error('[Ani Braids] Message save failed:', e?.code, e?.message, e);
 
     // FIX: Show the actual error code in the toast so it's diagnosable
     const reason = e?.code === 'permission-denied'

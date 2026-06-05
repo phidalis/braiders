@@ -1,5 +1,5 @@
 /* ============================================
-   LUXEBRAIDS — Admin Dashboard JS
+   ANI BRAIDS — Admin Dashboard JS
    ============================================ */
 
 // =========== DATA ===========
@@ -177,7 +177,7 @@ async function loadAllData() {
   renderNewsletterTable(allNewsletter);
   renderReviews();
   renderAnalytics();
-  addActivity('Data loaded', 'All Firebase data fetched successfully', 'green');
+  addActivity('Data loaded', 'All Ani Braids data fetched successfully', 'green');
 }
 
 function getSampleBookings() {
@@ -908,7 +908,7 @@ function exportNewsletter() {
   const csv = 'Email,Date\n' + allNewsletter.map(s => `${s.email||''},${s.date||''}`).join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'luxebraids_subscribers.csv'; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = 'anibraids_subscribers.csv'; a.click();
   showToast('CSV exported! 📊', 'success');
 }
 
@@ -1314,7 +1314,7 @@ async function sendAdminReply() {
 
   const fb = window._fb; if (!fb) return;
   const adminUser = window.adminUser;
-  const adminName = adminUser?.displayName || adminUser?.email?.split('@')[0] || 'LuxeBraids Admin';
+  const adminName = adminUser?.displayName || adminUser?.email?.split('@')[0] || 'Ani Braids Admin';
 
   const msgData = {
     text: txt,
@@ -1479,7 +1479,7 @@ async function handleHeroSlideImageSelect(input) {
   preview.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.8rem;"><i class="fas fa-spinner fa-spin"></i> Uploading…</div>';
 
   try {
-    const url = await uploadToCloudinary(file, 'luxebraids/hero');
+    const url = await uploadToCloudinary(file, 'anibraids/hero');
     document.getElementById('hero-slide-img-url').value = url;
     status.innerHTML = '<span style="color:#4caf50;">✓ Uploaded successfully</span>';
     preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"/>`;

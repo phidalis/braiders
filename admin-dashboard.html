@@ -612,9 +612,34 @@
       <input type="hidden" id="svc-image-url"/>
       <input type="hidden" id="svc-image-urls-json" value="[]"/>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Price (USD)</label><input class="form-control" type="number" id="svc-price" placeholder="4500"/></div>
-      <div class="form-group"><label>Original Price (USD)</label><input class="form-control" type="number" id="svc-oprice" placeholder="5500 (leave blank if no discount)"/></div>
+    <!-- Price Mode Selector -->
+    <div class="form-group" id="price-mode-group">
+      <label>Price Type</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);font-size:.85rem;font-weight:500;">
+          <input type="radio" name="price-mode" value="single" checked onchange="onPriceModeChange(this.value)" style="accent-color:#d4a4eb;"/> Single Price
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);font-size:.85rem;font-weight:500;">
+          <input type="radio" name="price-mode" value="range" onchange="onPriceModeChange(this.value)" style="accent-color:#d4a4eb;"/> Price Range
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);font-size:.85rem;font-weight:500;">
+          <input type="radio" name="price-mode" value="promo" onchange="onPriceModeChange(this.value)" style="accent-color:#d4a4eb;"/> Promotional
+        </label>
+      </div>
+    </div>
+    <!-- Single Price -->
+    <div class="form-row" id="price-single-row">
+      <div class="form-group"><label>Price</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.5);font-weight:600;">$</span><input class="form-control" type="number" id="svc-price" placeholder="150" style="padding-left:28px;"/></div></div>
+    </div>
+    <!-- Range Price -->
+    <div class="form-row" id="price-range-row" style="display:none;">
+      <div class="form-group"><label>Price From</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.5);font-weight:600;">$</span><input class="form-control" type="number" id="svc-price-min" placeholder="150" style="padding-left:28px;"/></div></div>
+      <div class="form-group"><label>Price To</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.5);font-weight:600;">$</span><input class="form-control" type="number" id="svc-price-max" placeholder="200" style="padding-left:28px;"/></div></div>
+    </div>
+    <!-- Promo Price -->
+    <div class="form-row" id="price-promo-row" style="display:none;">
+      <div class="form-group"><label>Original Price</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.5);font-weight:600;">$</span><input class="form-control" type="number" id="svc-oprice" placeholder="200" style="padding-left:28px;"/></div></div>
+      <div class="form-group"><label>Promo / Sale Price</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.5);font-weight:600;">$</span><input class="form-control" type="number" id="svc-price" placeholder="150" style="padding-left:28px;"/></div></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Duration</label><input class="form-control" id="svc-duration" placeholder="6–8 hrs"/></div>

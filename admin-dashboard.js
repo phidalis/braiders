@@ -2,7 +2,26 @@
    ANI BRAIDS — Admin Dashboard JS
    ============================================ */
 
-// =========== DATA ===========
+// =========== PRICE HELPERS ===========
+function formatPriceDisplay(s, plain = false) {
+  const fmt = n => '$' + Number(n).toLocaleString();
+  if (s.priceMode === 'range' && s.priceMax) {
+    return plain ? `${fmt(s.price)}–${fmt(s.priceMax)}` : `${fmt(s.price)}–${fmt(s.priceMax)}`;
+  }
+  if (s.priceMode === 'promo' && s.originalPrice) {
+    return plain
+      ? `${fmt(s.price)} (was ${fmt(s.originalPrice)})`
+      : `${fmt(s.price)} <del style="color:rgba(255,255,255,.3);font-size:.75rem;">${fmt(s.originalPrice)}</del>`;
+  }
+  return fmt(s.price);
+}
+
+function onPriceModeChange(mode) {
+  document.getElementById('price-single-row').style.display = mode === 'single' ? '' : 'none';
+  document.getElementById('price-range-row').style.display  = mode === 'range'  ? '' : 'none';
+  document.getElementById('price-promo-row').style.display  = mode === 'promo'  ? '' : 'none';
+}
+
 const SERVICES = [
   {id:1,name:"Goddess Box Braids",emoji:"👑",price:4500,originalPrice:5500,duration:"6–8 hrs",badge:"Trending",hairType:"All types",hairLength:"Medium–Long",description:"Elegant goddess box braids with subtle curled ends. Perfect for queens who want length, volume, and timeless beauty.",bookings:89,rating:4.9},
   {id:2,name:"Knotless Braids",emoji:"✨",price:3800,originalPrice:null,duration:"5–7 hrs",badge:"Most Booked",hairType:"All types",hairLength:"Any",description:"Knotless braids start from your roots with zero tension. More natural look, less stress on your scalp.",bookings:156,rating:4.8},
@@ -206,7 +225,7 @@ function updateStats() {
 
   document.getElementById('stat-bookings').textContent = allBookings.length;
   document.getElementById('stat-clients').textContent = allClients.length || '—';
-  document.getElementById('stat-revenue').textContent = 'USD '+revenue.toLocaleString();
+  document.getElementById('stat-revenue').textContent = '$'+revenue.toLocaleString();
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-subs').textContent = allNewsletter.length;
 
@@ -470,7 +489,7 @@ function renderServices() {
         ? `<img src="${s.imageUrl}" alt="${s.name}" style="width:100%;height:160px;object-fit:cover;border-radius:10px;margin-bottom:10px;display:block;">`
         : `<div style="width:100%;height:160px;border-radius:10px;margin-bottom:10px;background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.25);font-size:.72rem;"><i class="fas fa-camera" style="font-size:1.6rem;opacity:.3;"></i><span>No image uploaded</span></div>`}
       <div class="service-name">${s.name}</div>
-      <div class="service-price">USD ${s.price.toLocaleString()}${s.originalPrice?` <del style="color:rgba(255,255,255,.3);font-size:.75rem;">USD ${s.originalPrice.toLocaleString()}</del>`:''}</div>
+      <div class="service-price">${formatPriceDisplay(s)}</div>
       <div class="service-meta">
         <span><i class="fas fa-clock"></i> ${s.duration}</span>
         <span><i class="fas fa-star"></i> ${s.rating}</span>
@@ -492,6 +511,14 @@ function editService(id) {
   document.getElementById('svc-name').value = s.name;
   document.getElementById('svc-price').value = s.price;
   document.getElementById('svc-oprice').value = s.originalPrice || '';
+  // Restore price mode
+  const mode = s.priceMode || (s.originalPrice ? 'promo' : (s.priceMax ? 'range' : 'single'));
+  const radioEl = document.querySelector(`input[name="price-mode"][value="${mode}"]`);
+  if (radioEl) { radioEl.checked = true; onPriceModeChange(mode); }
+  if (mode === 'range') {
+    document.getElementById('svc-price-min').value = s.price || '';
+    document.getElementById('svc-price-max').value = s.priceMax || '';
+  }
   document.getElementById('svc-duration').value = s.duration;
   document.getElementById('svc-badge').value = s.badge || '';
   document.getElementById('svc-desc').value = s.description;
@@ -595,8 +622,17 @@ async function uploadToCloudinary(file, folder) {
 
 async function saveService() {
   const name = document.getElementById('svc-name').value.trim();
-  const price = parseInt(document.getElementById('svc-price').value) || 0;
-  const oprice = parseInt(document.getElementById('svc-oprice').value) || null;
+  const priceMode = document.querySelector('input[name="price-mode"]:checked')?.value || 'single';
+  let price = 0, oprice = null, priceMax = null;
+  if (priceMode === 'range') {
+    price  = parseInt(document.getElementById('svc-price-min').value) || 0;
+    priceMax = parseInt(document.getElementById('svc-price-max').value) || null;
+  } else if (priceMode === 'promo') {
+    oprice = parseInt(document.getElementById('svc-oprice').value) || null;
+    price  = parseInt(document.getElementById('svc-price').value) || 0;
+  } else {
+    price  = parseInt(document.getElementById('svc-price').value) || 0;
+  }
   const duration = document.getElementById('svc-duration').value.trim();
   const badge = document.getElementById('svc-badge').value.trim() || null;
   const description = document.getElementById('svc-desc').value.trim();
@@ -638,11 +674,11 @@ async function saveService() {
 
   if (editingServiceId) {
     const idx = localServices.findIndex(s => s.id === editingServiceId);
-    if (idx !== -1) localServices[idx] = {...localServices[idx], name, imageUrl, imageUrls, category, price, originalPrice:oprice, duration, badge, description, hairType, hairLength};
+    if (idx !== -1) localServices[idx] = {...localServices[idx], name, imageUrl, imageUrls, category, price, priceMax, priceMode, originalPrice:oprice, duration, badge, description, hairType, hairLength};
     editingServiceId = null;
     document.querySelector('#modal-add-service .modal-header h3').textContent = '✂️ Add/Edit Service';
   } else {
-    localServices.push({ id: Date.now(), name, imageUrl, imageUrls, category, price, originalPrice:oprice, duration, badge, description, hairType, hairLength, bookings:0, rating:5.0 });
+    localServices.push({ id: Date.now(), name, imageUrl, imageUrls, category, price, priceMax, priceMode, originalPrice:oprice, duration, badge, description, hairType, hairLength, bookings:0, rating:5.0 });
   }
 
   if (window._fb) {
@@ -680,7 +716,7 @@ function populateStyleSelect() {
   const sel = document.getElementById('bk-style');
   if (!sel) return;
   sel.innerHTML = '<option value="">Select style…</option>' +
-    localServices.map(s => `<option value="${s.name}">${s.emoji||'✂️'} ${s.name} — USD ${s.price.toLocaleString()}</option>`).join('');
+    localServices.map(s => `<option value="${s.name}">${s.emoji||'✂️'} ${s.name} — ${formatPriceDisplay(s, true)}</option>`).join('');
 }
 
 // =========== STYLISTS ===========
@@ -924,7 +960,7 @@ function renderAnalytics() {
   });
 
   document.getElementById('an-bookings').textContent = total;
-  document.getElementById('an-revenue').textContent = 'USD ' + rev.toLocaleString();
+  document.getElementById('an-revenue').textContent = '$' + rev.toLocaleString();
   document.getElementById('an-clients').textContent = allClients.length || (total > 0 ? total : '—');
   document.getElementById('an-confirm').textContent = (total > 0 ? Math.round((confirmed + completed) / total * 100) : 0) + '%';
 
@@ -960,8 +996,8 @@ function renderAnalytics() {
   if (chart) {
     chart.innerHTML = vals.map((v, i) => `
       <div class="rev-bar-wrap">
-        <div class="rev-bar" style="height:${(v/max*100)}%;" title="USD ${v.toLocaleString()}">
-          <span class="rev-bar-tooltip">USD ${v.toLocaleString()}</span>
+        <div class="rev-bar" style="height:${(v/max*100)}%;" title="$${v.toLocaleString()}">
+          <span class="rev-bar-tooltip">$${v.toLocaleString()}</span>
         </div>
         <div class="rev-label">${months[i]}</div>
       </div>
@@ -1075,6 +1111,11 @@ function openAddServiceModal() {
   document.getElementById('svc-name').value = '';
   document.getElementById('svc-price').value = '';
   document.getElementById('svc-oprice').value = '';
+  document.getElementById('svc-price-min').value = '';
+  document.getElementById('svc-price-max').value = '';
+  // Reset price mode to single
+  const singleRadio = document.querySelector('input[name="price-mode"][value="single"]');
+  if (singleRadio) { singleRadio.checked = true; onPriceModeChange('single'); }
   document.getElementById('svc-duration').value = '';
   document.getElementById('svc-badge').value = '';
   document.getElementById('svc-desc').value = '';

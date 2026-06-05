@@ -72,7 +72,7 @@ function updateBookingStyleSelect() {
   const sel = document.getElementById('db-bookStyle');
   if (sel && hairstyles.length) {
     sel.innerHTML = '<option value="">Choose a style…</option>' +
-      hairstyles.map(s => `<option value="${s.name}">${s.name} — USD ${(+s.price).toLocaleString()}</option>`).join('');
+      hairstyles.map(s => `<option value="${s.name}">${s.name} — $${(+s.price).toLocaleString()}</option>`).join('');
   }
   // Also update BSM stylist select if modal is present
 }
@@ -190,8 +190,8 @@ async function loadUserBookings() {
   } catch(e) {
     // Demo bookings as fallback
     userBookings = [
-      {id:'BK001',style:'Goddess Box Braids — USD 4,500',date:'2025-05-31',time:'10:00 AM',stylist:'Zara',status:'confirmed',emoji:'👑'},
-      {id:'BK002',style:'Knotless Braids — USD 3,800',date:'2025-05-10',time:'2:00 PM',stylist:'Amina',status:'completed',emoji:'✨'},
+      {id:'BK001',style:'Goddess Box Braids — $4,500',date:'2025-05-31',time:'10:00 AM',stylist:'Zara',status:'confirmed',emoji:'👑'},
+      {id:'BK002',style:'Knotless Braids — $3,800',date:'2025-05-10',time:'2:00 PM',stylist:'Amina',status:'completed',emoji:'✨'},
     ];
   }
   renderBookings('all');
@@ -227,7 +227,7 @@ function updateLoyaltyUI() {
     {type:'earn',desc:'Booked Goddess Box Braids',pts:'+50',date:'28 May 2025'},
     {type:'earn',desc:'Welcome bonus',pts:'+50',date:'20 May 2025'},
     {type:'earn',desc:'Referral: Amara S.',pts:'+50',date:'15 May 2025'},
-    {type:'redeem',desc:'USD 200 discount redeemed',pts:'-100',date:'10 May 2025'},
+    {type:'redeem',desc:'$200 discount redeemed',pts:'-100',date:'10 May 2025'},
     {type:'earn',desc:'Completed: Knotless Braids',pts:'+50',date:'10 May 2025'},
   ].map(t=>`<div class="loyalty-txn"><div class="txn-icon ${t.type}"><i class="fas fa-${t.type==='earn'?'arrow-down':'arrow-up'}"></i></div><div class="txn-desc"><strong>${t.desc}</strong><span>${t.date}</span></div><div class="txn-pts ${t.type}">${t.pts} pts</div></div>`).join('');
 }
@@ -455,7 +455,7 @@ function renderBookings(filter) {
           <span><i class="fas fa-clock"></i> ${b.time||'—'}</span>
           <span><i class="fas fa-user"></i> ${b.stylist||'Stylist TBD'}</span>
           <span><i class="fas fa-hashtag"></i> ${b.id||'—'}</span>
-          ${b.price ? `<span><i class="fas fa-tag"></i> USD ${Number(b.price).toLocaleString()}</span>` : ''}
+          ${b.price ? `<span><i class="fas fa-tag"></i> $${Number(b.price).toLocaleString()}</span>` : ''}
         </div>
         ${b.notes ? `<div class="booking-notes"><i class="fas fa-comment"></i> ${b.notes}</div>` : ''}
       </div>
@@ -590,7 +590,7 @@ function openStyleModal(id) {
     </div>
     <div class="modal-details">
       <h2>${style.name}</h2>
-      <div class="modal-price">USD ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">USD ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
+      <div class="modal-price">${(() => { const fmt = n => '$' + Number(n).toLocaleString(); if (style.priceMode === 'range' && style.priceMax) return `${fmt(style.price)}–${fmt(style.priceMax)}`; if (style.priceMode === 'promo' && style.originalPrice) return `${fmt(style.price)} <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">${fmt(style.originalPrice)}</span>`; return fmt(style.price); })()}</div>
       <div class="modal-tags">
         ${style.category.map(c => `<span class="modal-tag">${c}</span>`).join('')}
       </div>
@@ -747,7 +747,7 @@ function buildDbBsmReview() {
   const notes   = document.getElementById('db-bsmNotes')?.value || '';
 
   const matched = hairstyles.find(s => s.name === dbBsmStyleName);
-  const priceStr = matched ? `USD ${matched.price.toLocaleString()}` : '';
+  const priceStr = matched ? `$${matched.price.toLocaleString()}` : '';
 
   const rows = [
     { icon: 'fas fa-scissors',  label: 'Style',    value: `${matched?.emoji || '✨'} ${dbBsmStyleName}${priceStr ? ' — ' + priceStr : ''}` },

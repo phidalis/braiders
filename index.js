@@ -520,9 +520,14 @@ function createCardHTML(style, theme = '') {
                      style.badge === 'Kids' ? 'kids' :
                      style.badge === "Men's" ? 'mens' : '';
   const badgeHTML = style.badge ? `<div class="card-badge badge-${badgeClass}">${style.badge}</div>` : '';
-  const priceHTML = style.originalPrice
-    ? `<div class="card-price">USD ${style.price.toLocaleString()} <span class="original">USD ${style.originalPrice.toLocaleString()}</span></div>`
-    : `<div class="card-price">USD ${style.price.toLocaleString()}</div>`;
+  const priceHTML = (() => {
+    const fmt = n => '$' + Number(n).toLocaleString();
+    if (style.priceMode === 'range' && style.priceMax)
+      return `<div class="card-price">${fmt(style.price)}–${fmt(style.priceMax)}</div>`;
+    if (style.priceMode === 'promo' && style.originalPrice)
+      return `<div class="card-price">${fmt(style.price)} <span class="original">${fmt(style.originalPrice)}</span></div>`;
+    return `<div class="card-price">${fmt(style.price)}</div>`;
+  })();
 
   const imgHTML = style.imageUrl
     ? `<img src="${style.imageUrl}" alt="${style.name}" class="card-img" loading="lazy">`
@@ -615,7 +620,7 @@ function openStyleModal(id) {
     </div>
     <div class="modal-details">
       <h2>${style.name}</h2>
-      <div class="modal-price">USD ${style.price.toLocaleString()}${style.originalPrice ? ` <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">USD ${style.originalPrice.toLocaleString()}</span>` : ''}</div>
+      <div class="modal-price">${(() => { const fmt = n => '$' + Number(n).toLocaleString(); if (style.priceMode === 'range' && style.priceMax) return `${fmt(style.price)}–${fmt(style.priceMax)}`; if (style.priceMode === 'promo' && style.originalPrice) return `${fmt(style.price)} <span style="text-decoration:line-through;color:#9ca3af;font-size:1rem">${fmt(style.originalPrice)}</span>`; return fmt(style.price); })()}</div>
       <div class="modal-tags">
         ${style.category.map(c => `<span class="modal-tag">${c}</span>`).join('')}
       </div>
@@ -768,7 +773,7 @@ function buildBsmReview() {
   const notes = document.getElementById('bsmNotes')?.value || '';
 
   const matchedService = SERVICES.find(s => s.name === bsmStyleName);
-  const priceStr = matchedService ? `USD ${matchedService.price.toLocaleString()}` : '';
+  const priceStr = matchedService ? `$${matchedService.price.toLocaleString()}` : '';
 
   const rows = [
     { icon: 'fas fa-scissors', label: 'Style', value: `${matchedService?.emoji || '✨'} ${bsmStyleName}${priceStr ? ' — ' + priceStr : ''}` },
@@ -1224,7 +1229,7 @@ async function loadLiveDataFromFirestore() {
         const sel = document.getElementById('bookStyle');
         if (sel) {
           sel.innerHTML = '<option value="">Choose a style…</option>' +
-            list.map(s => `<option value="${s.name}">${s.name} — USD ${(+s.price).toLocaleString()}</option>`).join('');
+            list.map(s => `<option value="${s.name}">${s.name} — $${(+s.price).toLocaleString()}</option>`).join('');
         }
       }
     }

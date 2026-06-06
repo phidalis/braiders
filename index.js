@@ -23,6 +23,7 @@ let visibleCount = 10;
 let likedCards = new Set(); // session-only for unauthenticated visitors
 let heroSlideIndex = 0;
 let activeHairTypeFilter = 'all'; // hair type filter state
+let bsmPaymentMethod = ''; // 'zelle' | 'cashapp'
 
 // =================== INIT ===================
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBookingForm();
   initModals();
   initBookingStepsModal();
+  loadPaymentMethodsFromFirestore();
   initLivePopups();
   initOfferTimer();
   initScrollReveal();
@@ -109,34 +111,42 @@ function buildHeroSlides(slides) {
   const dotsContainer = document.querySelector('.slider-dots');
   if (!slider) return;
 
-  slider.innerHTML = slides.map((slide, i) => {
+  // Pick colour variant for braid-art circles based on slide index
+  const variants = ['', 'purple', 'gold'];
+
+  // Only inject slides that have a real image URL from admin uploads.
+  // Gradient-only entries are skipped — the default static slides in the HTML
+  // already provide the gradient braid-art look, and we never want to wipe those.
+  const imageSlides = slides.filter(slide => slide.imageUrl);
+  if (!imageSlides.length) return; // nothing to add — keep the 3 default static slides
+
+  // APPEND uploaded image slides after the existing default slides so the
+  // original animated braid-art slides are always preserved.
+  const newSlideHTML = imageSlides.map((slide, i) => {
     const bgStyle = slide.gradient || 'linear-gradient(135deg, #1a0a0f 0%, #3d0a2a 40%, #1a0a0f 100%)';
-    const activeClass = i === 0 ? ' active' : '';
-    if (slide.imageUrl) {
-      // Full-bleed image slide — image sits below hero-overlay so text remains readable
-      return `<div class="hero-slide${activeClass}" style="background:${bgStyle};overflow:hidden;">
-        <img src="${slide.imageUrl}" alt="Hero slide ${i+1}"
-          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.72;z-index:0;"/>
-      </div>`;
-    } else {
-      // Gradient-only slide with decorative braid art
-      return `<div class="hero-slide${activeClass}" style="background:${bgStyle};">
-        <div class="slide-visual">
-          <div class="slide-img-placeholder">
-            <div class="braid-art">
-              <div class="braid-circle c1"></div>
-              <div class="braid-circle c2"></div>
-              <div class="braid-circle c3"></div>
-            </div>
+    const variant = variants[i % variants.length];
+    const variantClass = variant ? ` ${variant}` : '';
+
+    return `<div class="hero-slide" style="background:${bgStyle};">
+      <div class="slide-visual">
+        <div class="slide-img-placeholder${variantClass}">
+          <img src="${slide.imageUrl}" alt="Hero slide" class="hero-slide-img"/>
+          <div class="braid-art">
+            <div class="braid-circle c1${variantClass}"></div>
+            <div class="braid-circle c2${variantClass}"></div>
+            <div class="braid-circle c3${variantClass}"></div>
           </div>
         </div>
-      </div>`;
-    }
+      </div>
+    </div>`;
   }).join('');
 
-  // Rebuild dots to match new slide count
+  slider.insertAdjacentHTML('beforeend', newSlideHTML);
+
+  // Rebuild dots to match the new total (defaults + image slides)
   if (dotsContainer) {
-    dotsContainer.innerHTML = slides.map((_, i) =>
+    const totalSlides = slider.querySelectorAll('.hero-slide').length;
+    dotsContainer.innerHTML = Array.from({ length: totalSlides }, (_, i) =>
       `<button class="dot${i===0?' active':''}" data-slide="${i}"></button>`
     ).join('');
   }
@@ -500,38 +510,34 @@ function bindCardEvents(container) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const styleName = btn.dataset.style;
-      const bookSelect = document.getElementById('bookStyle');
-      if (bookSelect) {
-        for (let opt of bookSelect.options) {
-          if (opt.text === styleName) { bookSelect.value = opt.value; break; }
-        }
-      }
-      document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
-      showToast(`${styleName} selected! Complete your booking below 👑`, 'gold');
+      openBookingStepsModal(styleName);
     });
   });
 }
 
 function createCardHTML(style, theme = '') {
-  const stars = '★'.repeat(Math.floor(style.rating)) + (style.rating % 1 >= 0.5 ? '½' : '');
   const badgeClass = style.badge === 'Luxury' || style.badge === 'Premium' ? 'gold' :
                      style.badge === 'New' ? 'new' :
                      style.badge === 'On Offer' ? 'offer' :
                      style.badge === 'Kids' ? 'kids' :
                      style.badge === "Men's" ? 'mens' : '';
   const badgeHTML = style.badge ? `<div class="card-badge badge-${badgeClass}">${style.badge}</div>` : '';
-  const priceHTML = (() => {
-    const fmt = n => '$' + Number(n).toLocaleString();
-    if (style.priceMode === 'range' && style.priceMax)
-      return `<div class="card-price">${fmt(style.price)}–${fmt(style.priceMax)}</div>`;
-    if (style.priceMode === 'promo' && style.originalPrice)
-      return `<div class="card-price">${fmt(style.price)} <span class="original">${fmt(style.originalPrice)}</span></div>`;
-    return `<div class="card-price">${fmt(style.price)}</div>`;
-  })();
 
   const imgHTML = style.imageUrl
     ? `<img src="${style.imageUrl}" alt="${style.name}" class="card-img" loading="lazy">`
     : `<div class="card-img-no-image"><i class="fas fa-camera"></i><span>Image Coming Soon</span></div>`;
+
+  // Per-style star rating
+  const rating = parseFloat(style.rating) || 0;
+  const reviews = style.reviews || 0;
+  const fullStars = Math.floor(rating);
+  const halfStar = rating - fullStars >= 0.5;
+  let starsHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= fullStars) starsHTML += '<i class="fas fa-star"></i>';
+    else if (i === fullStars + 1 && halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
+    else starsHTML += '<i class="far fa-star"></i>';
+  }
 
   return `
     <div class="style-card" data-id="${style.id}">
@@ -545,6 +551,11 @@ function createCardHTML(style, theme = '') {
       </div>
       <div class="card-body">
         <div class="card-title">${style.name}</div>
+        <div class="card-rating">
+          <div class="card-stars">${starsHTML}</div>
+          <span class="card-rating-val">${rating > 0 ? rating.toFixed(1) : '—'}</span>
+          <span class="card-rating-count">${reviews > 0 ? `(${reviews})` : 'No reviews'}</span>
+        </div>
         <button class="btn-card-book" data-style="${style.name}">
           <i class="fas fa-calendar-check"></i> Book Now
         </button>
@@ -629,11 +640,14 @@ function openStyleModal(id) {
         <div class="modal-info-item"><label>Duration</label><span>${style.duration}</span></div>
         <div class="modal-info-item"><label>Hair Type</label><span>${style.hairType}</span></div>
         <div class="modal-info-item"><label>Length</label><span>${style.hairLength}</span></div>
-        <div class="modal-info-item"><label>Rating</label><span>${style.rating} ★ (${style.reviews} reviews)</span></div>
+        <div class="modal-info-item"><label>Bookings</label><span>🔥 ${style.bookings} booked</span></div>
       </div>
-      <div style="background:#fce8ef;border-radius:10px;padding:12px;margin-bottom:20px;font-size:0.82rem;color:#c0394d;font-weight:500;">
-        🔥 ${style.bookings} people have booked this style
-      </div>
+      <button class="btn-modal-ratings" id="btn-modal-ratings" onclick="toggleIndexModalRatings(${style.id})">
+        <i class="fas fa-star"></i> Ratings &amp; Reviews
+        <span class="modal-ratings-summary" id="modal-ratings-summary">${style.rating > 0 ? style.rating.toFixed(1) + ' ★ · ' + style.reviews + ' reviews' : 'No reviews yet'}</span>
+        <i class="fas fa-chevron-down modal-ratings-chevron" id="modal-ratings-chevron"></i>
+      </button>
+      <div class="modal-ratings-panel" id="modal-ratings-panel" style="display:none;"></div>
       <button class="btn-modal-book" onclick="bookFromModal('${style.name}')">
         <i class="fas fa-calendar-check"></i> Book This Style
       </button>
@@ -764,6 +778,96 @@ function goToBsmStep(step) {
   if (step === 3) buildBsmReview();
 }
 
+// Payment methods — loaded from Firestore (set in Admin > Site Settings)
+let PAYMENT_METHODS_LIST = []; // array of payment method objects from Firestore
+
+async function loadPaymentMethodsFromFirestore() {
+  // Wait for Firebase to be ready
+  let waited = 0;
+  while ((!window.firebaseDb || !window._fbGetDoc || !window._fbDoc) && waited < 6000) {
+    await new Promise(r => setTimeout(r, 200));
+    waited += 200;
+  }
+  try {
+    const db = window.firebaseDb;
+    if (!db || !window._fbGetDoc || !window._fbDoc) return;
+    const snap = await window._fbGetDoc(window._fbDoc(db, 'settings', 'paymentMethods'));
+    PAYMENT_METHODS_LIST = snap.exists() ? (snap.data().list || []) : [];
+  } catch(e) { PAYMENT_METHODS_LIST = []; }
+  renderPaymentMethodOptions();
+}
+
+function renderPaymentMethodOptions() {
+  const container = document.getElementById('bsmPaymentMethods');
+  if (!container) return;
+  if (!PAYMENT_METHODS_LIST.length) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:20px;">No payment methods configured. Please contact us to arrange payment.</p>';
+    return;
+  }
+  container.innerHTML = PAYMENT_METHODS_LIST.map((pm, i) => `
+    <div class="bsm-pay-option" id="bsmPayOpt_${i}" onclick="selectPaymentMethod(${i})">
+      <div class="bsm-pay-logo" style="background:${pm.iconColor||'#6D1ED4'};border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas ${pm.iconSymbol||'fa-credit-card'}" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div class="bsm-pay-info">
+        <div class="bsm-pay-name">${escHtmlIndex(pm.name)}</div>
+        <div class="bsm-pay-desc">${escHtmlIndex(pm.description||'')}</div>
+      </div>
+      <div class="bsm-pay-check"><i class="fas fa-check-circle"></i></div>
+    </div>
+  `).join('');
+}
+
+function escHtmlIndex(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Payment method selection (global so inline onclick can reach it)
+window.selectPaymentMethod = function(index) {
+  bsmPaymentMethod = String(index);
+  const pm = PAYMENT_METHODS_LIST[index];
+  if (!pm) return;
+
+  // Clear active on all options
+  document.querySelectorAll('#bsmPaymentMethods .bsm-pay-option').forEach(el => el.classList.remove('active'));
+  document.getElementById(`bsmPayOpt_${index}`)?.classList.add('active');
+
+  const detailsBox  = document.getElementById('bsmPayDetailsBox');
+  const copyValue   = document.getElementById('bsmPayCopyValue');
+  const detailsTitle= document.getElementById('bsmPayDetailsTitle');
+  const copyHint    = document.getElementById('bsmPayCopyHint');
+  const handleWrap  = document.getElementById('bsmPayHandleWrap');
+  const label       = document.getElementById('bsmPayHandleLabel');
+  const prefix      = document.getElementById('bsmPayPrefix');
+  const noteText    = document.getElementById('bsmPayNoteText');
+  const confirmBtn  = document.getElementById('bsmConfirmBtn');
+  const input       = document.getElementById('bsmPayHandle');
+  const copyBtn     = document.getElementById('bsmPayCopyBtn');
+
+  if (detailsBox)    detailsBox.style.display = '';
+  if (copyValue)     copyValue.textContent = pm.value || '';
+  if (detailsTitle)  detailsTitle.textContent = pm.hint ? 'Send payment to:' : 'Send payment to:';
+  if (copyHint)      copyHint.textContent = pm.hint || '';
+  if (handleWrap)    handleWrap.style.display = '';
+  if (confirmBtn)    confirmBtn.style.display = '';
+  if (copyBtn)       { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy'; copyBtn.classList.remove('copied'); }
+  if (label)         label.textContent = pm.inputLabel || 'Your name / handle';
+  if (prefix)        prefix.innerHTML = `<i class="fas ${pm.iconSymbol||'fa-user'}"></i>`;
+  if (noteText)      noteText.textContent = pm.note || 'Send payment using the details above, then enter your name below.';
+  if (input)         input.placeholder = pm.inputPlaceholder || 'e.g. Jane Smith';
+};
+
+window.copyPaymentDetail = function() {
+  const val = document.getElementById('bsmPayCopyValue')?.textContent;
+  const btn = document.getElementById('bsmPayCopyBtn');
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Copied!'; btn.classList.add('copied'); }
+    showToast('Payment detail copied! 📋', 'success');
+    setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; btn.classList.remove('copied'); } }, 2500);
+  }).catch(() => {
+    showToast('Copy failed — please copy manually', 'error');
+  });
+};
+
 function buildBsmReview() {
   const date = document.getElementById('bsmDate').value;
   const time = document.getElementById('bsmTime').value;
@@ -822,20 +926,43 @@ function initBookingStepsModal() {
     goToBsmStep(3);
   });
 
-  // Confirm → submit
+  // Step 3 → 4 (proceed to payment)
+  document.getElementById('bsmNext3')?.addEventListener('click', () => {
+    // Reset payment state when entering step 4
+    bsmPaymentMethod = '';
+    document.getElementById('bsmPayZelle')?.classList.remove('active');
+    document.getElementById('bsmPayCashapp')?.classList.remove('active');
+    const detailsBox = document.getElementById('bsmPayDetailsBox');
+    const handleWrap = document.getElementById('bsmPayHandleWrap');
+    const confirmBtn = document.getElementById('bsmConfirmBtn');
+    const input      = document.getElementById('bsmPayHandle');
+    const copyBtn    = document.getElementById('bsmPayCopyBtn');
+    if (detailsBox) detailsBox.style.display = 'none';
+    if (handleWrap) handleWrap.style.display = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    if (input)      input.value = '';
+    if (copyBtn)    { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy'; copyBtn.classList.remove('copied'); }
+    goToBsmStep(4);
+  });
+
+  // Confirm → submit (step 4)
   document.getElementById('bsmConfirmBtn')?.addEventListener('click', async () => {
+    const payHandle = document.getElementById('bsmPayHandle')?.value.trim();
+    if (!bsmPaymentMethod) { showToast('Please select a payment method 💳', 'error'); return; }
+    if (!payHandle)        { showToast('Please enter your payment name / handle 📝', 'error'); return; }
+
     const btn = document.getElementById('bsmConfirmBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
     btn.disabled  = true;
 
     const selectedStyle  = bsmStyleName;
     const matchedService = SERVICES.find(s => s.name === selectedStyle);
     const bookingRef     = 'BK' + Date.now();
-    const date  = document.getElementById('bsmDate').value;
-    const time  = document.getElementById('bsmTime').value;
+    const date    = document.getElementById('bsmDate').value;
+    const time    = document.getElementById('bsmTime').value;
     const stylist = document.getElementById('bsmStylist').value;
-    const name  = document.getElementById('bsmName').value;
-    const phone = document.getElementById('bsmPhone').value;
+    const name    = document.getElementById('bsmName').value;
+    const phone   = document.getElementById('bsmPhone').value;
 
     // Sync style to main booking select so other page logic stays in sync
     const bookSelect = document.getElementById('bookStyle');
@@ -852,13 +979,13 @@ function initBookingStepsModal() {
     }
 
     if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc) {
-      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
       btn.disabled  = false;
       showToast('Could not connect. Please refresh and try again.', 'error');
       return;
     }
     if (!window.currentUser) {
-      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
       btn.disabled  = false;
       showToast('Authentication not ready. Please refresh and try again.', 'error');
       return;
@@ -868,16 +995,19 @@ function initBookingStepsModal() {
       await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
         style: selectedStyle,
         date, time, stylist, name, phone,
-        status:   'pending',
-        emoji:    matchedService?.emoji || '✨',
-        price:    matchedService?.price || null,
+        status:        'pending',
+        emoji:         matchedService?.emoji || '✨',
+        price:         matchedService?.price || null,
         bookingRef,
-        userId:   window.currentUser.uid,
+        userId:        window.currentUser.uid,
+        paymentMethod: PAYMENT_METHODS_LIST[parseInt(bsmPaymentMethod)]?.name || bsmPaymentMethod,
+        paymentHandle: payHandle,             // name/cashtag/email they sent from
+        paymentStatus: 'awaiting_verification',
         createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
       });
     } catch (err) {
       console.error('Firestore booking save failed:', err.code, err.message);
-      btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+      btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
       btn.disabled  = false;
       showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
       return;
@@ -885,15 +1015,16 @@ function initBookingStepsModal() {
 
     // Success — close steps modal, show confirm modal
     closeBsmModal();
-    btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+    btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
     btn.disabled  = false;
 
     const confirmModal = document.getElementById('confirmModal');
     const confirmMsg   = document.getElementById('confirmMsg');
-    if (confirmMsg) confirmMsg.textContent = `Your ${selectedStyle} appointment on ${formatDate(date)} at ${time} has been confirmed! We'll WhatsApp you at ${phone} shortly.`;
+    const methodLabel  = PAYMENT_METHODS_LIST[parseInt(bsmPaymentMethod)]?.name || bsmPaymentMethod;
+    if (confirmMsg) confirmMsg.textContent = `Your ${selectedStyle} appointment on ${formatDate(date)} at ${time} is pending payment verification. Once we confirm your ${methodLabel} payment from "${payHandle}", we'll approve your booking and notify you via WhatsApp at ${phone}. 💳✨`;
     confirmModal?.classList.add('open');
     document.body.style.overflow = 'hidden';
-    showToast('Booking confirmed! 🎉', 'success');
+    showToast('Booking submitted! Awaiting payment verification 🎉', 'success');
   });
 }
 
@@ -1253,21 +1384,87 @@ async function loadLiveDataFromFirestore() {
       const list = htSnap.data().list;
       if (Array.isArray(list) && list.length) buildHairTypeFilterBar(list);
     }
+
+    // ---- Site configuration (contact section, footer, page title) ----
+    const siteSnap = await getDoc(docFn(db, 'settings', 'site'));
+    if (siteSnap.exists()) {
+      const s = siteSnap.data();
+
+      // Page title
+      if (s.studioName) document.title = `${s.studioName} – Premium Braiding Studio`;
+
+      // Nav + logo instances
+      document.querySelectorAll('.logo-main').forEach(el => { if (s.studioName) el.textContent = s.studioName; });
+
+      // Contact section — targeted by ID
+      const setEl = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+      if (s.location)    setEl('site-location', s.location.replace(', ', '<br>'));
+      if (s.phone || s.hoursWeekday) {
+        const parts = [s.phone, s.hoursWeekday ? `Mon–Fri ${s.hoursWeekday}` : ''].filter(Boolean);
+        setEl('site-phone', parts.join('<br>'));
+      }
+      if (s.hoursWeekday || s.hoursWeekend) {
+        const parts = [];
+        if (s.hoursWeekday) parts.push(`Mon–Fri: ${s.hoursWeekday}`);
+        if (s.hoursWeekend) parts.push(`Sat–Sun: ${s.hoursWeekend}`);
+        setEl('site-hours', parts.join('<br>'));
+      }
+      if (s.email) setEl('site-email', `${s.email}<br>Response within 2 hours`);
+
+      // Footer tagline & copyright
+      const footerTagline = document.querySelector('.footer-brand p');
+      if (footerTagline && s.tagline) footerTagline.textContent = s.tagline;
+      const footerCopy = document.querySelector('.footer-bottom p');
+      if (footerCopy && s.studioName) {
+        footerCopy.textContent = `© ${new Date().getFullYear()} ${s.studioName}. All rights reserved.`;
+      }
+    }
   } catch(e) { /* Firebase unavailable — catalog stays empty until retry */ }
 }
 
 // Run once Firebase globals are ready (set by the inline module in index.html)
 (function waitAndLoad() {
-  if (window.firebaseDb && window._fbGetDoc && window._fbDoc) { loadLiveDataFromFirestore(); }
+  if (window.firebaseDb && window._fbGetDoc && window._fbDoc) {
+    loadLiveDataFromFirestore();
+    loadStylistsIntoSelects();
+  }
   else { setTimeout(waitAndLoad, 200); }
 })();
 
-// =================== REVIEWS (lxb- namespaced, no conflicts) ===================
+// =========== STYLIST SELECTS (Firestore-backed) ===========
+async function loadStylistsIntoSelects() {
+  // Wait for fsGetDocs to be available
+  let tries = 0;
+  while (!window.fsGetDocs && tries < 20) { await new Promise(r => setTimeout(r, 300)); tries++; }
+  if (!window.fsGetDocs || !window.firebaseDb) return;
+
+  try {
+    const snap = await window.fsGetDocs(window.fsCollection(window.firebaseDb, 'stylists'));
+    const stylists = snap.docs.map(d => d.data()).filter(s => s.status !== 'inactive');
+
+    // #bookStylist — "Name — Specialty: X" format
+    const bookSel = document.getElementById('bookStylist');
+    if (bookSel) {
+      bookSel.innerHTML = '<option value="">Choose stylist…</option>' +
+        stylists.map(s => `<option>${s.name} — Specialty: ${s.specialty || 'General'}</option>`).join('');
+    }
+
+    // #bsmStylist — name only, with "Any Available" first
+    const bsmSel = document.getElementById('bsmStylist');
+    if (bsmSel) {
+      bsmSel.innerHTML = '<option value="any">Any Available Stylist</option>' +
+        stylists.map(s => `<option>${s.name}</option>`).join('');
+    }
+  } catch(e) {
+    console.warn('Could not load stylists:', e);
+  }
+}
+
+
+
+// =================== REVIEWS CAROUSEL (homepage section) ===================
 (function () {
   'use strict';
-
-  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Absolutely Amazing! 🌟'];
-  let pickedRating = 0;
 
   // Wait until Firebase globals are ready
   function onFirebase(cb) {
@@ -1292,7 +1489,7 @@ async function loadLiveDataFromFirestore() {
         <div class="review-avatar">${initials}</div>
         <div>
           <div class="review-name">${r.name || 'Anonymous'}</div>
-          <div class="review-style">${r.style || 'Verified Client'}</div>
+          <div class="review-style">${r.styleName || r.style || 'Verified Client'}</div>
         </div>
         <span class="verified-badge">✓ Verified</span>
       </div>
@@ -1313,18 +1510,17 @@ async function loadLiveDataFromFirestore() {
     if (!track) return;
 
     try {
-      const { collection, query, where, orderBy, limit, getDocs } =
+      const { collection, query, where, limit, getDocs } =
         await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
       const q = query(
         collection(window.firebaseDb, 'reviews'),
-        where('status', '==', 'published'),
+        where('status', '==', 'approved'),
         limit(20)
       );
       const snap = await getDocs(q);
       const reviews = [];
       snap.forEach(d => reviews.push({ id: d.id, ...d.data() }));
-      // Sort by createdAt descending in JS (avoids needing a composite Firestore index)
       reviews.sort((a, b) => {
         const toMs = v => v?.seconds ? v.seconds * 1000 : (v ? new Date(v).getTime() : 0);
         return toMs(b.createdAt) - toMs(a.createdAt);
@@ -1332,20 +1528,18 @@ async function loadLiveDataFromFirestore() {
 
       loading.style.display = 'none';
 
-      if (!reviews.length) { empty.style.display = 'block'; return; }
+      if (!reviews.length) { if (empty) empty.style.display = 'block'; return; }
 
-      // Update average
       const avg = (reviews.reduce((s, r) => s + (r.rating || 5), 0) / reviews.length).toFixed(1);
       if (avgNum) avgNum.textContent = avg;
       if (avgLbl) avgLbl.textContent = `Based on ${reviews.length} verified review${reviews.length !== 1 ? 's' : ''}`;
 
-      // Render cards (no duplication needed — manual scroll)
       reviews.forEach(r => track.appendChild(buildCard(r)));
-      wrap.style.display = 'block';
+      if (wrap) wrap.style.display = 'block';
       initReviewsScroll();
 
     } catch (e) {
-      loading.style.display = 'none';
+      if (loading) loading.style.display = 'none';
       if (empty) empty.style.display = 'block';
     }
   }
@@ -1369,12 +1563,9 @@ async function loadLiveDataFromFirestore() {
     track.addEventListener('scroll', updateButtons);
     updateButtons();
 
-    // Drag-to-scroll (mouse)
     let isDown = false, startX, scrollLeftStart;
     track.addEventListener('mousedown', e => {
-      isDown = true;
-      startX = e.pageX - track.offsetLeft;
-      scrollLeftStart = track.scrollLeft;
+      isDown = true; startX = e.pageX - track.offsetLeft; scrollLeftStart = track.scrollLeft;
     });
     document.addEventListener('mouseup', () => { isDown = false; });
     track.addEventListener('mousemove', e => {
@@ -1409,91 +1600,165 @@ async function loadLiveDataFromFirestore() {
     document.getElementById('lxbDetailOverlay').onclick = () => modal.classList.remove('lxb-open');
   }
 
-  // ---- WRITE REVIEW MODAL ----
-  function initWriteModal() {
-    const openBtn  = document.getElementById('btnWriteReview');
-    const modal    = document.getElementById('lxbWriteModal');
-    const overlay  = document.getElementById('lxbWriteOverlay');
-    const closeBtn = document.getElementById('lxbWriteClose');
-    const submitBtn= document.getElementById('lxbSubmitBtn');
-    const textarea = document.getElementById('lxbRvText');
-    const charEl   = document.getElementById('lxbChar');
-    const hint     = document.getElementById('lxbStarHint');
-    if (!openBtn || !modal) return;
+  // Boot
+  onFirebase(() => { loadReviews(); });
+})();
 
-    function openModal() {
-      pickedRating = 0;
-      document.querySelectorAll('.lxb-star').forEach(s => s.classList.remove('on'));
-      if (hint) hint.textContent = 'Tap to rate';
-      const nameF = document.getElementById('lxbRvName');
-      if (nameF) nameF.value = window.currentUser?.displayName || '';
-      if (textarea) textarea.value = '';
-      if (charEl) charEl.textContent = '0 / 500';
-      document.getElementById('lxbWriteForm').style.display = 'block';
-      document.getElementById('lxbWriteSuccess').style.display = 'none';
-      const submitEl = document.getElementById('lxbSubmitBtn');
-      if (submitEl) { submitEl.disabled = false; submitEl.innerHTML = '<i class="fas fa-heart"></i> Submit Review<span class="btn-shimmer"></span>'; }
-      modal.classList.add('lxb-open');
-    }
+// =================== PER-STYLE RATINGS (index.js) ===================
+let _idxRatingsOpenStyleId = null;
+let _idxRatingsVisible = false;
+let _idxCurrentRatingVal = 0;
 
-    openBtn.addEventListener('click', openModal);
-    overlay.addEventListener('click', () => modal.classList.remove('lxb-open'));
-    closeBtn.addEventListener('click', () => modal.classList.remove('lxb-open'));
+async function toggleIndexModalRatings(styleId) {
+  const panel   = document.getElementById('modal-ratings-panel');
+  const chevron = document.getElementById('modal-ratings-chevron');
+  if (!panel) return;
 
-    // Stars
-    const starBtns = document.querySelectorAll('.lxb-star');
-    starBtns.forEach(s => {
-      s.addEventListener('click', () => {
-        pickedRating = +s.dataset.v;
-        starBtns.forEach((b, i) => b.classList.toggle('on', i < pickedRating));
-        if (hint) hint.textContent = starLabels[pickedRating];
-      });
-      s.addEventListener('mouseenter', () => {
-        const v = +s.dataset.v;
-        starBtns.forEach((b, i) => b.classList.toggle('on', i < v));
-      });
-    });
-    document.getElementById('lxbStarPicker')?.addEventListener('mouseleave', () => {
-      starBtns.forEach((b, i) => b.classList.toggle('on', i < pickedRating));
-    });
-
-    // Char count
-    textarea?.addEventListener('input', () => {
-      if (charEl) charEl.textContent = `${textarea.value.length} / 500`;
-    });
-
-    // Submit
-    submitBtn?.addEventListener('click', async () => {
-      const name = document.getElementById('lxbRvName')?.value.trim();
-      const text = textarea?.value.trim();
-      if (!pickedRating)        { showToast('Please select a star rating.', 'error'); return; }
-      if (!name)                { showToast('Please enter your name.', 'error'); return; }
-      if (!text || text.length < 10) { showToast('Please write at least 10 characters.', 'error'); return; }
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
-
-      try {
-        const { collection, addDoc, serverTimestamp } =
-          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        await addDoc(collection(window.firebaseDb, 'reviews'), {
-          userId:    window.currentUser?.uid || null,
-          name,
-          rating:    pickedRating,
-          text,
-          status:    'pending',
-          createdAt: serverTimestamp()
-        });
-      } catch (e) { /* submit silently */ }
-
-      document.getElementById('lxbWriteForm').style.display = 'none';
-      document.getElementById('lxbWriteSuccess').style.display = 'block';
-    });
+  if (_idxRatingsVisible && _idxRatingsOpenStyleId === styleId) {
+    panel.style.display = 'none';
+    _idxRatingsVisible = false;
+    if (chevron) chevron.style.transform = '';
+    return;
   }
 
-  // Boot
-  onFirebase(() => {
-    loadReviews();
-    initWriteModal();
-  });
-})();
+  _idxRatingsOpenStyleId = styleId;
+  _idxRatingsVisible = true;
+  if (chevron) chevron.style.transform = 'rotate(180deg)';
+  panel.style.display = 'block';
+  panel.innerHTML = `<div class="srp-loading"><i class="fas fa-spinner fa-spin"></i> Loading reviews…</div>`;
+
+  let existingReviews = [];
+  try {
+    const { collection, query, where, orderBy, getDocs } =
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap = await getDocs(query(
+      collection(window.firebaseDb, 'reviews'),
+      where('styleId', '==', styleId),
+      where('status', '==', 'approved')
+    ));
+    existingReviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { /* no approved reviews yet */ }
+
+  _idxCurrentRatingVal = 0;
+  renderIndexRatingsPanel(panel, styleId, existingReviews);
+}
+
+function renderIndexRatingsPanel(panel, styleId, reviews) {
+  const style = hairstyles.find(s => s.id === styleId);
+  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Amazing! 🌟'];
+
+  let avgHtml = '';
+  if (reviews.length) {
+    const avg = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
+    const dist = [5,4,3,2,1].map(n => {
+      const cnt = reviews.filter(r => r.rating === n).length;
+      const pct = Math.round((cnt / reviews.length) * 100);
+      return `<div class="srp-bar-row"><span class="srp-bar-label">${n}★</span><div class="srp-bar-outer"><div class="srp-bar-fill" style="width:${pct}%"></div></div><span class="srp-bar-count">${cnt}</span></div>`;
+    }).join('');
+    avgHtml = `<div class="srp-aggregate"><div class="srp-avg-big">${avg}<span>/ 5</span></div><div class="srp-bars">${dist}</div></div>`;
+  }
+
+  const reviewsHtml = reviews.length
+    ? reviews.map(r => {
+        const date = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '';
+        const stars = Array.from({length:5}, (_,i) => `<i class="${i < r.rating ? 'fas' : 'far'} fa-star"></i>`).join('');
+        return `<div class="srp-review-item">
+          <div class="srp-review-top">
+            <div class="srp-review-avatar">${(r.name||'A')[0].toUpperCase()}</div>
+            <div class="srp-review-meta"><div class="srp-review-name">${r.name || 'Verified Client'}</div><div class="srp-review-stars">${stars}</div></div>
+            ${date ? `<div class="srp-review-date">${date}</div>` : ''}
+          </div>
+          <div class="srp-review-text">${r.text}</div>
+        </div>`;
+      }).join('')
+    : `<div class="srp-no-reviews"><i class="far fa-star"></i><p>No reviews yet. Be the first to rate this style!</p></div>`;
+
+  // Show name field since visitors may not be logged in
+  const formHtml = `
+    <div class="srp-form" id="srp-form-${styleId}">
+      <div class="srp-form-title">Leave a Rating</div>
+      <div class="srp-star-row" id="srp-stars-${styleId}">
+        ${[1,2,3,4,5].map(v => `<button type="button" class="srp-star" data-v="${v}"><i class="fas fa-star"></i></button>`).join('')}
+      </div>
+      <div class="srp-star-hint" id="srp-hint-${styleId}">Tap to rate</div>
+      <input class="srp-name-input" id="srp-name-${styleId}" type="text" maxlength="60" placeholder="Your name…" value="${window.currentUser?.displayName || ''}"/>
+      <textarea class="srp-textarea" id="srp-text-${styleId}" rows="3" maxlength="500" placeholder="Share your experience with this style…"></textarea>
+      <button class="srp-submit-btn" id="srp-submit-${styleId}" onclick="submitIndexStyleRating(${styleId})">
+        <i class="fas fa-paper-plane"></i> Submit Rating
+      </button>
+      <div class="srp-submitted" id="srp-success-${styleId}" style="display:none;">
+        <i class="fas fa-check-circle"></i> Thank you! Your review will appear once approved.
+      </div>
+    </div>`;
+
+  panel.innerHTML = `
+    <div class="srp-panel">
+      ${avgHtml}
+      ${formHtml}
+      <div class="srp-reviews-section">
+        <div class="srp-reviews-title">${reviews.length} Review${reviews.length !== 1 ? 's' : ''}</div>
+        <div class="srp-reviews-list">${reviewsHtml}</div>
+      </div>
+    </div>`;
+
+  // Bind stars
+  const starsEl = document.getElementById(`srp-stars-${styleId}`);
+  const hintEl  = document.getElementById(`srp-hint-${styleId}`);
+  if (starsEl) {
+    const starBtns = starsEl.querySelectorAll('.srp-star');
+    starBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        _idxCurrentRatingVal = +btn.dataset.v;
+        starBtns.forEach((b, i) => b.classList.toggle('on', i < _idxCurrentRatingVal));
+        if (hintEl) hintEl.textContent = starLabels[_idxCurrentRatingVal];
+      });
+      btn.addEventListener('mouseenter', () => starBtns.forEach((b, i) => b.classList.toggle('on', i < +btn.dataset.v)));
+    });
+    starsEl.addEventListener('mouseleave', () => {
+      starsEl.querySelectorAll('.srp-star').forEach((b, i) => b.classList.toggle('on', i < _idxCurrentRatingVal));
+    });
+  }
+}
+
+async function submitIndexStyleRating(styleId) {
+  const style   = hairstyles.find(s => s.id === styleId);
+  const name    = document.getElementById(`srp-name-${styleId}`)?.value.trim();
+  const text    = document.getElementById(`srp-text-${styleId}`)?.value.trim();
+  if (!_idxCurrentRatingVal) { showToast('Please tap a star to rate.', 'error'); return; }
+  if (!name)                 { showToast('Please enter your name.', 'error'); return; }
+  if (!text || text.length < 5) { showToast('Please write at least 5 characters.', 'error'); return; }
+
+  const btn = document.getElementById(`srp-submit-${styleId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…'; }
+
+  try {
+    const { collection, addDoc, serverTimestamp } =
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await addDoc(collection(window.firebaseDb, 'reviews'), {
+      styleId,
+      styleName: style?.name || '',
+      userId:    window.currentUser?.uid || null,
+      name,
+      rating:    _idxCurrentRatingVal,
+      text,
+      status:    'pending',
+      createdAt: serverTimestamp(),
+    });
+  } catch(e) { /* silent */ }
+
+  const form    = document.getElementById(`srp-form-${styleId}`);
+  const success = document.getElementById(`srp-success-${styleId}`);
+  if (form) {
+    form.querySelectorAll('textarea, input, button').forEach(el => el.style.display = 'none');
+    ['srp-form-title','srp-star-row','srp-star-hint'].forEach(cls => {
+      const el = form.querySelector(`.${cls}`);
+      if (el) el.style.display = 'none';
+    });
+    const titleEl = form.querySelector('.srp-form-title');
+    if (titleEl) titleEl.style.display = 'none';
+  }
+  if (success) success.style.display = 'flex';
+}
+
+window.toggleIndexModalRatings = toggleIndexModalRatings;
+window.submitIndexStyleRating  = submitIndexStyleRating;

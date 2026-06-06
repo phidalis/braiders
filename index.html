@@ -13,7 +13,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -36,6 +36,7 @@
   window.fsCollection = collection;
   window.fsAddDoc = addDoc;
   window.fsServerTimestamp = serverTimestamp;
+  window.fsGetDocs = getDocs;
   // Expose so index.js can read Firestore settings (services, announcements)
   window._fbGetDoc = getDoc;
   window._fbDoc = doc;
@@ -125,7 +126,7 @@
       <a href="#trending" class="nav-link">Trending Styles</a>
       <a href="#about" class="nav-link">About</a>
       <a href="#contact" class="nav-link">Contact</a>
-      <a href="#booking" class="nav-link btn-book-nav">
+      <a href="#" class="nav-link btn-book-nav" onclick="openBookingStepsModal('');return false;">
         <i class="fas fa-calendar-check"></i> Book Now
       </a>
     </div>
@@ -141,7 +142,7 @@
     <a href="#trending">Trending Styles</a>
     <a href="#about">About</a>
     <a href="#contact">Contact</a>
-    <a href="#booking">Book Appointment</a>
+    <a href="#" onclick="openBookingStepsModal('');return false;">Book Appointment</a>
     <a href="client-login.html" id="mobile-login-link">Login</a>
     <a href="client-login.html#signup" id="mobile-signup-link" class="mobile-signup">Sign Up Free</a>
   </div>
@@ -199,7 +200,7 @@
     </h1>
     <p class="hero-subtitle">Luxury braiding experiences crafted for queens. Every strand tells your story.</p>
     <div class="hero-cta">
-      <a href="#booking" class="btn-hero-primary">
+      <a href="#" onclick="openBookingStepsModal('');return false;" class="btn-hero-primary">
         <i class="fas fa-calendar-star"></i>
         Book Appointment
         <span class="btn-shimmer"></span>
@@ -284,85 +285,6 @@
 <!-- CATALOG — all category sections rendered by JS -->
 <div id="catalogContainer"></div>
 
-<!-- BOOKING SECTION -->
-<section class="booking-section" id="booking">
-  <div class="booking-bg-art"></div>
-  <div class="booking-container">
-    <div class="booking-left">
-      <span class="section-eyebrow">Reserve Your Spot</span>
-      <h2 class="booking-title">Book Your <em>Luxury</em><br>Appointment</h2>
-      <p>Every seat in our studio is a throne. Choose your style, pick your time, and leave looking like royalty.</p>
-      <div class="booking-perks">
-        <div class="perk"><i class="fas fa-check-circle"></i> Instant confirmation</div>
-        <div class="perk"><i class="fas fa-check-circle"></i> Free consultation included</div>
-        <div class="perk"><i class="fas fa-check-circle"></i> Flexible rescheduling</div>
-        <div class="perk"><i class="fas fa-check-circle"></i> Loyalty points on every booking</div>
-      </div>
-    </div>
-    <div class="booking-form-card">
-      <h3>Quick Booking</h3>
-      <form class="booking-form" id="bookingForm">
-        <div class="form-group">
-          <label>Select Style</label>
-          <select id="bookStyle" required>
-            <option value="">Choose a hairstyle…</option>
-            <option>Goddess Box Braids</option>
-            <option>Knotless Braids</option>
-            <option>Fulani Braids</option>
-            <option>Boho Braids</option>
-            <option>Lemonade Braids</option>
-            <option>Butterfly Locs</option>
-            <option>Faux Locs</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="bookDate" required/>
-          </div>
-          <div class="form-group">
-            <label>Time</label>
-            <select id="bookTime" required>
-              <option value="">Select time…</option>
-              <option>9:00 AM</option>
-              <option>10:00 AM</option>
-              <option>11:00 AM</option>
-              <option>1:00 PM</option>
-              <option>2:00 PM</option>
-              <option>3:00 PM</option>
-              <option>4:00 PM</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Select Stylist</label>
-          <select id="bookStylist" required>
-            <option value="">Choose stylist…</option>
-            <option>Zara — Specialty: Box Braids</option>
-            <option>Amina — Specialty: Locs & Twists</option>
-            <option>Destiny — Specialty: Bridal Styles</option>
-            <option>Kezia — Specialty: Kids & Quick</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="bookName" placeholder="Your name" required/>
-        </div>
-        <div class="form-group">
-          <label>Phone / WhatsApp</label>
-          <input type="tel" id="bookPhone" placeholder="+254 7XX XXX XXX" required/>
-        </div>
-        <button type="submit" class="btn-book-submit">
-          <i class="fas fa-crown"></i> Confirm Booking
-          <span class="btn-shimmer"></span>
-        </button>
-        <p class="booking-note">🔒 No payment required now. Pay at studio.</p>
-      </form>
-    </div>
-  </div>
-</section>
-
-
 <!-- ABOUT SECTION -->
 <section class="about-section" id="about">
   <div class="about-content-only">
@@ -370,7 +292,7 @@
     <h2>Crafting <em>Luxury</em><br>One Braid at a Time</h2>
     <p>Ani Braids was born from a belief that every woman deserves to feel like royalty. Our master stylists combine traditional braiding techniques with modern luxury to create hairstyles that turn heads and build confidence.</p>
     <p>From intimate knotless braids to elaborate bridal crowns, every appointment is an experience in self-care and artistry.</p>
-    <a href="#booking" class="btn-about-cta">Book Your Experience</a>
+    <a href="#" onclick="openBookingStepsModal('');return false;" class="btn-about-cta">Book Your Experience</a>
   </div>
 </section>
 
@@ -496,22 +418,22 @@
     <div class="contact-card">
       <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
       <h4>Studio Location</h4>
-      <p>Seattle, Washington<br>USA</p>
+      <p id="site-location">Seattle, Washington<br>USA</p>
     </div>
     <div class="contact-card">
       <div class="contact-icon"><i class="fab fa-whatsapp"></i></div>
       <h4>WhatsApp Us</h4>
-      <p>+1 202 424 4894<br>Mon – Sat 8AM–8PM</p>
+      <p id="site-phone">+1 202 424 4894<br>Mon – Sat 8AM–8PM</p>
     </div>
     <div class="contact-card">
       <div class="contact-icon"><i class="fas fa-clock"></i></div>
       <h4>Studio Hours</h4>
-      <p>Mon–Fri: 8AM – 8PM<br>Sat–Sun: 9AM – 6PM</p>
+      <p id="site-hours">Mon–Fri: 8AM – 8PM<br>Sat–Sun: 9AM – 6PM</p>
     </div>
     <div class="contact-card">
       <div class="contact-icon"><i class="fas fa-envelope"></i></div>
       <h4>Email Us</h4>
-      <p>hello@anibraids.com<br>Response within 2 hours</p>
+      <p id="site-email">hello@anibraids.com<br>Response within 2 hours</p>
     </div>
   </div>
 </section>
@@ -538,7 +460,7 @@
     <div class="footer-links-col">
       <h5>Quick Links</h5>
       <a href="#trending">Trending Styles</a>
-      <a href="#booking">Book Appointment</a>
+      <a href="#" onclick="openBookingStepsModal('');return false;">Book Appointment</a>
       <a href="#reviews">Reviews</a>
       <a href="#about">About Us</a>
       <a href="#contact">Contact</a>
@@ -591,6 +513,63 @@
   </a>
 </div>
 
+<!-- PER-STYLE RATING MODAL -->
+<div class="lxb-modal-wrap" id="styleRatingModal">
+  <div class="lxb-modal-overlay" id="styleRatingOverlay"></div>
+  <div class="lxb-modal-box" style="max-width:480px;">
+    <button class="lxb-modal-close" id="styleRatingClose"><i class="fas fa-times"></i></button>
+    <div class="lxb-modal-head">
+      <div class="lxb-modal-emoji">⭐</div>
+      <h3 id="styleRatingTitle">Rate This Style</h3>
+      <p id="styleRatingSubtitle">Share your experience with this look</p>
+    </div>
+    <!-- Tabs -->
+    <div class="sr-tabs">
+      <button class="sr-tab active" id="srTabWrite" onclick="switchSrTab('write')"><i class="fas fa-pen"></i> Write a Review</button>
+      <button class="sr-tab" id="srTabRead" onclick="switchSrTab('read')"><i class="fas fa-comments"></i> All Reviews <span class="sr-tab-count" id="srTabCount">0</span></button>
+    </div>
+    <!-- Write tab -->
+    <div id="srWritePane">
+      <div id="srFormWrap">
+        <div class="lxb-star-row">
+          <label>Your rating</label>
+          <div class="lxb-stars" id="srStars">
+            <button type="button" class="lxb-star" data-v="1"><i class="fas fa-star"></i></button>
+            <button type="button" class="lxb-star" data-v="2"><i class="fas fa-star"></i></button>
+            <button type="button" class="lxb-star" data-v="3"><i class="fas fa-star"></i></button>
+            <button type="button" class="lxb-star" data-v="4"><i class="fas fa-star"></i></button>
+            <button type="button" class="lxb-star" data-v="5"><i class="fas fa-star"></i></button>
+          </div>
+          <span class="lxb-star-hint" id="srHint">Tap to rate</span>
+        </div>
+        <div class="lxb-field">
+          <label>Your Name</label>
+          <input type="text" id="srName" placeholder="e.g. Amara S." maxlength="40"/>
+        </div>
+        <div class="lxb-field">
+          <label>Your Review</label>
+          <textarea id="srText" rows="4" maxlength="500" placeholder="How did this style turn out? Any tips for others?…"></textarea>
+        </div>
+        <button type="button" class="btn-lxb-submit" id="srSubmit">
+          <i class="fas fa-heart"></i> Submit Review
+        </button>
+        <p class="lxb-note">Reviews appear publicly after approval by our team.</p>
+      </div>
+      <div class="lxb-success" id="srSuccess" style="display:none;">
+        <div class="lxb-success-emoji">🎉</div>
+        <h4>Thank You, Queen!</h4>
+        <p>Your review will appear once approved by our team.</p>
+        <button class="btn-lxb-review" onclick="switchSrTab('read')" style="margin-top:16px;">See All Reviews</button>
+      </div>
+    </div>
+    <!-- Read tab -->
+    <div id="srReadPane" style="display:none;">
+      <div class="sr-summary" id="srSummary"></div>
+      <div id="srReviewsList"><div style="text-align:center;padding:24px;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Loading reviews…</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- HAIRSTYLE MODAL (FULLSCREEN) -->
 <div class="style-modal" id="styleModal">
   <div class="modal-overlay" id="modalOverlay"></div>
@@ -638,7 +617,12 @@
         <div class="bsm-step-line"></div>
         <div class="bsm-step" data-step="3">
           <div class="bsm-step-circle">3</div>
-          <span>Confirm</span>
+          <span>Review</span>
+        </div>
+        <div class="bsm-step-line"></div>
+        <div class="bsm-step" data-step="4">
+          <div class="bsm-step-circle">4</div>
+          <span>Payment</span>
         </div>
       </div>
     </div>
@@ -669,8 +653,6 @@
           <label><i class="fas fa-user-tie"></i> Stylist</label>
           <select id="bsmStylist" class="bsm-input">
             <option value="any">Any Available Stylist</option>
-            <option>Zara</option><option>Destiny</option><option>Amara</option>
-            <option>Faith</option><option>Grace</option>
           </select>
         </div>
         <button class="bsm-btn-next" id="bsmNext1">
@@ -704,15 +686,52 @@
       <div class="bsm-panel" id="bsmPanel3">
         <div class="bsm-panel-header">
           <div class="bsm-panel-icon">✨</div>
-          <h3>Review & Confirm</h3>
-          <p>Everything looks good? Let's lock it in!</p>
+          <h3>Review Booking</h3>
+          <p>Everything looks good? Proceed to payment.</p>
         </div>
         <div class="bsm-review-card" id="bsmReviewCard">
           <!-- Populated by JS -->
         </div>
-        <p class="bsm-note">🔒 No payment required now. Pay at studio.</p>
-        <button class="bsm-btn-confirm" id="bsmConfirmBtn">
-          <i class="fas fa-crown"></i> Confirm Booking
+        <button class="bsm-btn-next" id="bsmNext3" style="margin-top:20px;">
+          Proceed to Payment <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <!-- Step 4: Payment -->
+      <div class="bsm-panel" id="bsmPanel4">
+        <div class="bsm-panel-header">
+          <div class="bsm-panel-icon">💳</div>
+          <h3>Secure Payment</h3>
+          <p>Select your payment method to complete booking</p>
+        </div>
+        <!-- Payment method selector — populated dynamically from Firestore -->
+        <div class="bsm-payment-methods" id="bsmPaymentMethods">
+          <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading payment methods…</div>
+        </div>
+        <!-- Payment details copy box (shown after method selection) -->
+        <div class="bsm-pay-details-box" id="bsmPayDetailsBox" style="display:none;">
+          <div class="bsm-pay-details-title" id="bsmPayDetailsTitle">Send payment to:</div>
+          <div class="bsm-pay-copy-row">
+            <span class="bsm-pay-copy-value" id="bsmPayCopyValue">—</span>
+            <button class="bsm-pay-copy-btn" id="bsmPayCopyBtn" onclick="copyPaymentDetail()">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="bsm-pay-copy-hint" id="bsmPayCopyHint">Tap to copy, then open your app and send</div>
+        </div>
+        <!-- Your name / handle input -->
+        <div class="bsm-pay-handle-wrap" id="bsmPayHandleWrap" style="display:none;">
+          <div class="bsm-pay-handle-label" id="bsmPayHandleLabel">Your name as it appears in the app</div>
+          <div class="bsm-pay-handle-input-row">
+            <span class="bsm-pay-prefix" id="bsmPayPrefix"><i class="fas fa-user"></i></span>
+            <input type="text" id="bsmPayHandle" class="bsm-input" placeholder="e.g. Jane Smith or jane@email.com" autocomplete="off"/>
+          </div>
+          <div class="bsm-pay-note" id="bsmPayNote">
+            <i class="fas fa-info-circle"></i>
+            <span id="bsmPayNoteText">Send your payment, paste your name/handle above, then submit.</span>
+          </div>
+        </div>
+        <button class="bsm-btn-confirm" id="bsmConfirmBtn" style="display:none;margin-top:20px;">
+          <i class="fas fa-lock"></i> Submit Booking &amp; Payment
           <span class="btn-shimmer"></span>
         </button>
       </div>

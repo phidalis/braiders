@@ -269,7 +269,7 @@
                 <div class="form-group"><label>Hair Style</label><select id="db-bookStyle"><option value="">Choose a style…</option></select></div>
                 <div class="form-group"><label>Date</label><input type="date" id="db-bookDate"/></div>
                 <div class="form-group"><label>Time</label><select id="db-bookTime"><option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option></select></div>
-                <div class="form-group"><label>Stylist</label><select id="db-bookStylist"><option>Any Available Stylist</option><option>Zara — Box Braids</option><option>Amina — Locs & Twists</option><option>Destiny — Bridal</option><option>Kezia — Kids & Quick</option></select></div>
+                <div class="form-group"><label>Stylist</label><select id="db-bookStylist"><option value="">Loading stylists…</option></select></div>
                 <div class="form-group full"><label>Full Name</label><input type="text" id="db-bookName" placeholder="Your full name"/></div>
                 <div class="form-group full"><label>Phone / WhatsApp</label><input type="tel" id="db-bookPhone" placeholder="+254 7XX XXX XXX"/></div>
                 <button type="submit" class="btn-book-submit"><i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span></button>
@@ -299,10 +299,10 @@
         <div class="dash-eyebrow">Get in Touch</div>
         <div class="dash-section-title" style="margin-bottom:16px;">Visit Us or Say Hello</div>
         <div class="dash-contact-grid">
-          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div><h4>Studio Location</h4><p>Westlands, Nairobi<br>Kenya</p></div>
-          <div class="contact-card reveal"><div class="contact-icon"><i class="fab fa-whatsapp"></i></div><h4>WhatsApp Us</h4><p>+254 700 000 000<br>Mon–Sat 8AM–8PM</p></div>
-          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-clock"></i></div><h4>Studio Hours</h4><p>Mon–Fri: 8AM–8PM<br>Sat–Sun: 9AM–6PM</p></div>
-          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-envelope"></i></div><h4>Email Us</h4><p>hello@anibraids.com<br>Response within 2 hours</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div><h4>Studio Location</h4><p id="cd-site-location">Westlands, Nairobi<br>Kenya</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fab fa-whatsapp"></i></div><h4>WhatsApp Us</h4><p id="cd-site-phone">+254 700 000 000<br>Mon–Sat 8AM–8PM</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-clock"></i></div><h4>Studio Hours</h4><p id="cd-site-hours">Mon–Fri: 8AM–8PM<br>Sat–Sun: 9AM–6PM</p></div>
+          <div class="contact-card reveal"><div class="contact-icon"><i class="fas fa-envelope"></i></div><h4>Email Us</h4><p id="cd-site-email">hello@anibraids.com<br>Response within 2 hours</p></div>
         </div>
       </div>
 
@@ -319,55 +319,6 @@
           <button class="btn-new-booking" onclick="navigateTo('overview');setTimeout(()=>document.getElementById('home-booking-section').scrollIntoView({behavior:'smooth'}),300)"><i class="fas fa-plus"></i> New Booking</button>
         </div>
         <div id="bookings-list"></div>
-
-        <!-- REVIEW PROMPT — shown only when completed bookings exist -->
-        <div class="lxb-rp-card" id="lxbRpCard" style="display:none;">
-          <div class="lxb-rp-icon">👑</div>
-          <div class="lxb-rp-text">
-            <div class="lxb-rp-title">How was your experience?</div>
-            <div class="lxb-rp-sub">Share your thoughts — it only takes a moment.</div>
-          </div>
-          <button class="lxb-rp-btn" id="lxbRpBtn"><i class="fas fa-star"></i> Leave a Review</button>
-        </div>
-      </div>
-
-      <!-- DASHBOARD REVIEW MODAL -->
-      <div class="lxb-modal-wrap" id="lxbDbModal">
-        <div class="lxb-modal-overlay" id="lxbDbOverlay"></div>
-        <div class="lxb-modal-box">
-          <button class="lxb-modal-close" id="lxbDbClose"><i class="fas fa-times"></i></button>
-          <div class="lxb-modal-head">
-            <div class="lxb-modal-emoji">✨</div>
-            <h3>Rate Your Visit</h3>
-            <p>Tell us how it went — it only takes a second</p>
-          </div>
-          <div id="lxbDbFormWrap">
-            <div class="lxb-star-row">
-              <label>Your rating</label>
-              <div class="lxb-stars" id="lxbDbStars">
-                <button type="button" class="lxb-star" data-v="1"><i class="fas fa-star"></i></button>
-                <button type="button" class="lxb-star" data-v="2"><i class="fas fa-star"></i></button>
-                <button type="button" class="lxb-star" data-v="3"><i class="fas fa-star"></i></button>
-                <button type="button" class="lxb-star" data-v="4"><i class="fas fa-star"></i></button>
-                <button type="button" class="lxb-star" data-v="5"><i class="fas fa-star"></i></button>
-              </div>
-              <span class="lxb-star-hint" id="lxbDbHint">Tap to rate</span>
-            </div>
-            <div class="lxb-field">
-              <label>Your review</label>
-              <textarea id="lxbDbText" rows="4" maxlength="500" placeholder="What did you love? Any style you'd recommend?…"></textarea>
-            </div>
-            <button type="button" class="lxb-db-submit" id="lxbDbSubmit">
-              <i class="fas fa-heart"></i> Submit Review
-            </button>
-          </div>
-          <div class="lxb-success" id="lxbDbSuccess" style="display:none;">
-            <div class="lxb-success-emoji">🎉</div>
-            <h4>Thank You, Queen!</h4>
-            <p>Your review will appear once approved by our team.</p>
-            <button class="lxb-rp-btn" onclick="document.getElementById('lxbDbModal').classList.remove('lxb-open')" style="margin-top:16px;">Done</button>
-          </div>
-        </div>
       </div>
 
       <!-- FAVOURITES -->
@@ -525,7 +476,9 @@
           <div class="bsm-step-line"></div>
           <div class="bsm-step" data-step="2"><div class="bsm-step-circle">2</div><span>Details</span></div>
           <div class="bsm-step-line"></div>
-          <div class="bsm-step" data-step="3"><div class="bsm-step-circle">3</div><span>Confirm</span></div>
+          <div class="bsm-step" data-step="3"><div class="bsm-step-circle">3</div><span>Review</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="4"><div class="bsm-step-circle">4</div><span>Payment</span></div>
         </div>
       </div>
       <div class="bsm-body" id="db-bsmBody">
@@ -545,8 +498,6 @@
           <div class="bsm-form-group"><label><i class="fas fa-user-tie"></i> Stylist</label>
             <select id="db-bsmStylist" class="bsm-input">
               <option value="any">Any Available Stylist</option>
-              <option>Zara</option><option>Destiny</option><option>Amara</option>
-              <option>Faith</option><option>Grace</option>
             </select>
           </div>
           <button class="bsm-btn-next" id="db-bsmNext1">Continue <i class="fas fa-arrow-right"></i></button>
@@ -559,13 +510,50 @@
           <div class="bsm-form-group"><label><i class="fas fa-comment"></i> Special Requests (optional)</label><textarea id="db-bsmNotes" class="bsm-input bsm-textarea" placeholder="Any notes for your stylist…"></textarea></div>
           <button class="bsm-btn-next" id="db-bsmNext2">Review Booking <i class="fas fa-arrow-right"></i></button>
         </div>
-        <!-- Step 3 -->
+        <!-- Step 3: Review -->
         <div class="bsm-panel" id="db-bsmPanel3">
-          <div class="bsm-panel-header"><div class="bsm-panel-icon">✨</div><h3>Review & Confirm</h3><p>Everything looks good? Let's lock it in!</p></div>
+          <div class="bsm-panel-header"><div class="bsm-panel-icon">✨</div><h3>Review & Confirm</h3><p>Everything looks good? Proceed to payment.</p></div>
           <div class="bsm-review-card" id="db-bsmReviewCard"></div>
-          <p class="bsm-note">🔒 No payment required now. Pay at studio.</p>
-          <button class="bsm-btn-confirm" id="db-bsmConfirmBtn">
-            <i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>
+          <button class="bsm-btn-next" id="db-bsmNext3">
+            Proceed to Payment <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+        <!-- Step 4: Payment -->
+        <div class="bsm-panel" id="db-bsmPanel4">
+          <div class="bsm-panel-header"><div class="bsm-panel-icon">💳</div><h3>Secure Payment</h3><p>Select your payment method to complete booking</p></div>
+
+          <!-- Payment method selector — populated dynamically from Firestore -->
+          <div class="bsm-payment-methods" id="db-bsmPaymentMethods">
+            <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading payment methods…</div>
+          </div>
+
+          <!-- Step 4b: Payment details copy box (shown after method selection) -->
+          <div class="bsm-pay-details-box" id="db-bsmPayDetailsBox" style="display:none;">
+            <div class="bsm-pay-details-title" id="db-bsmPayDetailsTitle">Send payment to:</div>
+            <div class="bsm-pay-copy-row">
+              <span class="bsm-pay-copy-value" id="db-bsmPayCopyValue">—</span>
+              <button class="bsm-pay-copy-btn" id="db-bsmPayCopyBtn" onclick="dbCopyPaymentDetail()">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+            <div class="bsm-pay-copy-hint" id="db-bsmPayCopyHint">Tap to copy, then open your app and send</div>
+          </div>
+
+          <!-- Your name / handle input -->
+          <div class="bsm-pay-handle-wrap" id="db-bsmPayHandleWrap" style="display:none;">
+            <div class="bsm-pay-handle-label" id="db-bsmPayHandleLabel">Your name as it appears in the app</div>
+            <div class="bsm-pay-handle-input-row">
+              <span class="bsm-pay-prefix" id="db-bsmPayPrefix"><i class="fas fa-user"></i></span>
+              <input type="text" id="db-bsmPayHandle" class="bsm-input" placeholder="e.g. Jane Smith or jane@email.com" autocomplete="off"/>
+            </div>
+            <div class="bsm-pay-note" id="db-bsmPayNote">
+              <i class="fas fa-info-circle"></i>
+              <span id="db-bsmPayNoteText">Send your payment, paste your name/handle above, then submit.</span>
+            </div>
+          </div>
+
+          <button class="bsm-btn-confirm" id="db-bsmConfirmBtn" style="display:none;margin-top:20px;">
+            <i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>
           </button>
         </div>
       </div>

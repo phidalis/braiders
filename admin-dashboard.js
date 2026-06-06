@@ -72,10 +72,13 @@ function initDashboard() {
     document.getElementById('set-admin-name').value = user.displayName || '';
   }
   loadAllData();
+  loadSiteSettings();
+  loadPaymentMethods();
   renderServices();
   renderHairTypeTags();
   renderAnnouncements();
   populateStyleSelect();
+  loadStylists();
   setMinDate();
   startAdminMsgPolling();
   loadHeroData();
@@ -99,6 +102,7 @@ function navigateTo(key) {
   if (window.innerWidth <= 900) closeSidebar();
   if (key === 'messages') loadAdminConversations();
   if (key === 'hero') loadHeroData();
+  if (key === 'settings') loadPaymentMethods();
 }
 
 function toggleSidebar() {
@@ -336,6 +340,23 @@ async function updateBookingStatus(id, status) {
   addActivity('Status updated', `${bk.name}'s booking → ${status}`, status==='confirmed'?'green':status==='cancelled'?'red':'gold');
 }
 
+async function updatePaymentStatus(id, paymentStatus) {
+  const bk = allBookings.find(b => b.id === id);
+  if (!bk) return;
+  bk.paymentStatus = paymentStatus;
+  if (window._fb) {
+    try {
+      await window._fb.updateDoc(window._fb.doc(window._fb.db,'bookings',id), {paymentStatus});
+    } catch(e) {}
+  }
+  const label = paymentStatus === 'verified' ? 'Payment verified ✅' : 'Payment rejected ❌';
+  showToast(label, paymentStatus === 'verified' ? 'success' : 'error');
+  addActivity('Payment updated', `${bk.name} — ${label}`, paymentStatus === 'verified' ? 'green' : 'red');
+  // Refresh the detail modal with the updated data
+  closeModal('modal-booking-detail');
+  setTimeout(() => viewBookingDetail(id), 150);
+}
+
 async function deleteBooking(id) {
   if (!confirm('Delete this booking permanently?')) return;
   allBookings = allBookings.filter(b => b.id !== id);
@@ -349,23 +370,114 @@ async function deleteBooking(id) {
 function viewBookingDetail(id) {
   const b = allBookings.find(x => x.id === id);
   if (!b) return;
+
+  // Payment badge block
+  const methodLabel = b.paymentMethod === 'zelle' ? 'Zelle' : b.paymentMethod === 'cashapp' ? 'Cash App' : null;
+  const payStatusMap = {
+    awaiting_verification: { label: 'Awaiting Verification', color: '#f59e0b', bg: 'rgba(245,158,11,.12)', border: 'rgba(245,158,11,.3)' },
+    verified:              { label: 'Payment Verified',       color: '#22c55e', bg: 'rgba(34,197,94,.12)',  border: 'rgba(34,197,94,.3)' },
+    rejected:              { label: 'Payment Rejected',       color: '#ef4444', bg: 'rgba(239,68,68,.12)',  border: 'rgba(239,68,68,.3)' },
+  };
+  const ps = payStatusMap[b.paymentStatus] || null;
+
+  const paymentBlock = methodLabel ? `
+    <div style="margin-top:20px;padding:16px 18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;">
+      <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:12px;">💳 Payment Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Method</div>
+          <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:1rem;">
+            ${b.paymentMethod === 'zelle'
+              ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#6D1ED4;"><svg width="14" height="14" viewBox="0 0 48 48" fill="none"><path d="M14 16h14.5L14 32h20M33 16v16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Zelle`
+              : `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#00D632;"><svg width="14" height="14" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="8" stroke="#fff" stroke-width="3"/><path d="M24 12v4M24 32v4" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>Cash App`
+            }
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">${b.paymentMethod === 'cashapp' ? '$Cashtag / Name' : 'Zelle Name / Email'}</div>
+          <div style="font-weight:600;">${b.paymentHandle || '—'}</div>
+        </div>
+      </div>
+      ${ps ? `<div style="margin-top:12px;"><span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.06em;background:${ps.bg};border:1px solid ${ps.border};color:${ps.color};">${ps.label}</span></div>` : ''}
+      ${b.paymentStatus === 'awaiting_verification' ? `
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-success" style="font-size:.8rem;padding:7px 14px;" onclick="updatePaymentStatus('${b.id}','verified')"><i class="fas fa-check-circle"></i> Mark Verified</button>
+          <button class="btn-danger" style="font-size:.8rem;padding:7px 14px;" onclick="updatePaymentStatus('${b.id}','rejected')"><i class="fas fa-times-circle"></i> Reject Payment</button>
+        </div>` : ''}
+    </div>` : `
+    <div style="margin-top:20px;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;">
+      <div style="font-size:.7rem;color:rgba(255,255,255,.3);"><i class="fas fa-info-circle"></i> No payment info recorded for this booking.</div>
+    </div>`;
+
+  // Build WhatsApp message
+  const rawPhone = (b.phone||'').replace(/\D/g,'');
+  const waMsg = encodeURIComponent(
+    `Hi ${b.name||'there'} 👋, this is Ani Braids!\n\nWe received your booking:\n` +
+    `📅 Date: ${b.date ? formatDate(b.date) : '—'}\n` +
+    `💇 Style: ${b.style||'—'}\n` +
+    `👩 Stylist: ${b.stylist||'—'}\n\n` +
+    `We'd like to confirm your appointment. Please reply to this message to confirm. Thank you! 🌟`
+  );
+  const waLink = rawPhone ? `https://wa.me/${rawPhone}?text=${waMsg}` : '#';
+
+  // Build submitted-at date
+  const submittedAt = b.createdAt
+    ? (b.createdAt.seconds
+        ? new Date(b.createdAt.seconds * 1000).toLocaleString('en-KE', {weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+        : new Date(b.createdAt).toLocaleString('en-KE'))
+    : '—';
+
+  function detailRow(label, value) {
+    return `<div>
+      <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:4px;">${label}</div>
+      <div style="font-weight:600;font-size:.92rem;">${value||'—'}</div>
+    </div>`;
+  }
+
   document.getElementById('booking-detail-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Client Name</div><div style="font-weight:600;">${b.name||'—'}</div></div>
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Phone</div><div style="font-weight:600;">${b.phone||'—'}</div></div>
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Style</div><div style="font-weight:600;">${b.style||'—'}</div></div>
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Stylist</div><div style="font-weight:600;">${b.stylist||'—'}</div></div>
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Date</div><div style="font-weight:600;">${b.date ? formatDate(b.date) : '—'}</div></div>
-      <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:4px;">Status</div><span class="status-badge ${b.status}">${cap(b.status||'pending')}</span></div>
+    <!-- Client Info -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:12px;">👤 Client Information</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        ${detailRow('Full Name', b.name)}
+        ${detailRow('Phone', b.phone ? `<a href="tel:${b.phone}" style="color:inherit;text-decoration:none;">${b.phone}</a>` : '—')}
+        ${b.email ? detailRow('Email', `<a href="mailto:${b.email}" style="color:rgba(255,200,80,.85);text-decoration:none;">${b.email}</a>`) : ''}
+        ${b.hairType ? detailRow('Hair Type', b.hairType) : ''}
+        ${b.hairLength ? detailRow('Hair Length', b.hairLength) : ''}
+      </div>
     </div>
-    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn-success" onclick="updateBookingStatus('${b.id}','confirmed');closeModal('modal-booking-detail')"><i class="fas fa-check"></i> Confirm</button>
-      <button class="btn-success" style="background:rgba(74,144,217,.12);border-color:rgba(74,144,217,.3);color:#4a90d9;" onclick="updateBookingStatus('${b.id}','completed');closeModal('modal-booking-detail')"><i class="fas fa-flag-checkered"></i> Complete</button>
-      <button class="btn-danger" onclick="updateBookingStatus('${b.id}','cancelled');closeModal('modal-booking-detail')"><i class="fas fa-times"></i> Cancel</button>
-      <a href="https://wa.me/${(b.phone||'').replace(/\D/g,'')}" target="_blank" class="btn-primary" style="text-decoration:none;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+
+    <!-- Booking Info -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:12px;">📅 Booking Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        ${detailRow('Style', b.style)}
+        ${detailRow('Stylist', b.stylist)}
+        ${detailRow('Appointment Date', b.date ? formatDate(b.date) : '—')}
+        ${b.time ? detailRow('Time', b.time) : ''}
+        ${detailRow('Submitted', submittedAt)}
+        <div>
+          <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:4px;">Status</div>
+          <span class="status-badge ${b.status||'pending'}">${cap(b.status||'pending')}</span>
+        </div>
+      </div>
+      ${b.notes ? `<div style="margin-top:14px;">${detailRow('Client Notes', `<span style="color:rgba(255,255,255,.7);font-weight:400;">${b.notes}</span>`)}</div>` : ''}
+    </div>
+
+    ${paymentBlock}
+
+    <!-- Action Buttons -->
+    <div style="margin-top:18px;">
+      <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:10px;">⚡ Actions</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${b.status !== 'confirmed' && b.status !== 'completed' ? `<button class="btn-success" onclick="updateBookingStatus('${b.id}','confirmed');closeModal('modal-booking-detail')"><i class="fas fa-check"></i> Approve</button>` : ''}
+        ${b.status !== 'completed' ? `<button class="btn-success" style="background:rgba(74,144,217,.12);border-color:rgba(74,144,217,.3);color:#4a90d9;" onclick="updateBookingStatus('${b.id}','completed');closeModal('modal-booking-detail')"><i class="fas fa-flag-checkered"></i> Complete</button>` : ''}
+        ${b.status !== 'cancelled' ? `<button class="btn-danger" onclick="updateBookingStatus('${b.id}','cancelled');closeModal('modal-booking-detail')"><i class="fas fa-times"></i> Cancel</button>` : ''}
+        ${rawPhone ? `<a href="${waLink}" target="_blank" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;"><i class="fab fa-whatsapp"></i> WhatsApp Client</a>` : ''}
+      </div>
     </div>
   `;
-  openModal('modal-booking-detail');
+  document.getElementById('modal-booking-detail').classList.add('open');
 }
 
 async function saveBooking() {
@@ -720,21 +832,135 @@ function populateStyleSelect() {
 }
 
 // =========== STYLISTS ===========
-function saveStylist() {
-  const name = document.getElementById('stl-name').value.trim();
-  if (!name) { showToast('Name is required.','error'); return; }
+let localStylists = [];
+
+async function loadStylists() {
   const tbody = document.getElementById('stylists-tbody');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${name}</td><td>${document.getElementById('stl-spec').value||'—'}</td><td>0</td><td>★ 5.0</td><td>${document.getElementById('stl-avail').value||'TBD'}</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','${name}')">Edit</button></td>`;
-  tbody.appendChild(tr);
-  // Add to booking select
-  const bkStylist = document.getElementById('bk-stylist');
-  const opt = document.createElement('option');
-  opt.textContent = name+' — '+(document.getElementById('stl-spec').value||'General');
-  bkStylist.appendChild(opt);
-  closeModal('modal-add-stylist');
-  showToast('Stylist added! 💅', 'success');
+  if (!tbody) return;
+  if (!window._fb) { setTimeout(loadStylists, 500); return; }
+  const { db, collection, getDocs } = window._fb;
+  try {
+    const snap = await getDocs(collection(db, 'stylists'));
+    localStylists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStylistsTable();
+    populateStylistSelect();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:rgba(255,71,87,.5);">Failed to load stylists</td></tr>`;
+  }
 }
+
+function renderStylistsTable() {
+  const tbody = document.getElementById('stylists-tbody');
+  if (!tbody) return;
+  if (!localStylists.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(255,255,255,.3);">No stylists yet — add your first team member</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = localStylists.map(s => `
+    <tr>
+      <td>${s.name}</td>
+      <td>${s.specialty||'—'}</td>
+      <td>${s.bookings||0}</td>
+      <td>★ ${s.rating||'5.0'}</td>
+      <td>${s.availability||'TBD'}</td>
+      <td><span class="status-badge ${s.status==='inactive'?'cancelled':'confirmed'}">${s.status==='inactive'?'Inactive':'Active'}</span></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-secondary btn-sm" onclick="openEditStylist('${s.id}')"><i class="fas fa-pen" style="font-size:.7rem;"></i> Edit</button>
+        <button class="btn-danger btn-sm" onclick="deleteStylist('${s.id}','${s.name}')"><i class="fas fa-trash" style="font-size:.7rem;"></i> Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function populateStylistSelect() {
+  const sel = document.getElementById('bk-stylist');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Select stylist…</option>' +
+    localStylists.filter(s => s.status !== 'inactive').map(s =>
+      `<option value="${s.name} — ${s.specialty||'General'}">${s.name} — ${s.specialty||'General'}</option>`
+    ).join('');
+  if (current) sel.value = current;
+}
+
+function openEditStylist(id) {
+  const s = localStylists.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('stl-id').value = s.id;
+  document.getElementById('stl-name').value = s.name || '';
+  document.getElementById('stl-spec').value = s.specialty || '';
+  document.getElementById('stl-phone').value = s.phone || '';
+  document.getElementById('stl-avail').value = s.availability || '';
+  document.getElementById('stl-bio').value = s.bio || '';
+  document.getElementById('stylist-modal-title').textContent = '✏️ Edit Stylist';
+  openModal('add-stylist');
+}
+
+function resetStylistModal() {
+  document.getElementById('stl-id').value = '';
+  document.getElementById('stl-name').value = '';
+  document.getElementById('stl-spec').value = '';
+  document.getElementById('stl-phone').value = '';
+  document.getElementById('stl-avail').value = '';
+  document.getElementById('stl-bio').value = '';
+  document.getElementById('stylist-modal-title').textContent = '💅 Add Stylist';
+}
+
+async function saveStylist() {
+  const name = document.getElementById('stl-name').value.trim();
+  if (!name) { showToast('Name is required.', 'error'); return; }
+  if (!window._fb) { showToast('Firebase not ready', 'error'); return; }
+  const { db, collection, addDoc, setDoc, doc, serverTimestamp } = window._fb;
+
+  const editId = document.getElementById('stl-id').value.trim();
+  const data = {
+    name,
+    specialty: document.getElementById('stl-spec').value.trim() || '—',
+    phone: document.getElementById('stl-phone').value.trim() || '',
+    availability: document.getElementById('stl-avail').value.trim() || 'TBD',
+    bio: document.getElementById('stl-bio').value.trim() || '',
+    status: 'active',
+    bookings: 0,
+    rating: '5.0',
+  };
+
+  try {
+    if (editId) {
+      // Edit existing
+      const existing = localStylists.find(x => x.id === editId);
+      data.bookings = existing?.bookings || 0;
+      data.rating = existing?.rating || '5.0';
+      await setDoc(doc(db, 'stylists', editId), data);
+      showToast('Stylist updated! ✅', 'success');
+    } else {
+      // Add new
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'stylists'), data);
+      showToast('Stylist added! 💅', 'success');
+    }
+    closeModal('modal-add-stylist');
+    // Reset modal for next add
+    document.getElementById('stl-id').value = '';
+    document.getElementById('stylist-modal-title').textContent = '💅 Add Stylist';
+    await loadStylists();
+  } catch(e) {
+    showToast('Error saving stylist: ' + e.message, 'error');
+  }
+}
+
+async function deleteStylist(id, name) {
+  if (!confirm(`Delete stylist "${name}"? This cannot be undone.`)) return;
+  if (!window._fb) { showToast('Firebase not ready', 'error'); return; }
+  const { db, deleteDoc, doc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'stylists', id));
+    showToast(`${name} removed from the team.`, 'success');
+    await loadStylists();
+  } catch(e) {
+    showToast('Error deleting stylist: ' + e.message, 'error');
+  }
+}
+
 
 // =========== ANNOUNCEMENTS ===========
 function renderAnnouncements() {
@@ -804,9 +1030,10 @@ function renderReviews() {
   tbody.innerHTML = sorted.map(r => {
     const initial = (r.name || '?').charAt(0).toUpperCase();
     const stars = '★'.repeat(Math.min(5, parseInt(r.rating) || 5));
-    const isPending = r.status === 'pending';
-    const isPublished = r.status === 'published';
+    const isPending  = r.status === 'pending';
+    const isApproved = r.status === 'approved';
     const text = (r.text || r.review || '').substring(0, 90);
+    const styleName = r.styleName || r.style || '—';
     return `
     <tr>
       <td>
@@ -818,12 +1045,12 @@ function renderReviews() {
           </div>
         </div>
       </td>
-      <td style="font-size:.78rem;">${r.style || r.service || '—'}</td>
-      <td style="font-size:.78rem;max-width:220px;color:rgba(255,255,255,.75);">${text}${text.length >= 90 ? '…' : ''}</td>
+      <td style="font-size:.78rem;max-width:160px;color:rgba(255,255,255,.7);">${styleName}</td>
+      <td style="font-size:.78rem;max-width:200px;color:rgba(255,255,255,.75);">${text}${text.length >= 90 ? '…' : ''}</td>
       <td style="color:#f9c74f;letter-spacing:2px;">${stars}</td>
       <td>
-        <span class="status-badge ${isPublished ? 'confirmed' : isPending ? 'pending' : 'cancelled'}">
-          ${isPending ? '⏳ Pending' : isPublished ? '✅ Published' : '🚫 Hidden'}
+        <span class="status-badge ${isApproved ? 'confirmed' : isPending ? 'pending' : 'cancelled'}">
+          ${isPending ? '⏳ Pending' : isApproved ? '✅ Approved' : '🚫 Hidden'}
         </span>
       </td>
       <td>
@@ -835,13 +1062,13 @@ function renderReviews() {
             <button class="btn-icon btn-danger" onclick="rejectReview('${r.id}')" title="Reject / Hide">
               <i class="fas fa-times"></i>
             </button>
-          ` : isPublished ? `
-            <button class="btn-secondary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="unpublishReview('${r.id}')" title="Unpublish">
+          ` : isApproved ? `
+            <button class="btn-secondary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="unpublishReview('${r.id}')" title="Hide">
               <i class="fas fa-eye-slash"></i> Hide
             </button>
           ` : `
-            <button class="btn-primary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="approveReview('${r.id}')" title="Re-publish">
-              <i class="fas fa-eye"></i> Publish
+            <button class="btn-primary btn-sm" style="padding:5px 10px;font-size:.72rem;" onclick="approveReview('${r.id}')" title="Re-approve">
+              <i class="fas fa-eye"></i> Approve
             </button>
           `}
           <button class="btn-icon btn-danger" onclick="deleteReview('${r.id}')" title="Delete permanently">
@@ -868,11 +1095,13 @@ async function updateReviewStatus(id, status) {
 }
 
 async function approveReview(id) {
-  const ok = await updateReviewStatus(id, 'published');
+  const ok = await updateReviewStatus(id, 'approved');
   if (ok) {
-    allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'published' } : r);
+    allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'approved' } : r);
     renderReviews();
     showToast('Review approved & published! ✅', 'success');
+    // Recalculate and update the service's rating in Firestore
+    await recalcServiceRating(id);
   }
 }
 
@@ -882,6 +1111,7 @@ async function unpublishReview(id) {
     allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'hidden' } : r);
     renderReviews();
     showToast('Review hidden from website.', 'gold');
+    await recalcServiceRating(id);
   }
 }
 
@@ -891,6 +1121,47 @@ async function rejectReview(id) {
     allReviews = allReviews.map(r => r.id === id ? { ...r, status: 'hidden' } : r);
     renderReviews();
     showToast('Review rejected & hidden.', 'gold');
+    // Also recalc rating (removed one approved review)
+    await recalcServiceRating(id);
+  }
+}
+
+// Recalculate a service's average rating from all approved reviews and save to Firestore
+async function recalcServiceRating(reviewId) {
+  try {
+    const review = allReviews.find(r => r.id === reviewId);
+    const styleId = review?.styleId;
+    if (!styleId) return;
+
+    const { collection, query, where, getDocs, getDoc, doc, updateDoc } =
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const db = window._fb?.db;
+    if (!db) return;
+
+    // Get all approved reviews for this styleId
+    const snap = await getDocs(query(
+      collection(db, 'reviews'),
+      where('styleId', '==', styleId),
+      where('status', '==', 'approved')
+    ));
+    const approved = snap.docs.map(d => d.data());
+    const count = approved.length;
+    const avg = count > 0
+      ? Math.round((approved.reduce((s, r) => s + (r.rating || 0), 0) / count) * 10) / 10
+      : 0;
+
+    // Update the services list doc in Firestore
+    const svcSnap = await getDoc(doc(db, 'settings', 'services'));
+    if (!svcSnap.exists()) return;
+    const list = svcSnap.data().list || [];
+    const updated = list.map(s => s.id === styleId ? { ...s, rating: avg, reviews: count } : s);
+    await updateDoc(doc(db, 'settings', 'services'), { list: updated });
+
+    // Update local services array too
+    localServices = localServices.map(s => s.id === styleId ? { ...s, rating: avg, reviews: count } : s);
+    renderServices();
+  } catch(e) {
+    console.warn('Rating recalc failed:', e);
   }
 }
 
@@ -1079,6 +1350,27 @@ function renderAnalytics() {
 }
 
 // =========== SETTINGS ===========
+async function loadSiteSettings() {
+  if (!window._fb) return;
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'site'));
+    if (!snap.exists()) return;
+    const d = snap.data();
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    const setChk = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.checked = val; };
+    set('set-studio-name', d.studioName);
+    set('set-tagline',     d.tagline);
+    set('set-phone',       d.phone);
+    set('set-email',       d.email);
+    set('set-location',    d.location);
+    set('set-hours-wk',    d.hoursWeekday);
+    set('set-hours-wknd',  d.hoursWeekend);
+    setChk('toggle-bookings',   d.toggleBookings);
+    setChk('toggle-newsletter', d.toggleNewsletter);
+  } catch(e) { /* keep HTML defaults */ }
+}
+
 function saveSettings() {
   const data = {
     studioName: document.getElementById('set-studio-name')?.value,
@@ -1532,7 +1824,7 @@ async function handleHeroSlideImageSelect(input) {
   }
 }
 
-function saveHeroSlide() {
+async function saveHeroSlide() {
   const indexVal = parseInt(document.getElementById('hero-slide-index').value);
   const imageUrl = document.getElementById('hero-slide-img-url').value.trim();
   const gradient = document.getElementById('hero-slide-gradient').value.trim();
@@ -1547,14 +1839,23 @@ function saveHeroSlide() {
 
   if (indexVal === -1) {
     heroSlides.push(slideData);
-    showToast('Slide added! Click "Save & Publish" to go live.', 'success');
   } else {
     heroSlides[indexVal] = slideData;
-    showToast('Slide updated! Click "Save & Publish" to go live.', 'success');
   }
 
   renderHeroSlidesList();
   closeModal('modal-hero-slide');
+
+  // Auto-save to Firestore immediately so the slide persists and shows on homepage
+  if (!window._fb) { showToast('Slide saved locally — Firebase not ready to publish yet.', 'success'); return; }
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'settings', 'heroSlides'), { list: heroSlides });
+    showToast(indexVal === -1 ? 'Slide added & published! 🚀' : 'Slide updated & published! 🚀', 'success');
+    addActivity('Hero slides updated', `${heroSlides.length} slides now live`, 'gold');
+  } catch(e) {
+    showToast('Slide saved locally but failed to publish: ' + e.message, 'error');
+  }
 }
 
 async function saveHeroSlides() {
@@ -1647,4 +1948,112 @@ function showToast(msg, type) {
   t.innerHTML = `<i class="fas fa-${icons[type]||'bell'}"></i> ${msg}`;
   c.appendChild(t);
   setTimeout(()=>{ t.style.animation='toastIn .4s ease reverse'; setTimeout(()=>t.remove(),400); }, 4000);
+}
+
+// =========== PAYMENT METHODS ===========
+let localPaymentMethods = [];
+
+async function loadPaymentMethods() {
+  if (!window._fb) return;
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'paymentMethods'));
+    localPaymentMethods = snap.exists() ? (snap.data().list || []) : [];
+  } catch(e) { localPaymentMethods = []; }
+  renderPaymentMethodsList();
+}
+
+function renderPaymentMethodsList() {
+  const el = document.getElementById('payment-methods-list');
+  if (!el) return;
+  if (!localPaymentMethods.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:rgba(255,255,255,.3);font-size:.85rem;"><i class="fas fa-credit-card" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>No payment methods yet. Add one above.</div>`;
+    return;
+  }
+  el.innerHTML = localPaymentMethods.map((pm, i) => `
+    <div class="pm-row" style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.07);" data-index="${i}">
+      <div class="pm-icon-circle" style="width:44px;height:44px;border-radius:50%;background:${pm.iconColor||'#6D1ED4'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas ${pm.iconSymbol||'fa-credit-card'}" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:.9rem;">${escHtml(pm.name)}</div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.5);margin-top:2px;">${escHtml(pm.description||'')} &nbsp;·&nbsp; <span style="color:rgba(255,200,80,.8);">${escHtml(pm.value||'')}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn-secondary btn-sm" onclick="editPaymentMethod(${i})"><i class="fas fa-edit"></i></button>
+        <button class="btn-danger btn-sm" onclick="deletePaymentMethod(${i})" style="padding:6px 10px;font-size:.75rem;"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+window.openAddPaymentMethodModal = function() {
+  document.getElementById('pm-edit-id').value = '';
+  document.getElementById('pm-modal-title').textContent = '💳 Add Payment Method';
+  ['pm-name','pm-desc','pm-value','pm-hint','pm-input-label','pm-input-placeholder','pm-note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('pm-icon-color').value = '#6D1ED4';
+  document.getElementById('pm-icon-symbol').value = 'fa-credit-card';
+  document.getElementById('modal-payment-method')?.classList.add('open');
+};
+
+window.editPaymentMethod = function(index) {
+  const pm = localPaymentMethods[index];
+  if (!pm) return;
+  document.getElementById('pm-edit-id').value = String(index);
+  document.getElementById('pm-modal-title').textContent = '✏️ Edit Payment Method';
+  document.getElementById('pm-name').value = pm.name || '';
+  document.getElementById('pm-desc').value = pm.description || '';
+  document.getElementById('pm-value').value = pm.value || '';
+  document.getElementById('pm-hint').value = pm.hint || '';
+  document.getElementById('pm-input-label').value = pm.inputLabel || '';
+  document.getElementById('pm-input-placeholder').value = pm.inputPlaceholder || '';
+  document.getElementById('pm-note').value = pm.note || '';
+  document.getElementById('pm-icon-color').value = pm.iconColor || '#6D1ED4';
+  document.getElementById('pm-icon-symbol').value = pm.iconSymbol || 'fa-credit-card';
+  document.getElementById('modal-payment-method')?.classList.add('open');
+};
+
+window.deletePaymentMethod = async function(index) {
+  if (!confirm('Delete this payment method?')) return;
+  localPaymentMethods.splice(index, 1);
+  await persistPaymentMethods();
+  renderPaymentMethodsList();
+  showToast('Payment method removed', 'success');
+};
+
+window.savePaymentMethod = async function() {
+  const name = document.getElementById('pm-name')?.value.trim();
+  if (!name) { showToast('Method name is required', 'error'); return; }
+  const pm = {
+    name,
+    description: document.getElementById('pm-desc')?.value.trim() || '',
+    value: document.getElementById('pm-value')?.value.trim() || '',
+    hint: document.getElementById('pm-hint')?.value.trim() || '',
+    inputLabel: document.getElementById('pm-input-label')?.value.trim() || '',
+    inputPlaceholder: document.getElementById('pm-input-placeholder')?.value.trim() || '',
+    note: document.getElementById('pm-note')?.value.trim() || '',
+    iconColor: document.getElementById('pm-icon-color')?.value || '#6D1ED4',
+    iconSymbol: document.getElementById('pm-icon-symbol')?.value || 'fa-credit-card',
+  };
+  const editId = document.getElementById('pm-edit-id')?.value;
+  if (editId !== '') {
+    localPaymentMethods[parseInt(editId)] = pm;
+  } else {
+    localPaymentMethods.push(pm);
+  }
+  await persistPaymentMethods();
+  renderPaymentMethodsList();
+  closeModal('modal-payment-method');
+  showToast('Payment method saved! 💳', 'success');
+};
+
+async function persistPaymentMethods() {
+  if (!window._fb) return;
+  try {
+    await window._fb.setDoc(window._fb.doc(window._fb.db, 'settings', 'paymentMethods'), { list: localPaymentMethods });
+  } catch(e) { showToast('Error saving payment methods', 'error'); }
 }

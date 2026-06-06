@@ -1389,3 +1389,439 @@ button{cursor:pointer;font-family:var(--font-body);border:none;}
   .lxb-rp-card { flex-direction: column; align-items: flex-start; }
   .lxb-rp-btn  { width: 100%; justify-content: center; }
 }
+
+/* =================== PER-STYLE CARD RATING =================== */
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 10px;
+}
+.card-stars {
+  display: flex;
+  gap: 2px;
+}
+.card-stars i {
+  font-size: 0.72rem;
+  color: #f59e0b;
+}
+.card-stars i.far {
+  color: rgba(255,255,255,0.25);
+}
+.card-rating-val {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f59e0b;
+  line-height: 1;
+}
+.card-rating-count {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1;
+}
+
+/* =================== MODAL RATINGS BUTTON =================== */
+.btn-modal-ratings {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: linear-gradient(135deg, rgba(255,45,135,0.07), rgba(155,0,255,0.07));
+  border: 1.5px solid rgba(255,45,135,0.2);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ff2d87;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  text-align: left;
+}
+.btn-modal-ratings:hover {
+  background: linear-gradient(135deg, rgba(255,45,135,0.13), rgba(155,0,255,0.1));
+  border-color: rgba(255,45,135,0.4);
+  box-shadow: 0 4px 16px rgba(255,45,135,0.12);
+}
+.btn-modal-ratings i:first-child { color: #f59e0b; font-size: 1rem; }
+.modal-ratings-summary {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-left: 2px;
+}
+.modal-ratings-chevron {
+  font-size: 0.75rem;
+  color: #c084fc;
+  transition: transform 0.25s ease;
+}
+
+/* =================== RATINGS PANEL =================== */
+.modal-ratings-panel {
+  margin-bottom: 16px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(155,0,255,0.12);
+  background: #fdf9ff;
+}
+.srp-panel { padding: 0; }
+
+.srp-loading {
+  text-align: center;
+  padding: 28px;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+/* Aggregate score */
+.srp-aggregate {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(255,45,135,0.05), rgba(155,0,255,0.05));
+  border-bottom: 1px solid rgba(155,0,255,0.1);
+}
+.srp-avg-big {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #1a0a2e;
+  line-height: 1;
+  white-space: nowrap;
+}
+.srp-avg-big span {
+  font-size: 1rem;
+  color: #9ca3af;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+}
+.srp-bars { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.srp-bar-row { display: flex; align-items: center; gap: 8px; }
+.srp-bar-label { font-size: 0.7rem; color: #6b7280; width: 18px; text-align: right; flex-shrink: 0; }
+.srp-bar-outer { flex: 1; height: 6px; background: rgba(0,0,0,0.07); border-radius: 99px; overflow: hidden; }
+.srp-bar-fill { height: 100%; background: linear-gradient(90deg, #ff2d87, #f59e0b); border-radius: 99px; transition: width 0.4s ease; }
+.srp-bar-count { font-size: 0.68rem; color: #9ca3af; width: 14px; text-align: right; flex-shrink: 0; }
+
+/* Submit form */
+.srp-form {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(155,0,255,0.08);
+}
+.srp-form-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #7c3aed;
+  margin-bottom: 12px;
+}
+.srp-star-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.srp-star {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s, transform 0.15s;
+  line-height: 1;
+}
+.srp-star.on, .srp-star:hover { color: #f59e0b; transform: scale(1.2); }
+.srp-star-hint {
+  font-size: 0.74rem;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  min-height: 1em;
+}
+.srp-textarea {
+  width: 100%;
+  border: 1.5px solid rgba(155,0,255,0.15);
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-size: 0.85rem;
+  color: #1a0a2e;
+  background: #faf5ff;
+  outline: none;
+  resize: none;
+  font-family: 'Jost', sans-serif;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+.srp-textarea:focus { border-color: #ff2d87; background: #fff; }
+.srp-submit-btn {
+  background: linear-gradient(135deg, #ff2d87, #9b00ff);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 11px 22px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.srp-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255,45,135,0.35); }
+.srp-submit-btn:disabled { opacity: 0.7; transform: none; }
+.srp-submitted {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  background: rgba(16,185,129,0.08);
+  border-radius: 10px;
+  color: #059669;
+  font-size: 0.84rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.srp-submitted i { font-size: 1.1rem; }
+.srp-login-prompt {
+  padding: 14px 20px;
+  font-size: 0.83rem;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(155,0,255,0.08);
+}
+
+/* Reviews list */
+.srp-reviews-section { padding: 16px 20px; }
+.srp-reviews-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  margin-bottom: 14px;
+}
+.srp-no-reviews {
+  text-align: center;
+  padding: 20px 0;
+  color: #c4b5d4;
+}
+.srp-no-reviews i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+.srp-no-reviews p { font-size: 0.82rem; }
+.srp-review-item {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(155,0,255,0.07);
+}
+.srp-review-item:last-child { border-bottom: none; padding-bottom: 0; }
+.srp-review-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.srp-review-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff2d87, #9b00ff);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.srp-review-meta { flex: 1; }
+.srp-review-name { font-size: 0.83rem; font-weight: 600; color: #1a0a2e; }
+.srp-review-stars { display: flex; gap: 2px; margin-top: 2px; }
+.srp-review-stars i { font-size: 0.65rem; color: #f59e0b; }
+.srp-review-stars i.far { color: #d1d5db; }
+.srp-review-date { font-size: 0.7rem; color: #9ca3af; white-space: nowrap; }
+.srp-review-text { font-size: 0.83rem; color: #4b4060; line-height: 1.55; }
+
+.srp-name-input {
+  width: 100%; border: 1.5px solid rgba(155,0,255,0.15); border-radius: 10px;
+  padding: 10px 13px; font-size: 0.85rem; color: #1a0a2e;
+  background: #faf5ff; outline: none; margin-bottom: 10px;
+  font-family: 'Jost', sans-serif; transition: border-color 0.2s; box-sizing: border-box;
+}
+.srp-name-input:focus { border-color: #ff2d87; background: #fff; }
+
+/* ========== PAYMENT STEP STYLES (client dashboard) ========== */
+.bsm-payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.bsm-pay-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 2px solid #e5e0f0;
+  background: #faf8ff;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  position: relative;
+}
+.bsm-pay-option:hover {
+  border-color: rgba(255,45,135,.4);
+  background: #fff0f6;
+  transform: translateY(-1px);
+}
+.bsm-pay-option.active {
+  border-color: #ff2d87;
+  background: #fff0f6;
+  box-shadow: 0 0 0 3px rgba(255,45,135,.12);
+}
+.bsm-pay-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bsm-pay-logo-zelle   { background: linear-gradient(135deg, #6D1ED4, #4a00c8); }
+.bsm-pay-logo-cashapp { background: linear-gradient(135deg, #00D632, #00a825); }
+.bsm-pay-info { flex: 1; }
+.bsm-pay-name {
+  font-weight: 700;
+  font-size: .95rem;
+  color: #1a0a2e;
+  line-height: 1.2;
+}
+.bsm-pay-desc {
+  font-size: .74rem;
+  color: #666;
+  margin-top: 2px;
+}
+.bsm-pay-check {
+  color: #ff2d87;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.bsm-pay-option.active .bsm-pay-check { opacity: 1; }
+
+/* Payment details copy box */
+.bsm-pay-details-box {
+  background: #fff;
+  border: 2px solid rgba(255,45,135,.3);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  animation: fadeInUp .25s ease;
+}
+.bsm-pay-details-title {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #555;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.bsm-pay-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f0ff;
+  border: 1.5px solid rgba(109,30,212,.2);
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+.bsm-pay-copy-value {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a0a2e;
+  letter-spacing: .01em;
+  user-select: all;
+}
+.bsm-pay-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ff2d87;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  white-space: nowrap;
+  font-family: 'Jost', sans-serif;
+}
+.bsm-pay-copy-btn:hover { background: #e0206f; transform: scale(1.04); }
+.bsm-pay-copy-btn.copied { background: #10b981; }
+.bsm-pay-copy-hint {
+  font-size: .72rem;
+  color: #666;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Payment handle input */
+.bsm-pay-handle-wrap {
+  background: #fff;
+  border: 1.5px solid rgba(255,45,135,.25);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  animation: fadeInUp .25s ease;
+}
+.bsm-pay-handle-label {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #555;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.bsm-pay-handle-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #f5f0ff;
+  border: 1.5px solid #ddd6f3;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.bsm-pay-handle-input-row:focus-within {
+  border-color: #ff2d87;
+  background: #fff0f6;
+}
+.bsm-pay-prefix {
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.bsm-pay-handle-input-row .bsm-input {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 12px 14px 12px 0 !important;
+  flex: 1;
+  color: #1a0a2e !important;
+}
+.bsm-pay-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: .74rem;
+  color: #555;
+  line-height: 1.5;
+}
+.bsm-pay-note i { color: #f59e0b; margin-top: 1px; flex-shrink: 0; }

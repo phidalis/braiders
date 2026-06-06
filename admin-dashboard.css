@@ -43,6 +43,21 @@ input, select, textarea { font-family: var(--font-body); }
 }
 @keyframes scrollTrack { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
+@media (max-width: 600px) {
+  .announcement-bar {
+    height: 30px;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+  }
+  .ann-track {
+    gap: 40px;
+    animation-duration: 28s;
+  }
+  .admin-layout { padding-top: 30px; }
+  .sidebar { top: 30px; }
+  .topbar { top: 30px; }
+}
+
 /* LAYOUT */
 .admin-layout { display: flex; min-height: 100vh; padding-top: 34px; }
 

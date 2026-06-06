@@ -77,6 +77,32 @@ function updateBookingStyleSelect() {
   // Also update BSM stylist select if modal is present
 }
 
+async function loadStylistsIntoSelects() {
+  const fb = window._fb;
+  if (!fb || !fb.db || !fb.collection || !fb.getDocs) return;
+  try {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'stylists'));
+    const stylists = snap.docs.map(d => d.data()).filter(s => s.status !== 'inactive');
+
+    // #db-bookStylist — "Name — Specialty" format with "Any Available" first
+    const bookSel = document.getElementById('db-bookStylist');
+    if (bookSel) {
+      bookSel.innerHTML = '<option value="">Any Available Stylist</option>' +
+        stylists.map(s => `<option value="${s.name} — ${s.specialty || 'General'}">${s.name} — ${s.specialty || 'General'}</option>`).join('');
+    }
+
+    // #db-bsmStylist — name only, "Any Available" first
+    const bsmSel = document.getElementById('db-bsmStylist');
+    if (bsmSel) {
+      bsmSel.innerHTML = '<option value="any">Any Available Stylist</option>' +
+        stylists.map(s => `<option>${s.name}</option>`).join('');
+    }
+  } catch(e) {
+    console.warn('Could not load stylists for dashboard:', e);
+  }
+}
+
+
 // INIT
 document.addEventListener('DOMContentLoaded', () => {
   if (window.location.hash === '#signup') switchTab('signup');
@@ -85,6 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInterval(waitFb);
       hideLdr();
       loadLiveServicesFromFirestore();
+      loadStylistsIntoSelects();
+      loadSiteConfig();
+      loadDbPaymentMethods();
     }
   }, 100);
   setTimeout(() => { hideLdr(); }, 3500);
@@ -392,6 +421,19 @@ function dbCardHTML(h, theme = '') {
   const imgHTML = h.imageUrl
     ? `<img src="${h.imageUrl}" alt="${h.name}" class="card-img" loading="lazy">`
     : `<div class="card-img-no-image"><i class="fas fa-camera"></i><span>Image Coming Soon</span></div>`;
+
+  // Per-style star rating display
+  const rating = parseFloat(h.rating) || 0;
+  const reviews = h.reviews || 0;
+  const fullStars = Math.floor(rating);
+  const halfStar = rating - fullStars >= 0.5;
+  let starsHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= fullStars) starsHTML += '<i class="fas fa-star"></i>';
+    else if (i === fullStars + 1 && halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
+    else starsHTML += '<i class="far fa-star"></i>';
+  }
+
   return `
     <div class="style-card" data-id="${h.id}">
       <div class="card-img-wrap">
@@ -404,6 +446,11 @@ function dbCardHTML(h, theme = '') {
       </div>
       <div class="card-body">
         <div class="card-title">${h.name}</div>
+        <div class="card-rating">
+          <div class="card-stars">${starsHTML}</div>
+          <span class="card-rating-val">${rating > 0 ? rating.toFixed(1) : '—'}</span>
+          <span class="card-rating-count">${reviews > 0 ? `(${reviews})` : 'No reviews'}</span>
+        </div>
         <button class="btn-card-book" data-style="${h.name}">
           <i class="fas fa-calendar-check"></i> Book Now
         </button>
@@ -599,11 +646,14 @@ function openStyleModal(id) {
         <div class="modal-info-item"><label>Duration</label><span>${style.duration}</span></div>
         <div class="modal-info-item"><label>Hair Type</label><span>${style.hairType}</span></div>
         <div class="modal-info-item"><label>Length</label><span>${style.hairLength}</span></div>
-        <div class="modal-info-item"><label>Rating</label><span>${style.rating} ★ (${style.reviews} reviews)</span></div>
+        <div class="modal-info-item"><label>Bookings</label><span>🔥 ${style.bookings} booked</span></div>
       </div>
-      <div style="background:#fce8ef;border-radius:10px;padding:12px;margin-bottom:20px;font-size:0.82rem;color:#c0394d;font-weight:500;">
-        🔥 ${style.bookings} people have booked this style
-      </div>
+      <button class="btn-modal-ratings" id="btn-modal-ratings" onclick="toggleModalRatings(${style.id})">
+        <i class="fas fa-star"></i> Ratings &amp; Reviews
+        <span class="modal-ratings-summary" id="modal-ratings-summary">${style.rating > 0 ? style.rating.toFixed(1) + ' ★ · ' + style.reviews + ' reviews' : 'No reviews yet'}</span>
+        <i class="fas fa-chevron-down modal-ratings-chevron" id="modal-ratings-chevron"></i>
+      </button>
+      <div class="modal-ratings-panel" id="modal-ratings-panel" style="display:none;"></div>
       <button class="btn-modal-book" onclick="dbBookFromModal('${style.name.replace(/'/g,"\\'")}')">
         <i class="fas fa-calendar-check"></i> Book This Style
       </button>
@@ -679,6 +729,174 @@ document.addEventListener('keydown', e => {
     document.body.style.overflow = '';
   }
 });
+
+// =================== PER-STYLE RATINGS ===================
+let _ratingsOpenStyleId = null;
+let _ratingsVisible = false;
+let _currentRatingVal = 0;
+
+async function toggleModalRatings(styleId) {
+  const panel = document.getElementById('modal-ratings-panel');
+  const chevron = document.getElementById('modal-ratings-chevron');
+  if (!panel) return;
+
+  if (_ratingsVisible && _ratingsOpenStyleId === styleId) {
+    panel.style.display = 'none';
+    _ratingsVisible = false;
+    if (chevron) chevron.style.transform = '';
+    return;
+  }
+
+  _ratingsOpenStyleId = styleId;
+  _ratingsVisible = true;
+  if (chevron) chevron.style.transform = 'rotate(180deg)';
+  panel.style.display = 'block';
+  panel.innerHTML = `<div class="srp-loading"><i class="fas fa-spinner fa-spin"></i> Loading reviews…</div>`;
+
+  // Load existing reviews + render form
+  let existingReviews = [];
+  try {
+    const fb = window._fb;
+    if (fb && fb.db) {
+      const snap = await fb.getDocs(fb.query(
+        fb.collection(fb.db, 'reviews'),
+        fb.where('styleId', '==', styleId),
+        fb.where('status', '==', 'approved'),
+        fb.orderBy('createdAt', 'desc')
+      ));
+      existingReviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+  } catch(e) { /* no approved reviews or index missing — fine */ }
+
+  _currentRatingVal = 0;
+  renderRatingsPanel(panel, styleId, existingReviews);
+}
+
+function renderRatingsPanel(panel, styleId, reviews) {
+  const user = window.currentUser;
+  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Amazing! 🌟'];
+
+  // Aggregate display
+  let avgHtml = '';
+  if (reviews.length) {
+    const avg = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
+    const dist = [5,4,3,2,1].map(n => {
+      const cnt = reviews.filter(r => r.rating === n).length;
+      const pct = Math.round((cnt / reviews.length) * 100);
+      return `<div class="srp-bar-row"><span class="srp-bar-label">${n}★</span><div class="srp-bar-outer"><div class="srp-bar-fill" style="width:${pct}%"></div></div><span class="srp-bar-count">${cnt}</span></div>`;
+    }).join('');
+    avgHtml = `<div class="srp-aggregate">
+      <div class="srp-avg-big">${avg}<span>/ 5</span></div>
+      <div class="srp-bars">${dist}</div>
+    </div>`;
+  }
+
+  // Reviews list
+  const reviewsHtml = reviews.length
+    ? reviews.map(r => {
+        const date = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '';
+        const stars = Array.from({length:5}, (_,i) => `<i class="${i < r.rating ? 'fas' : 'far'} fa-star"></i>`).join('');
+        return `<div class="srp-review-item">
+          <div class="srp-review-top">
+            <div class="srp-review-avatar">${(r.name||'A')[0].toUpperCase()}</div>
+            <div class="srp-review-meta">
+              <div class="srp-review-name">${r.name || 'Verified Client'}</div>
+              <div class="srp-review-stars">${stars}</div>
+            </div>
+            ${date ? `<div class="srp-review-date">${date}</div>` : ''}
+          </div>
+          <div class="srp-review-text">${r.text}</div>
+        </div>`;
+      }).join('')
+    : `<div class="srp-no-reviews"><i class="far fa-star"></i><p>No reviews yet for this style. Be the first!</p></div>`;
+
+  // Submit form (only for logged-in users)
+  const formHtml = user ? `
+    <div class="srp-form" id="srp-form-${styleId}">
+      <div class="srp-form-title">Leave a Rating</div>
+      <div class="srp-star-row" id="srp-stars-${styleId}">
+        ${[1,2,3,4,5].map(v => `<button type="button" class="srp-star" data-v="${v}"><i class="fas fa-star"></i></button>`).join('')}
+      </div>
+      <div class="srp-star-hint" id="srp-hint-${styleId}">Tap to rate</div>
+      <textarea class="srp-textarea" id="srp-text-${styleId}" rows="3" maxlength="500" placeholder="Share your experience with this style…"></textarea>
+      <button class="srp-submit-btn" id="srp-submit-${styleId}" onclick="submitStyleRating(${styleId})">
+        <i class="fas fa-paper-plane"></i> Submit Rating
+      </button>
+      <div class="srp-submitted" id="srp-success-${styleId}" style="display:none;">
+        <i class="fas fa-check-circle"></i> Thank you! Your review will appear once approved.
+      </div>
+    </div>` : `<div class="srp-login-prompt"><i class="fas fa-lock"></i> Sign in to leave a rating</div>`;
+
+  panel.innerHTML = `
+    <div class="srp-panel">
+      ${avgHtml}
+      ${formHtml}
+      <div class="srp-reviews-section">
+        <div class="srp-reviews-title">${reviews.length} Review${reviews.length !== 1 ? 's' : ''}</div>
+        <div class="srp-reviews-list">${reviewsHtml}</div>
+      </div>
+    </div>`;
+
+  // Bind star interactions
+  const starsEl = document.getElementById(`srp-stars-${styleId}`);
+  const hintEl  = document.getElementById(`srp-hint-${styleId}`);
+  if (starsEl) {
+    const starBtns = starsEl.querySelectorAll('.srp-star');
+    starBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        _currentRatingVal = +btn.dataset.v;
+        starBtns.forEach((b, i) => b.classList.toggle('on', i < _currentRatingVal));
+        if (hintEl) hintEl.textContent = starLabels[_currentRatingVal];
+      });
+      btn.addEventListener('mouseenter', () => starBtns.forEach((b, i) => b.classList.toggle('on', i < +btn.dataset.v)));
+    });
+    starsEl.addEventListener('mouseleave', () => {
+      starBtns.forEach((b, i) => b.classList.toggle('on', i < _currentRatingVal));
+    });
+  }
+}
+
+async function submitStyleRating(styleId) {
+  const style = hairstyles.find(s => s.id === styleId);
+  const text = document.getElementById(`srp-text-${styleId}`)?.value.trim();
+  if (!_currentRatingVal) { showToast('Please tap a star to rate.', 'error'); return; }
+  if (!text || text.length < 5) { showToast('Please write at least 5 characters.', 'error'); return; }
+
+  const btn = document.getElementById(`srp-submit-${styleId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…'; }
+
+  try {
+    const fb = window._fb;
+    const user = window.currentUser;
+    const name = window.userProfile?.firstName
+      ? `${window.userProfile.firstName} ${(window.userProfile.lastName || '')[0] || ''}`.trim()
+      : (user?.displayName || 'Verified Client');
+
+    await fb.addDoc(fb.collection(fb.db, 'reviews'), {
+      styleId,
+      styleName: style?.name || '',
+      userId:    user?.uid || null,
+      name,
+      rating:    _currentRatingVal,
+      text,
+      status:    'pending',
+      createdAt: fb.serverTimestamp(),
+    });
+  } catch(e) { /* silent */ }
+
+  const form = document.getElementById(`srp-form-${styleId}`);
+  const success = document.getElementById(`srp-success-${styleId}`);
+  if (form) {
+    form.querySelectorAll('textarea, button').forEach(el => el.style.display = 'none');
+    const starsEl = form.querySelector('.srp-star-row');
+    const hintEl  = form.querySelector('.srp-star-hint');
+    const titleEl = form.querySelector('.srp-form-title');
+    if (starsEl) starsEl.style.display = 'none';
+    if (hintEl)  hintEl.style.display  = 'none';
+    if (titleEl) titleEl.style.display = 'none';
+  }
+  if (success) success.style.display = 'flex';
+}
 
 // =================== DB BOOKING STEPS MODAL ===================
 let dbBsmCurrentStep = 1;
@@ -773,6 +991,95 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// Payment method state for client dashboard booking
+let dbPaymentMethod = '';
+let DB_PAYMENT_METHODS_LIST = []; // loaded from Firestore
+
+async function loadDbPaymentMethods() {
+  // Wait for _fb to be ready
+  let waited = 0;
+  while (!window._fb && waited < 6000) {
+    await new Promise(r => setTimeout(r, 200));
+    waited += 200;
+  }
+  try {
+    const fb = window._fb;
+    if (!fb) return;
+    const snap = await fb.getDoc(fb.doc(fb.db, 'settings', 'paymentMethods'));
+    DB_PAYMENT_METHODS_LIST = snap.exists() ? (snap.data().list || []) : [];
+  } catch(e) { DB_PAYMENT_METHODS_LIST = []; }
+  renderDbPaymentMethodOptions();
+}
+
+function escHtmlDb(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderDbPaymentMethodOptions() {
+  const container = document.getElementById('db-bsmPaymentMethods');
+  if (!container) return;
+  if (!DB_PAYMENT_METHODS_LIST.length) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:20px;">No payment methods configured. Please contact us to arrange payment.</p>';
+    return;
+  }
+  container.innerHTML = DB_PAYMENT_METHODS_LIST.map((pm, i) => `
+    <div class="bsm-pay-option" id="db-bsmPayOpt_${i}" onclick="dbSelectPaymentMethod(${i})">
+      <div class="bsm-pay-logo" style="background:${pm.iconColor||'#6D1ED4'};border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas ${pm.iconSymbol||'fa-credit-card'}" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div class="bsm-pay-info">
+        <div class="bsm-pay-name">${escHtmlDb(pm.name)}</div>
+        <div class="bsm-pay-desc">${escHtmlDb(pm.description||'')}</div>
+      </div>
+      <div class="bsm-pay-check"><i class="fas fa-check-circle"></i></div>
+    </div>
+  `).join('');
+}
+
+window.dbSelectPaymentMethod = function(index) {
+  dbPaymentMethod = String(index);
+  const pm = DB_PAYMENT_METHODS_LIST[index];
+  if (!pm) return;
+
+  document.querySelectorAll('#db-bsmPaymentMethods .bsm-pay-option').forEach(el => el.classList.remove('active'));
+  document.getElementById(`db-bsmPayOpt_${index}`)?.classList.add('active');
+
+  const detailsBox  = document.getElementById('db-bsmPayDetailsBox');
+  const copyValue   = document.getElementById('db-bsmPayCopyValue');
+  const detailsTitle= document.getElementById('db-bsmPayDetailsTitle');
+  const copyHint    = document.getElementById('db-bsmPayCopyHint');
+  const handleWrap  = document.getElementById('db-bsmPayHandleWrap');
+  const label       = document.getElementById('db-bsmPayHandleLabel');
+  const prefix      = document.getElementById('db-bsmPayPrefix');
+  const noteText    = document.getElementById('db-bsmPayNoteText');
+  const confirmBtn  = document.getElementById('db-bsmConfirmBtn');
+  const input       = document.getElementById('db-bsmPayHandle');
+  const copyBtn     = document.getElementById('db-bsmPayCopyBtn');
+
+  if (detailsBox)    detailsBox.style.display = '';
+  if (copyValue)     copyValue.textContent = pm.value || '';
+  if (detailsTitle)  detailsTitle.textContent = 'Send payment to:';
+  if (copyHint)      copyHint.textContent = pm.hint || '';
+  if (handleWrap)    handleWrap.style.display = '';
+  if (confirmBtn)    confirmBtn.style.display = '';
+  if (copyBtn)       { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy'; copyBtn.classList.remove('copied'); }
+  if (label)         label.textContent = pm.inputLabel || 'Your name / handle';
+  if (prefix)        prefix.innerHTML = `<i class="fas ${pm.iconSymbol||'fa-user'}"></i>`;
+  if (noteText)      noteText.textContent = pm.note || 'Send payment using the details above, then enter your name below.';
+  if (input)         input.placeholder = pm.inputPlaceholder || 'e.g. Jane Smith';
+};
+
+window.dbCopyPaymentDetail = function() {
+  const val = document.getElementById('db-bsmPayCopyValue')?.textContent;
+  const btn = document.getElementById('db-bsmPayCopyBtn');
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Copied!'; btn.classList.add('copied'); }
+    showToast('Payment detail copied! 📋', 'success');
+    setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; btn.classList.remove('copied'); } }, 2500);
+  }).catch(() => {
+    showToast('Copy failed — please copy manually', 'error');
+  });
+};
+
 function initDbBookingStepsModal() {
   document.getElementById('db-bsmClose')?.addEventListener('click', closeDbBsmModal);
   document.getElementById('db-bsmOverlay')?.addEventListener('click', closeDbBsmModal);
@@ -796,13 +1103,34 @@ function initDbBookingStepsModal() {
     goToDbBsmStep(3);
   });
 
+  document.getElementById('db-bsmNext3')?.addEventListener('click', () => {
+    // Reset payment state when entering step 4
+    dbPaymentMethod = '';
+    document.getElementById('db-bsmPayZelle')?.classList.remove('active');
+    document.getElementById('db-bsmPayCashapp')?.classList.remove('active');
+    const detailsBox = document.getElementById('db-bsmPayDetailsBox');
+    const handleWrap = document.getElementById('db-bsmPayHandleWrap');
+    const confirmBtn = document.getElementById('db-bsmConfirmBtn');
+    const handle     = document.getElementById('db-bsmPayHandle');
+    if (detailsBox) detailsBox.style.display = 'none';
+    if (handleWrap) handleWrap.style.display = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    if (handle)     handle.value = '';
+    goToDbBsmStep(4);
+  });
+
   document.getElementById('db-bsmConfirmBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('db-bsmConfirmBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
+    const payHandle = document.getElementById('db-bsmPayHandle')?.value.trim();
+
+    if (!dbPaymentMethod) { showToast('Please select a payment method 💳', 'error'); return; }
+    if (!payHandle)       { showToast('Please enter your payment name / handle 📝', 'error'); return; }
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
     btn.disabled = true;
 
     const user = window.currentUser;
-    if (!user) { showToast('Please sign in to book.', 'error'); btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>'; btn.disabled = false; return; }
+    if (!user) { showToast('Please sign in to book.', 'error'); btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>'; btn.disabled = false; return; }
 
     const date    = document.getElementById('db-bsmDate').value;
     const time    = document.getElementById('db-bsmTime').value;
@@ -815,7 +1143,11 @@ function initDbBookingStepsModal() {
 
     const booking = {
       userId: user.uid, style: dbBsmStyleName, date, time, stylist, name, phone, notes,
-      status: 'confirmed', emoji: matched?.emoji || '✨', price: matched?.price || null,
+      status: 'awaiting_verification',
+      emoji: matched?.emoji || '✨', price: matched?.price || null,
+      paymentMethod: DB_PAYMENT_METHODS_LIST[parseInt(dbPaymentMethod)]?.name || dbPaymentMethod,
+      paymentHandle: payHandle,
+      paymentStatus: 'awaiting_verification',
       bookingRef, createdAt: new Date().toISOString(), id: bookingRef,
     };
 
@@ -832,13 +1164,14 @@ function initDbBookingStepsModal() {
     }
 
     userBookings.unshift(booking); updateStats(); updateLoyaltyUI();
-    btn.innerHTML = '<i class="fas fa-crown"></i> Confirm Booking<span class="btn-shimmer"></span>';
+    btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
     btn.disabled = false;
 
     closeDbBsmModal();
 
+    const methodLabel = DB_PAYMENT_METHODS_LIST[parseInt(dbPaymentMethod)]?.name || dbPaymentMethod;
     const cm = document.getElementById('confirm-msg');
-    if (cm) cm.textContent = `Your ${dbBsmStyleName} on ${formatDate(date)} at ${time} is confirmed! We'll WhatsApp you at ${phone}. Ref: ${bookingRef}`;
+    if (cm) cm.textContent = `Your ${dbBsmStyleName} on ${formatDate(date)} at ${time} is pending payment verification. Once we confirm your ${methodLabel} payment from "${payHandle}", we'll approve your booking and WhatsApp you at ${phone}. Ref: ${bookingRef} 💳✨`;
     document.getElementById('confirm-modal').classList.add('open');
   });
 }
@@ -1140,6 +1473,40 @@ async function changePassword() {
   }
 }
 
+// SITE CONFIG — apply admin settings/site to dashboard UI
+async function loadSiteConfig() {
+  const fb = window._fb; if (!fb) return;
+  try {
+    const snap = await fb.getDoc(fb.doc(fb.db, 'settings', 'site'));
+    if (!snap.exists()) return;
+    const s = snap.data();
+    const setText = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    const setHtml = (id, val) => { const el = document.getElementById(id); if (el && val) el.innerHTML = val; };
+
+    // Studio name across branding
+    if (s.studioName) {
+      document.querySelectorAll('.logo-main').forEach(el => el.textContent = s.studioName);
+      document.querySelectorAll('.loader-logo').forEach(el => el.textContent = s.studioName);
+      document.title = `${s.studioName} – Client Dashboard`;
+      const greetingSub = document.getElementById('greeting-sub');
+      if (greetingSub) greetingSub.textContent = `Welcome back to ${s.studioName}. What style are you feeling today?`;
+      const msgStudioNames = document.querySelectorAll('.msg-thread-name, .msg-chat-name');
+      msgStudioNames.forEach(el => el.textContent = `${s.studioName} Studio`);
+    }
+
+    // Contact section in client dashboard
+    if (s.location)    setHtml('cd-site-location', s.location.replace(', ', '<br>'));
+    if (s.email)       setHtml('cd-site-email', `${s.email}<br>Response within 2 hours`);
+    if (s.hoursWeekday || s.hoursWeekend) {
+      const parts = [];
+      if (s.hoursWeekday) parts.push(`Mon–Fri: ${s.hoursWeekday}`);
+      if (s.hoursWeekend) parts.push(`Sat–Sun: ${s.hoursWeekend}`);
+      setHtml('cd-site-hours', parts.join('<br>'));
+    }
+    if (s.phone) setHtml('cd-site-phone', `${s.phone}<br>Click to message us`);
+  } catch(e) {}
+}
+
 // SCROLL REVEAL
 function initScrollReveal() {
   const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('revealed');obs.unobserve(e.target);}});},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
@@ -1158,89 +1525,3 @@ function showToast(msg, type) {
 
 // Check hash
 if(window.location.hash==='#signup') switchTab('signup');
-// =================== DASHBOARD REVIEW PROMPT (lxb- namespaced) ===================
-(function () {
-  'use strict';
-  let dbRating = 0;
-  const starLabels = ['', 'Poor', 'Not Great', 'Okay', 'Good', 'Absolutely Amazing! 🌟'];
-
-  function openDbModal() {
-    dbRating = 0;
-    document.querySelectorAll('#lxbDbStars .lxb-star').forEach(s => s.classList.remove('on'));
-    const hint = document.getElementById('lxbDbHint');
-    if (hint) hint.textContent = 'Tap to rate';
-    const ta = document.getElementById('lxbDbText');
-    if (ta) ta.value = '';
-    const sub = document.getElementById('lxbDbSubmit');
-    if (sub) { sub.disabled = false; sub.innerHTML = '<i class="fas fa-heart"></i> Submit Review'; }
-    document.getElementById('lxbDbFormWrap').style.display = 'block';
-    document.getElementById('lxbDbSuccess').style.display = 'none';
-    document.getElementById('lxbDbModal').classList.add('lxb-open');
-  }
-
-  function initDbModal() {
-    document.getElementById('lxbRpBtn')?.addEventListener('click', openDbModal);
-    document.getElementById('lxbDbOverlay')?.addEventListener('click', () => document.getElementById('lxbDbModal').classList.remove('lxb-open'));
-    document.getElementById('lxbDbClose')?.addEventListener('click', () => document.getElementById('lxbDbModal').classList.remove('lxb-open'));
-
-    const stars = document.querySelectorAll('#lxbDbStars .lxb-star');
-    const hint  = document.getElementById('lxbDbHint');
-    stars.forEach(s => {
-      s.addEventListener('click', () => {
-        dbRating = +s.dataset.v;
-        stars.forEach((b, i) => b.classList.toggle('on', i < dbRating));
-        if (hint) hint.textContent = starLabels[dbRating];
-      });
-      s.addEventListener('mouseenter', () => stars.forEach((b, i) => b.classList.toggle('on', i < +s.dataset.v)));
-    });
-    document.getElementById('lxbDbStars')?.addEventListener('mouseleave', () => {
-      stars.forEach((b, i) => b.classList.toggle('on', i < dbRating));
-    });
-
-    document.getElementById('lxbDbSubmit')?.addEventListener('click', async () => {
-      const text = document.getElementById('lxbDbText')?.value.trim();
-      if (!dbRating)             { showToast('Please select a star rating.', 'error'); return; }
-      if (!text || text.length < 10) { showToast('Please write at least 10 characters.', 'error'); return; }
-
-      const sub = document.getElementById('lxbDbSubmit');
-      sub.disabled = true;
-      sub.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
-
-      try {
-        const { collection, addDoc, serverTimestamp } =
-          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const db   = window._fb?.db || window.firebaseDb;
-        const user = window.currentUser;
-        const name = window.userProfile?.firstName
-          ? `${window.userProfile.firstName} ${(window.userProfile.lastName || '')[0] || ''}`.trim()
-          : (user?.displayName || 'Verified Client');
-
-        await addDoc(collection(db, 'reviews'), {
-          userId:    user?.uid || null,
-          name,
-          rating:    dbRating,
-          text,
-          status:    'pending',
-          createdAt: serverTimestamp()
-        });
-      } catch (e) { /* submit silently */ }
-
-      document.getElementById('lxbDbFormWrap').style.display = 'none';
-      document.getElementById('lxbDbSuccess').style.display = 'block';
-    });
-  }
-
-  // Show review prompt when completed bookings are detected.
-  // Hooks into the existing renderBookings function without overwriting it.
-  const _origRender = window.renderBookings;
-  window.renderBookings = function (filter) {
-    if (typeof _origRender === 'function') _origRender(filter);
-    // Check if any bookings in the list have status "completed"
-    const hasCompleted = Array.isArray(window.userBookings) &&
-      window.userBookings.some(b => (b.status || '').toLowerCase() === 'completed');
-    const card = document.getElementById('lxbRpCard');
-    if (card) card.style.display = hasCompleted ? 'flex' : 'none';
-  };
-
-  initDbModal();
-})();

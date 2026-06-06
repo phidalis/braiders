@@ -285,16 +285,13 @@
       <div class="panel" id="panel-stylists">
         <div class="panel-header"><h1>Manage <span>Stylists</span></h1><p>Your team of master braiders</p></div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-          <button class="btn-primary" onclick="openModal('add-stylist')"><i class="fas fa-plus"></i> Add Stylist</button>
+          <button class="btn-primary" onclick="resetStylistModal();openModal('add-stylist')"><i class="fas fa-plus"></i> Add Stylist</button>
         </div>
         <div class="admin-card" style="padding:0;overflow:hidden;">
           <table class="data-table">
             <thead><tr><th>Name</th><th>Specialty</th><th>Bookings</th><th>Rating</th><th>Availability</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="stylists-tbody">
-              <tr><td>Zara</td><td>Box Braids</td><td>89</td><td>★ 4.9</td><td>Mon–Sat</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Zara')">Edit</button></td></tr>
-              <tr><td>Amina</td><td>Locs & Twists</td><td>72</td><td>★ 4.8</td><td>Mon–Fri</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Amina')">Edit</button></td></tr>
-              <tr><td>Destiny</td><td>Bridal Styles</td><td>38</td><td>★ 5.0</td><td>Wed–Sun</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Destiny')">Edit</button></td></tr>
-              <tr><td>Kezia</td><td>Kids & Quick</td><td>54</td><td>★ 4.9</td><td>Mon–Sat</td><td><span class="status-badge confirmed">Active</span></td><td><button class="btn-secondary btn-sm" onclick="openModal('edit-stylist','Kezia')">Edit</button></td></tr>
+              <tr><td colspan="7" style="text-align:center;padding:24px;color:rgba(255,255,255,.3);">Loading stylists…</td></tr>
             </tbody>
           </table>
         </div>
@@ -546,6 +543,18 @@
           </div>
           <button class="btn-danger" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out of Admin</button>
         </div>
+
+        <!-- Payment Methods -->
+        <div class="admin-card" id="payment-methods-card">
+          <h3 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <span>💳 Payment Methods</span>
+            <button class="btn-primary" onclick="openAddPaymentMethodModal()" style="font-size:.78rem;padding:8px 14px;"><i class="fas fa-plus"></i> Add Method</button>
+          </h3>
+          <p style="font-size:.8rem;color:rgba(255,255,255,.45);margin-bottom:16px;">These methods appear during booking checkout on the site and client dashboard.</p>
+          <div id="payment-methods-list">
+            <div style="text-align:center;padding:24px;color:rgba(255,255,255,.3);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+          </div>
+        </div>
       </div>
 
     </div><!-- /main-content -->
@@ -678,9 +687,10 @@
 <div class="modal-overlay" id="modal-add-stylist">
   <div class="modal-box">
     <div class="modal-header">
-      <h3>💅 Add/Edit Stylist</h3>
+      <h3 id="stylist-modal-title">💅 Add Stylist</h3>
       <button class="modal-close" onclick="closeModal('modal-add-stylist')"><i class="fas fa-times"></i></button>
     </div>
+    <input type="hidden" id="stl-id" value=""/>
     <div class="form-row">
       <div class="form-group"><label>Name</label><input class="form-control" id="stl-name" placeholder="Stylist name"/></div>
       <div class="form-group"><label>Specialty</label><input class="form-control" id="stl-spec" placeholder="Box Braids, Locs…"/></div>
@@ -696,7 +706,7 @@
 
 <!-- BOOKING DETAIL MODAL -->
 <div class="modal-overlay" id="modal-booking-detail">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:620px;">
     <div class="modal-header">
       <h3>📋 Booking Details</h3>
       <button class="modal-close" onclick="closeModal('modal-booking-detail')"><i class="fas fa-times"></i></button>
@@ -748,6 +758,49 @@
 </div>
 
 <div class="toast-container" id="toast-container"></div>
+
+<!-- ADD/EDIT PAYMENT METHOD MODAL -->
+<div class="modal-overlay" id="modal-payment-method">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <h3 id="pm-modal-title">&#x1F4B3; Add Payment Method</h3>
+      <button class="modal-close" onclick="closeModal('modal-payment-method')"><i class="fas fa-times"></i></button>
+    </div>
+    <input type="hidden" id="pm-edit-id" value=""/>
+    <div class="form-group"><label>Method Name</label><input class="form-control" id="pm-name" placeholder="e.g. M-Pesa, Zelle, PayPal"/></div>
+    <div class="form-group"><label>Short Description</label><input class="form-control" id="pm-desc" placeholder="e.g. Send via M-Pesa - instant mobile payment"/></div>
+    <div class="form-group"><label>Your Handle / Account</label><input class="form-control" id="pm-value" placeholder="e.g. +254700000000 or $YourCashtag"/></div>
+    <div class="form-group"><label>Copy Hint</label><input class="form-control" id="pm-hint" placeholder="e.g. Copy the number above and send payment"/></div>
+    <div class="form-group"><label>Customer Input Label</label><input class="form-control" id="pm-input-label" placeholder="e.g. Your M-Pesa name or phone number"/></div>
+    <div class="form-group"><label>Customer Input Placeholder</label><input class="form-control" id="pm-input-placeholder" placeholder="e.g. Jane Smith or 0712 345 678"/></div>
+    <div class="form-group"><label>Customer Input Note</label><input class="form-control" id="pm-note" placeholder="e.g. Send to our number above then enter your name below."/></div>
+    <div class="form-group">
+      <label>Icon Style</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <select class="form-control" id="pm-icon-color" style="max-width:140px;">
+          <option value="#6D1ED4">Purple</option>
+          <option value="#00D632">Green</option>
+          <option value="#0070BA">Blue</option>
+          <option value="#FF6600">Orange</option>
+          <option value="#CC0000">Red</option>
+          <option value="#CC9900">Gold</option>
+          <option value="#555555">Grey</option>
+        </select>
+        <select class="form-control" id="pm-icon-symbol">
+          <option value="fa-mobile-alt">Mobile (M-Pesa etc.)</option>
+          <option value="fa-university">Bank / Zelle</option>
+          <option value="fa-dollar-sign">Dollar (Cash App)</option>
+          <option value="fa-paypal">PayPal</option>
+          <option value="fa-credit-card">Card</option>
+          <option value="fa-money-bill-wave">Cash</option>
+          <option value="fa-bitcoin">Crypto</option>
+          <option value="fa-wallet">Wallet</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="savePaymentMethod()" style="width:100%;justify-content:center;margin-top:8px;"><i class="fas fa-save"></i> Save Method</button>
+  </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";

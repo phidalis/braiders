@@ -621,15 +621,19 @@ function editService(id) {
   if (!s) return;
   editingServiceId = id;
   document.getElementById('svc-name').value = s.name;
-  document.getElementById('svc-price').value = s.price;
-  document.getElementById('svc-oprice').value = s.originalPrice || '';
-  // Restore price mode
+  // Restore price mode first so the right rows become visible
   const mode = s.priceMode || (s.originalPrice ? 'promo' : (s.priceMax ? 'range' : 'single'));
   const radioEl = document.querySelector(`input[name="price-mode"][value="${mode}"]`);
   if (radioEl) { radioEl.checked = true; onPriceModeChange(mode); }
+  // Populate the correct price fields based on mode
   if (mode === 'range') {
     document.getElementById('svc-price-min').value = s.price || '';
     document.getElementById('svc-price-max').value = s.priceMax || '';
+  } else if (mode === 'promo') {
+    document.getElementById('svc-oprice').value = s.originalPrice || '';
+    document.getElementById('svc-promo-price').value = s.price || '';
+  } else {
+    document.getElementById('svc-price').value = s.price || '';
   }
   document.getElementById('svc-duration').value = s.duration;
   document.getElementById('svc-badge').value = s.badge || '';
@@ -655,7 +659,7 @@ function editService(id) {
   if (s.hairType) document.getElementById('svc-hairtype').value = s.hairType;
 
   document.querySelector('#modal-add-service .modal-header h3').textContent = '✂️ Edit Service';
-  openModal('modal-add-service');
+  openModal('add-service');
 }
 
 // =========== CLOUDINARY IMAGE UPLOAD (MULTI — up to 5) ===========
@@ -741,7 +745,7 @@ async function saveService() {
     priceMax = parseInt(document.getElementById('svc-price-max').value) || null;
   } else if (priceMode === 'promo') {
     oprice = parseInt(document.getElementById('svc-oprice').value) || null;
-    price  = parseInt(document.getElementById('svc-price').value) || 0;
+    price  = parseInt(document.getElementById('svc-promo-price').value) || 0;
   } else {
     price  = parseInt(document.getElementById('svc-price').value) || 0;
   }
@@ -1405,6 +1409,7 @@ function openAddServiceModal() {
   document.getElementById('svc-oprice').value = '';
   document.getElementById('svc-price-min').value = '';
   document.getElementById('svc-price-max').value = '';
+  document.getElementById('svc-promo-price').value = '';
   // Reset price mode to single
   const singleRadio = document.querySelector('input[name="price-mode"][value="single"]');
   if (singleRadio) { singleRadio.checked = true; onPriceModeChange('single'); }

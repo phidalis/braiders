@@ -555,6 +555,43 @@
             <div style="text-align:center;padding:24px;color:rgba(255,255,255,.3);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
           </div>
         </div>
+
+        <!-- Social Media Links -->
+        <div class="admin-card">
+          <h3 style="margin-bottom:4px;"><i class="fas fa-share-alt" style="color:var(--gold);margin-right:8px;"></i> Social Media Links</h3>
+          <p style="font-size:.8rem;color:rgba(255,255,255,.45);margin-bottom:20px;">These links power the social buttons displayed on your website. Leave blank to hide a button.</p>
+          <div class="two-col" style="gap:14px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;">
+                <span style="width:28px;height:28px;border-radius:50%;background:#1877F2;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fab fa-facebook-f" style="color:#fff;font-size:.75rem;"></i></span>
+                Facebook URL
+              </label>
+              <input class="form-control" id="set-social-facebook" placeholder="https://facebook.com/yourpage"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;">
+                <span style="width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 30% 110%,#f09433,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fab fa-instagram" style="color:#fff;font-size:.75rem;"></i></span>
+                Instagram URL
+              </label>
+              <input class="form-control" id="set-social-instagram" placeholder="https://instagram.com/yourhandle"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;">
+                <span style="width:28px;height:28px;border-radius:50%;background:#010101;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fab fa-tiktok" style="color:#fff;font-size:.75rem;"></i></span>
+                TikTok URL
+              </label>
+              <input class="form-control" id="set-social-tiktok" placeholder="https://tiktok.com/@yourhandle"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;">
+                <span style="width:28px;height:28px;border-radius:50%;background:#25D366;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fab fa-whatsapp" style="color:#fff;font-size:.75rem;"></i></span>
+                WhatsApp Link
+              </label>
+              <input class="form-control" id="set-social-whatsapp" placeholder="https://wa.me/254700000000"/>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="saveSocialLinks()" style="width:100%;justify-content:center;margin-top:20px;"><i class="fas fa-save"></i> Save Social Links</button>
+        </div>
       </div>
 
     </div><!-- /main-content -->

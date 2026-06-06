@@ -1418,6 +1418,22 @@ async function loadLiveDataFromFirestore() {
       if (footerCopy && s.studioName) {
         footerCopy.textContent = `© ${new Date().getFullYear()} ${s.studioName}. All rights reserved.`;
       }
+
+      // Social links — footer + floating bar
+      // Only update href when a URL is actually saved; never hide buttons that have no URL yet
+      const setSocial = (footerId, floatId, url) => {
+        if (!url) return; // nothing saved yet — leave the button as-is
+        const setLink = (id) => { const el = document.getElementById(id); if (el) el.href = url; };
+        setLink(footerId);
+        setLink(floatId);
+      };
+      setSocial('footer-social-facebook',  'float-social-facebook',  s.socialFacebook);
+      setSocial('footer-social-instagram', 'float-social-instagram', s.socialInstagram);
+      setSocial('footer-social-tiktok',    'float-social-tiktok',    s.socialTiktok);
+      // WhatsApp float bar — prefer saved URL, fall back to phone number
+      const waUrl = s.socialWhatsapp || (s.phone ? `https://wa.me/${s.phone.replace(/\D/g,'')}` : '');
+      const waFloat = document.getElementById('float-social-whatsapp');
+      if (waFloat && waUrl) waFloat.href = waUrl;
     }
   } catch(e) { /* Firebase unavailable — catalog stays empty until retry */ }
 }

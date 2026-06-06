@@ -1372,6 +1372,11 @@ async function loadSiteSettings() {
     set('set-hours-wknd',  d.hoursWeekend);
     setChk('toggle-bookings',   d.toggleBookings);
     setChk('toggle-newsletter', d.toggleNewsletter);
+    // Social links
+    set('set-social-facebook',  d.socialFacebook);
+    set('set-social-instagram', d.socialInstagram);
+    set('set-social-tiktok',    d.socialTiktok);
+    set('set-social-whatsapp',  d.socialWhatsapp);
   } catch(e) { /* keep HTML defaults */ }
 }
 
@@ -1388,10 +1393,25 @@ function saveSettings() {
     toggleNewsletter: document.getElementById('toggle-newsletter')?.checked,
   };
   if (window._fb) {
-    window._fb.setDoc(window._fb.doc(window._fb.db,'settings','site'), data).catch(()=>{});
+    window._fb.setDoc(window._fb.doc(window._fb.db,'settings','site'), data, { merge: true }).catch(()=>{});
   }
   showToast('Settings saved! ⚙️', 'success');
   addActivity('Settings updated', 'Site configuration saved', 'gold');
+}
+
+function saveSocialLinks() {
+  const data = {
+    socialFacebook:  document.getElementById('set-social-facebook')?.value?.trim() || '',
+    socialInstagram: document.getElementById('set-social-instagram')?.value?.trim() || '',
+    socialTiktok:    document.getElementById('set-social-tiktok')?.value?.trim() || '',
+    socialWhatsapp:  document.getElementById('set-social-whatsapp')?.value?.trim() || '',
+  };
+  if (window._fb) {
+    // merge into the existing settings doc (setDoc with merge:true)
+    window._fb.setDoc(window._fb.doc(window._fb.db, 'settings', 'site'), data, { merge: true }).catch(() => {});
+  }
+  showToast('Social links saved! 🔗', 'success');
+  addActivity('Social links updated', 'Facebook, Instagram, TikTok & WhatsApp links saved', 'gold');
 }
 
 // =========== MODALS ===========

@@ -1399,19 +1399,26 @@ function saveSettings() {
   addActivity('Settings updated', 'Site configuration saved', 'gold');
 }
 
-function saveSocialLinks() {
+async function saveSocialLinks() {
+  if (!window._fb) { showToast('Firebase not ready — please wait and try again.', 'error'); return; }
+  const btn = document.querySelector('[onclick="saveSocialLinks()"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; }
   const data = {
     socialFacebook:  document.getElementById('set-social-facebook')?.value?.trim() || '',
     socialInstagram: document.getElementById('set-social-instagram')?.value?.trim() || '',
     socialTiktok:    document.getElementById('set-social-tiktok')?.value?.trim() || '',
     socialWhatsapp:  document.getElementById('set-social-whatsapp')?.value?.trim() || '',
   };
-  if (window._fb) {
-    // merge into the existing settings doc (setDoc with merge:true)
-    window._fb.setDoc(window._fb.doc(window._fb.db, 'settings', 'site'), data, { merge: true }).catch(() => {});
+  try {
+    await window._fb.setDoc(window._fb.doc(window._fb.db, 'settings', 'site'), data, { merge: true });
+    showToast('Social links saved! 🔗', 'success');
+    addActivity('Social links updated', 'Facebook, Instagram, TikTok & WhatsApp links saved', 'gold');
+  } catch(e) {
+    console.error('saveSocialLinks failed:', e);
+    showToast('Save failed: ' + (e.message || 'unknown error'), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Social Links'; }
   }
-  showToast('Social links saved! 🔗', 'success');
-  addActivity('Social links updated', 'Facebook, Instagram, TikTok & WhatsApp links saved', 'gold');
 }
 
 // =========== MODALS ===========

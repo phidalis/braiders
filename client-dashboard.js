@@ -1084,7 +1084,13 @@ function initDbBookingStepsModal() {
   document.getElementById('db-bsmClose')?.addEventListener('click', closeDbBsmModal);
   document.getElementById('db-bsmOverlay')?.addEventListener('click', closeDbBsmModal);
   document.getElementById('db-bsmBack')?.addEventListener('click', () => {
-    if (dbBsmCurrentStep > 1) goToDbBsmStep(dbBsmCurrentStep - 1);
+    if (dbBsmCurrentStep > 1 && dbBsmCurrentStep < 5) goToDbBsmStep(dbBsmCurrentStep - 1);
+  });
+  document.getElementById('db-bsmDoneBtn')?.addEventListener('click', () => {
+    closeDbBsmModal();
+    const cm = document.getElementById('confirm-msg');
+    if (cm) cm.textContent = `Your booking has been submitted and is pending payment verification. We'll confirm via WhatsApp shortly. 💳✨`;
+    document.getElementById('confirm-modal').classList.add('open');
   });
 
   document.getElementById('db-bsmNext1')?.addEventListener('click', () => {
@@ -1167,12 +1173,26 @@ function initDbBookingStepsModal() {
     btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
     btn.disabled = false;
 
-    closeDbBsmModal();
-
+    // Build WhatsApp message
     const methodLabel = DB_PAYMENT_METHODS_LIST[parseInt(dbPaymentMethod)]?.name || dbPaymentMethod;
-    const cm = document.getElementById('confirm-msg');
-    if (cm) cm.textContent = `Your ${dbBsmStyleName} on ${formatDate(date)} at ${time} is pending payment verification. Once we confirm your ${methodLabel} payment from "${payHandle}", we'll approve your booking and WhatsApp you at ${phone}. Ref: ${bookingRef} 💳✨`;
-    document.getElementById('confirm-modal').classList.add('open');
+    const waMessage = `Hi Ani Braids. I have just booked an appointment and made a payment.\n\n` +
+      `📋 *Booking Details*\n` +
+      `• Style: ${dbBsmStyleName}\n` +
+      `• Date: ${formatDate(date)}\n` +
+      `• Time: ${time}\n` +
+      `• Stylist: ${stylist === 'any' ? 'Any Available' : stylist}\n` +
+      `• Name: ${name}\n` +
+      `• Phone: ${phone}\n` +
+      `• Payment Method: ${methodLabel}\n` +
+      `• Payment Name/Handle: ${payHandle}\n` +
+      `• Booking Ref: ${bookingRef}\n` +
+      (notes ? `• Special Requests: ${notes}\n` : '') +
+      `\nWaiting for your response. Thank you 🙏`;
+
+    const waLink = document.getElementById('db-bsmWhatsAppBtn');
+    if (waLink) waLink.href = `https://wa.me/12024244894?text=${encodeURIComponent(waMessage)}`;
+
+    goToDbBsmStep(5);
   });
 }
 

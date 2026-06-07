@@ -905,7 +905,15 @@ function initBookingStepsModal() {
   document.getElementById('bsmClose')?.addEventListener('click', closeBsmModal);
   document.getElementById('bsmOverlay')?.addEventListener('click', closeBsmModal);
   document.getElementById('bsmBack')?.addEventListener('click', () => {
-    if (bsmCurrentStep > 1) goToBsmStep(bsmCurrentStep - 1);
+    if (bsmCurrentStep > 1 && bsmCurrentStep < 5) goToBsmStep(bsmCurrentStep - 1);
+  });
+  document.getElementById('bsmDoneBtn')?.addEventListener('click', () => {
+    closeBsmModal();
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmMsg   = document.getElementById('confirmMsg');
+    if (confirmMsg) confirmMsg.textContent = `Your booking has been submitted and is pending payment verification. We'll confirm via WhatsApp shortly. 💳✨`;
+    confirmModal?.classList.add('open');
+    document.body.style.overflow = 'hidden';
   });
 
   // Step 1 → 2
@@ -1013,17 +1021,30 @@ function initBookingStepsModal() {
       return;
     }
 
-    // Success — close steps modal, show confirm modal
-    closeBsmModal();
+    // Success — go to step 5 (WhatsApp confirmation)
     btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment<span class="btn-shimmer"></span>';
     btn.disabled  = false;
 
-    const confirmModal = document.getElementById('confirmModal');
-    const confirmMsg   = document.getElementById('confirmMsg');
     const methodLabel  = PAYMENT_METHODS_LIST[parseInt(bsmPaymentMethod)]?.name || bsmPaymentMethod;
-    if (confirmMsg) confirmMsg.textContent = `Your ${selectedStyle} appointment on ${formatDate(date)} at ${time} is pending payment verification. Once we confirm your ${methodLabel} payment from "${payHandle}", we'll approve your booking and notify you via WhatsApp at ${phone}. 💳✨`;
-    confirmModal?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    const notes        = document.getElementById('bsmNotes')?.value.trim() || '';
+    const waMessage    = `Hi Ani Braids. I have just booked an appointment and made a payment.\n\n` +
+      `📋 *Booking Details*\n` +
+      `• Style: ${selectedStyle}\n` +
+      `• Date: ${formatDate(date)}\n` +
+      `• Time: ${time}\n` +
+      `• Stylist: ${stylist === 'any' ? 'Any Available' : stylist}\n` +
+      `• Name: ${name}\n` +
+      `• Phone: ${phone}\n` +
+      `• Payment Method: ${methodLabel}\n` +
+      `• Payment Name/Handle: ${payHandle}\n` +
+      `• Booking Ref: ${bookingRef}\n` +
+      (notes ? `• Special Requests: ${notes}\n` : '') +
+      `\nWaiting for your response. Thank you 🙏`;
+
+    const waLink = document.getElementById('bsmWhatsAppBtn');
+    if (waLink) waLink.href = `https://wa.me/12024244894?text=${encodeURIComponent(waMessage)}`;
+
+    goToBsmStep(5);
     showToast('Booking submitted! Awaiting payment verification 🎉', 'success');
   });
 }

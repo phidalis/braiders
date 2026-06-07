@@ -3773,3 +3773,99 @@ button { cursor: pointer; font-family: var(--font-body); }
   line-height: 1.5;
 }
 .bsm-pay-note i { color: #f59e0b; margin-top: 1px; flex-shrink: 0; }
+
+/* ===== STEP 5: WHATSAPP CONFIRMATION ===== */
+.bsm-wa-success-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.bsm-wa-checkmark {
+  font-size: 3rem;
+  color: #25D366;
+  animation: waCheckPop .4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes waCheckPop {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bsm-wa-submitted-label {
+  font-size: .9rem;
+  font-weight: 600;
+  color: #10b981;
+  margin: 0;
+}
+.bsm-wa-info-box {
+  background: rgba(37, 211, 102, .08);
+  border: 1px solid rgba(37, 211, 102, .25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.bsm-wa-info-box p {
+  font-size: .82rem;
+  color: rgba(255,255,255,.7);
+  margin: 0;
+  line-height: 1.6;
+  text-align: center;
+}
+.bsm-btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: #fff;
+  font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 20px rgba(37,211,102,.35);
+}
+.bsm-btn-whatsapp i { font-size: 1.25rem; }
+.bsm-btn-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(37,211,102,.5);
+}
+.bsm-btn-whatsapp .btn-shimmer {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  transform: skewX(-15deg);
+}
+.bsm-btn-whatsapp:hover .btn-shimmer {
+  animation: shimmer .7s ease forwards;
+}
+.bsm-btn-done {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.6);
+  font-family: 'Jost', sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.bsm-btn-done:hover {
+  border-color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.06);
+}

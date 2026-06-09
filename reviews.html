@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews – Ani Braids – Premium Braiding Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --brand: #9B1FBE;
+      --brand-light: #E8447A;
+      --dark: #1a1a1a;
+      --white: #ffffff;
+      --mid: #666666;
+      --light-bg: #F8F4FB;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    
+    /* ── TOP BAR ── */
+    .topbar {
+      background: #6B0E85;
+      color: #ffffff;
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .topbar strong { color: #D4A843; }
+
+    /* ── HEADER ── */
+    header {
+      background: #ffffff;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .sticky-header-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #9B1FBE;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: #E8447A; }
+
+    /* ── HEADER SEARCH ── */
+    .header-search {
+      display: flex;
+      align-items: center;
+      background: #F8F4FB;
+      border: 1.5px solid rgba(155,31,190,0.2);
+      border-radius: 50px;
+      padding: 6px 16px;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+    .header-search:focus-within {
+      border-color: #9B1FBE;
+    }
+    .header-search input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #2A2A2A;
+      width: 180px;
+    }
+    .header-search input::placeholder { color: #aaa; }
+    .header-search button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9B1FBE;
+      display: flex;
+      align-items: center;
+      padding: 0;
+      font-size: 15px;
+    }
+    .header-search button:hover { color: #E8447A; }
+
+    /* ── SECONDARY NAV ── */
+    .secondary-nav {
+      background: #111111;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .secondary-nav-top {
+      display: none;
+    }
+    .secondary-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .secondary-nav-inner a {
+      color: rgba(255,255,255,0.82);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      padding: 11px 13px;
+      white-space: nowrap;
+      transition: color 0.2s, background 0.2s;
+      border-radius: 4px;
+      display: block;
+    }
+    .secondary-nav-inner a:hover {
+      color: #ffffff;
+      background: rgba(255,255,255,0.07);
+    }
+
+    @media (max-width: 768px) {
+      .secondary-nav-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+      .secondary-nav-top span {
+        color: rgba(255,255,255,0.7);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 12px 0;
+      }
+      .nav-toggle-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 8px 4px;
+      }
+      .nav-toggle-btn i {
+        color: rgba(255,255,255,0.85);
+        font-size: 18px;
+      }
+      .secondary-nav-inner {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      .secondary-nav-inner.open {
+        display: flex;
+      }
+      .secondary-nav-inner a {
+        padding: 13px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        font-size: 14px;
+        white-space: normal;
+      }
+      .secondary-nav-inner a:last-child {
+        border-bottom: none;
+      }
+      .header-search input { width: 130px; }
+    }
+
+    .page-section {
+      padding: 60px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      display: inline-block;
+      background: var(--light-bg);
+      color: var(--brand);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .section-title em {
+      color: var(--brand);
+      font-style: normal;
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--mid);
+      margin-bottom: 40px;
+    }
+
+    .reviews-section {
+      text-align: center;
+    }
+
+    .review-form {
+      background: var(--light-bg);
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .form-row label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--dark);
+    }
+
+    .form-row input[type="text"],
+    .form-row input[type="email"],
+    .form-row textarea {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-row input[type="text"]:focus,
+    .form-row input[type="email"]:focus,
+    .form-row textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(155, 31, 190, 0.1);
+    }
+
+    .form-row textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .star-rating {
+      display: flex;
+      gap: 12px;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+
+    .star-rating input {
+      display: none;
+    }
+
+    .star-rating label {
+      font-size: 28px;
+      cursor: pointer;
+      color: #ddd;
+      transition: color 0.2s;
+      margin: 0;
+    }
+
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+      color: var(--brand);
+    }
+
+    .terms-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .terms-row input {
+      margin-top: 4px;
+      cursor: pointer;
+      accent-color: var(--brand);
+    }
+
+    .terms-row label {
+      font-size: 13px;
+      color: var(--mid);
+      margin: 0;
+      font-weight: normal;
+    }
+
+    .btn-submit {
+      background: var(--brand);
+      color: var(--white);
+      padding: 14px 28px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    .btn-submit:hover {
+      background: #7a1599;
+    }
+
+    #formSuccess {
+      font-size: 16px;
+    }
+
+    footer {
+      background: var(--dark);
+      color: var(--white);
+      padding: 60px 20px 20px;
+    }
+
+    .footer-brand {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .footer-brand .logo {
+      color: var(--white);
+      font-size: 28px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .footer-brand p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .footer-body {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .footer-col h4 {
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .footer-col a {
+      display: block;
+      text-decoration: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      margin-bottom: 8px;
+      transition: color 0.3s;
+    }
+
+    .footer-col a:hover {
+      color: var(--white);
+    }
+
+    .footer-col p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .social-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      font-size: 16px;
+      text-decoration: none;
+    }
+
+    .social-links a:hover {
+      background: var(--brand);
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .newsletter-form button {
+      padding: 10px 16px;
+      background: var(--brand);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+
+    .newsletter-form button:hover {
+      background: #7a1599;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 768px) {
+      .footer-body {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+
+      .section-title {
+        font-size: 32px;
+      }
+
+      .review-form {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <strong>✨ Ani Braids</strong> — Premium Protective Styling, Worldwide Bookings Available
+  </div>
+
+  <div class="sticky-header-wrap">
+    <!-- HEADER -->
+    <header>
+      <div class="header-inner">
+        <a href="index.html" class="logo">Ani <span>Braids</span></a>
+        <div class="header-search">
+          <input type="text" placeholder="Search...">
+          <button aria-label="Search"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECONDARY NAV -->
+    <nav class="secondary-nav">
+      <div class="secondary-nav-top">
+        <span>Menu</span>
+        <button class="nav-toggle-btn" id="navToggle" aria-label="Toggle navigation">
+          <i class="fas fa-bars" id="navToggleIcon"></i>
+        </button>
+      </div>
+      <div class="secondary-nav-inner" id="secondaryNavLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="appointment.html">Appointment</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="customer.html">Customer Cabinet</a>
+        <a href="contact.html">Contact us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund & Returns</a>
+        <a href="reviews.html">Reviews</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- REVIEW FORM -->
+  <section class="reviews-section page-section">
+    <div class="section-label">Client Reviews</div>
+    <h2 class="section-title">Share Your <em>Experience</em></h2>
+    <p class="section-subtitle">We'd love to hear from you — your feedback helps us grow.</p>
+    <div class="review-form">
+      <form id="reviewForm" onsubmit="submitReview(event)">
+        <div class="form-row">
+          <label>Your Overall Rating</label>
+          <div class="star-rating">
+            <input type="radio" id="s5" name="rating" value="5"><label for="s5">★</label>
+            <input type="radio" id="s4" name="rating" value="4"><label for="s4">★</label>
+            <input type="radio" id="s3" name="rating" value="3"><label for="s3">★</label>
+            <input type="radio" id="s2" name="rating" value="2"><label for="s2">★</label>
+            <input type="radio" id="s1" name="rating" value="1"><label for="s1">★</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="rTitle">Title of Your Review</label>
+          <input type="text" id="rTitle" placeholder="Summarize your experience" required>
+        </div>
+        <div class="form-row">
+          <label for="rContent">Your Review</label>
+          <textarea id="rContent" placeholder="Tell others about your experience with Ani Braids..." required></textarea>
+        </div>
+        <div class="form-row">
+          <label for="rName">Your Name</label>
+          <input type="text" id="rName" placeholder="Your name" required>
+        </div>
+        <div class="form-row">
+          <label for="rEmail">Your Email</label>
+          <input type="email" id="rEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="terms-row">
+          <input type="checkbox" id="rTerms" required>
+          <label for="rTerms">This review is based on my own experience and is my genuine opinion.</label>
+        </div>
+        <button type="submit" class="btn-submit">Submit Review</button>
+        <div id="formSuccess" style="display:none;text-align:center;margin-top:16px;color:var(--brand);font-weight:600;">
+          🎉 Thank you for your review!
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="home.html" class="logo">Ani <span>Braids</span></a>
+      <p>Premium Protective Styling Studio — Worldwide</p>
+    </div>
+    <div class="footer-body">
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>
+        <a href="tel:+1234567890">+1 (234) 567-890</a>
+        <p>Available worldwide via online booking</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="home.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="privacy.html">Policies</a>
+        <a href="appointment.html">Book Now</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Stay Updated</h4>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Your email address">
+          <button type="button">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 Ani Braids. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('navToggle').addEventListener('click', function() {
+      const navLinks = document.getElementById('secondaryNavLinks');
+      navLinks.classList.toggle('active');
+    });
+
+    function submitReview(event) {
+      event.preventDefault();
+      
+      const form = document.getElementById('reviewForm');
+      const successMsg = document.getElementById('formSuccess');
+      
+      // Here you would normally send the data to a server
+      // For now, we'll just show a success message and reset the form
+      
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        form.reset();
+        form.style.display = 'block';
+        successMsg.style.display = 'none';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

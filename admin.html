@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – Ani Braids</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc,
+             getDocs, deleteDoc, updateDoc, serverTimestamp, query, orderBy }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // Expose to global scope for inline handlers
+    window._fb = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+                   doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc,
+                   updateDoc, serverTimestamp, query, orderBy };
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        document.getElementById('loginScreen').style.display  = 'none';
+        document.getElementById('adminShell').style.display   = 'flex';
+        document.getElementById('adminEmail').textContent     = user.email;
+        window._adminReady();
+      } else {
+        document.getElementById('loginScreen').style.display  = 'flex';
+        document.getElementById('adminShell').style.display   = 'none';
+      }
+    });
+  </script>
+
+  <style>
+    /* ─── TOKENS ─────────────────────────────────── */
+    :root {
+      --brand:      #9B1FBE;
+      --brand-d:    #6B0E85;
+      --pink:       #E8447A;
+      --gold:       #D4A843;
+      --dark:       #111111;
+      --dark2:      #1A1A1A;
+      --surface:    #1E1E1E;
+      --surface2:   #252525;
+      --border:     rgba(255,255,255,0.08);
+      --text:       #F0F0F0;
+      --text-muted: rgba(255,255,255,0.5);
+      --success:    #22C97A;
+      --danger:     #F04F5A;
+      --warning:    #F5A623;
+      --radius:     10px;
+      --sidebar-w:  240px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+
+    /* ─── LOGIN SCREEN ───────────────────────────── */
+    #loginScreen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 30% 60%, rgba(155,31,190,0.25) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(232,68,122,0.15) 0%, transparent 55%),
+                  #0d0d0d;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 380px;
+      text-align: center;
+    }
+    .login-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px; font-weight: 700;
+      color: var(--brand); letter-spacing: -0.5px; margin-bottom: 4px;
+    }
+    .login-logo span { color: var(--pink); }
+    .login-sub { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 32px; }
+    .login-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 24px; }
+    .login-field { margin-bottom: 14px; text-align: left; }
+    .login-field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .login-field input {
+      width: 100%; padding: 11px 14px;
+      background: var(--dark2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: var(--brand); }
+    .btn-login {
+      width: 100%; padding: 13px; margin-top: 8px;
+      background: linear-gradient(135deg, var(--brand), var(--pink));
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-login:hover { opacity: 0.9; }
+    #loginError { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 20px; }
+
+    /* ─── ADMIN SHELL ────────────────────────────── */
+    #adminShell { display: none; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--dark2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 200;
+      transition: transform 0.3s;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo a {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 700; color: var(--brand);
+      text-decoration: none;
+    }
+    .sidebar-logo a span { color: var(--pink); }
+    .sidebar-logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+    .nav-group-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 14px 20px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 20px; color: rgba(255,255,255,0.7);
+      cursor: pointer; font-size: 13.5px; font-weight: 500;
+      transition: all 0.15s; border-radius: 0; user-select: none;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-item.active {
+      background: rgba(155,31,190,0.15); color: var(--brand);
+      border-left-color: var(--brand);
+    }
+    .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-user { font-size: 12px; color: var(--text-muted); }
+    #adminEmail { color: var(--text); font-size: 11px; display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+    .btn-logout {
+      background: rgba(240,79,90,0.15); border: 1px solid rgba(240,79,90,0.3);
+      color: var(--danger); padding: 6px 10px; border-radius: 6px;
+      cursor: pointer; font-size: 12px; transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(240,79,90,0.25); }
+
+    /* MAIN */
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+    }
+    .topbar-admin {
+      background: var(--dark2); border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-admin h1 { font-size: 17px; font-weight: 600; }
+    .topbar-badge {
+      font-size: 11px; padding: 3px 10px; border-radius: 20px;
+      background: rgba(155,31,190,0.2); color: var(--brand);
+      border: 1px solid rgba(155,31,190,0.3); font-weight: 600; letter-spacing: 0.5px;
+    }
+    .sidebar-toggle {
+      display: none; background: none; border: none; color: var(--text);
+      font-size: 20px; cursor: pointer; padding: 4px;
+    }
+    .content-area { padding: 28px; flex: 1; }
+
+    /* ─── PANELS ─────────────────────────────────── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ─── DASHBOARD OVERVIEW ─────────────────────── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: var(--text); }
+    .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .stat-card.accent-purple { border-color: rgba(155,31,190,0.4); background: rgba(155,31,190,0.08); }
+    .stat-card.accent-pink   { border-color: rgba(232,68,122,0.4); background: rgba(232,68,122,0.08); }
+    .stat-card.accent-gold   { border-color: rgba(212,168,67,0.4); background: rgba(212,168,67,0.08); }
+    .stat-card.accent-green  { border-color: rgba(34,201,122,0.4); background: rgba(34,201,122,0.08); }
+
+    /* ─── SECTION HEADERS ────────────────────────── */
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-head h2 { font-size: 16px; font-weight: 600; }
+    .section-head p  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ─── BUTTONS ────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary { background: linear-gradient(135deg,var(--brand),var(--pink)); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-danger  { background: rgba(240,79,90,0.15); border: 1px solid rgba(240,79,90,0.3); color: var(--danger); }
+    .btn-danger:hover { background: rgba(240,79,90,0.25); }
+    .btn-success { background: rgba(34,201,122,0.15); border: 1px solid rgba(34,201,122,0.3); color: var(--success); }
+    .btn-sm { padding: 6px 13px; font-size: 12px; }
+
+    /* ─── FORMS ──────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-grid.cols1 { grid-template-columns: 1fr; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.span2 { grid-column: span 2; }
+    .field.span3 { grid-column: span 3; }
+    .field label { font-size: 12px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; }
+    .field input, .field select, .field textarea {
+      background: var(--dark2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 13px;
+      color: var(--text); font-size: 13.5px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field select option { background: var(--dark2); }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .checkbox-item { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; }
+    .checkbox-item input[type=checkbox] { accent-color: var(--brand); width: 15px; height: 15px; cursor: pointer; }
+
+    /* ─── IMAGE UPLOAD ZONE ──────────────────────── */
+    .upload-zone {
+      border: 2px dashed rgba(155,31,190,0.4);
+      border-radius: 10px; padding: 28px 20px;
+      text-align: center; cursor: pointer;
+      transition: all 0.2s; background: rgba(155,31,190,0.04);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--brand); background: rgba(155,31,190,0.1);
+    }
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone i { font-size: 28px; color: var(--brand); margin-bottom: 10px; display: block; }
+    .upload-zone p { font-size: 13px; color: var(--text-muted); }
+    .upload-zone strong { color: var(--text); }
+    .upload-progress {
+      margin-top: 10px; background: var(--dark2); border-radius: 4px; overflow: hidden; height: 4px; display: none;
+    }
+    .upload-progress-bar { height: 100%; background: linear-gradient(90deg,var(--brand),var(--pink)); transition: width 0.3s; width: 0%; }
+
+    .img-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .img-thumb {
+      width: 90px; height: 90px; border-radius: 8px; overflow: hidden;
+      position: relative; border: 1px solid var(--border);
+    }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .img-thumb-remove {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(0,0,0,0.75); color: #fff;
+      border: none; border-radius: 50%; width: 20px; height: 20px;
+      cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;
+    }
+    .img-thumb-remove:hover { background: var(--danger); }
+    .upload-spinner { display: none; }
+    .upload-spinner.active { display: inline-block; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── CARDS / TABLE ──────────────────────────── */
+    .card-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .card-box-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-box-header h3 { font-size: 14px; font-weight: 600; }
+
+    /* Service cards in admin list */
+    .svc-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .svc-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; display: flex;
+    }
+    .svc-item-img {
+      width: 80px; height: 80px; flex-shrink: 0; overflow: hidden; background: var(--dark);
+    }
+    .svc-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .svc-item-img-placeholder {
+      width: 100%; height: 100%; display: flex; align-items: center;
+      justify-content: center; font-size: 24px;
+      background: linear-gradient(135deg,rgba(155,31,190,0.2),rgba(232,68,122,0.2));
+    }
+    .svc-item-body { flex: 1; padding: 12px 14px; }
+    .svc-item-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .svc-item-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .svc-item-actions { display: flex; gap: 6px; }
+
+    /* Portfolio gallery */
+    .portfolio-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .portfolio-item {
+      border-radius: 8px; overflow: hidden; position: relative;
+      aspect-ratio: 3/4; background: var(--surface2);
+    }
+    .portfolio-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .portfolio-item-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      padding: 12px; opacity: 0; transition: opacity 0.2s;
+    }
+    .portfolio-item:hover .portfolio-item-overlay { opacity: 1; }
+    .portfolio-item-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #fff; text-align: center; }
+
+    /* Hero section */
+    .hero-slots { display: flex; flex-direction: column; gap: 28px; }
+    .hero-page-group { display: flex; flex-direction: column; gap: 14px; }
+    .hero-page-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--brand); padding: 10px 14px;
+      background: rgba(155,31,190,0.08); border: 1px solid rgba(155,31,190,0.2);
+      border-radius: 8px;
+    }
+    .hero-page-label i { font-size: 13px; }
+    .hero-page-slots { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .hero-slot {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+
+    /* Carousel admin grid */
+    .carousel-admin-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
+    }
+    .carousel-admin-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; position: relative;
+    }
+    .carousel-admin-card .card-img {
+      aspect-ratio: 3/4; overflow: hidden; position: relative; background: var(--dark);
+    }
+    .carousel-admin-card .card-img img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .carousel-admin-card .card-img-placeholder {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      color: var(--text-muted); font-size: 12px;
+    }
+    .carousel-admin-card .card-img-placeholder i { font-size: 28px; color: rgba(155,31,190,0.4); }
+    .carousel-admin-card .card-body { padding: 10px 12px; }
+    .carousel-admin-card .card-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .carousel-admin-card .card-order { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
+    .carousel-admin-card .card-actions { display: flex; gap: 6px; }
+    .carousel-drag-handle {
+      position: absolute; top: 6px; left: 6px;
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.7);
+      border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: grab;
+    }
+    .hero-slot-img { aspect-ratio: 16/9; overflow: hidden; background: var(--dark); position: relative; }
+    .hero-slot-img img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-slot-img-empty {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 13px; gap: 8px;
+    }
+    .hero-slot-img-empty i { font-size: 28px; color: rgba(155,31,190,0.4); }
+    .hero-slot-body { padding: 14px; }
+    .hero-slot-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s; pointer-events: none; min-width: 260px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast i { font-size: 18px; }
+    #toast.success { border-color: rgba(34,201,122,0.4); }
+    #toast.success i { color: var(--success); }
+    #toast.error { border-color: rgba(240,79,90,0.4); }
+    #toast.error i { color: var(--danger); }
+    #toast-msg { font-size: 13.5px; font-weight: 500; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; width: 640px; max-width: 96vw; max-height: 90vh;
+      overflow-y: auto; padding: 28px;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 { font-size: 17px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; }
+    .modal-close:hover { color: var(--text); }
+    .modal-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab-btn {
+      padding: 10px 20px; font-size: 13px; font-weight: 500;
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--text-muted);
+    }
+    .empty-state i { font-size: 40px; margin-bottom: 14px; display: block; opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-wrap { margin-left: 0; }
+      .sidebar-toggle { display: block; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .svc-list { grid-template-columns: 1fr; }
+      .portfolio-grid { grid-template-columns: repeat(2,1fr); }
+      .hero-slots { grid-template-columns: 1fr; }
+      .carousel-admin-grid { grid-template-columns: repeat(2,1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid.cols3 { grid-template-columns: 1fr; }
+      .field.span2, .field.span3 { grid-column: span 1; }
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .content-area { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ LOGIN ═══════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Ani <span>Braids</span></div>
+    <div class="login-sub">Admin Dashboard</div>
+    <h2>Sign In</h2>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="admin@anibraids.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Sign In to Dashboard</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ SHELL ═══════════════════════════════════ -->
+<div id="adminShell" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="index.html" target="_blank">Ani <span>Braids</span></a>
+      <p>Admin Panel</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item active" data-panel="dashboard"><i class="fas fa-th-large"></i> Dashboard</div>
+
+      <div class="nav-group-label">Content</div>
+      <div class="nav-item" data-panel="hero"><i class="fas fa-image"></i> Hero Images</div>
+      <div class="nav-item" data-panel="carousel"><i class="fas fa-film"></i> Carousel</div>
+      <div class="nav-item" data-panel="services"><i class="fas fa-cut"></i> Portfolio</div>
+      <div class="nav-item" data-panel="portfolio"><i class="fas fa-images"></i> Services</div>
+
+      <div class="nav-group-label">Website</div>
+      <div class="nav-item" data-panel="announcements"><i class="fas fa-bullhorn"></i> Announcements</div>
+      <div class="nav-item" data-panel="bookings"><i class="fas fa-calendar-alt"></i> Bookings</div>
+      <div class="nav-item" data-panel="reviews"><i class="fas fa-star"></i> Reviews</div>
+      <div class="nav-item" data-panel="settings"><i class="fas fa-cog"></i> Site Settings</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <span>Signed in as</span>
+        <span id="adminEmail"></span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrap">
+    <div class="topbar-admin">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 id="panelTitle">Dashboard</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="topbar-badge">Admin</span>
+        <a href="index.html" target="_blank" class="btn btn-outline btn-sm">
+          <i class="fas fa-external-link-alt"></i> View Site
+        </a>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card accent-purple">
+            <div class="label">Portfolio</div>
+            <div class="value" id="stat-services">—</div>
+            <div class="sub">Portfolio styles</div>
+          </div>
+          <div class="stat-card accent-pink">
+            <div class="label">Services</div>
+            <div class="value" id="stat-portfolio">—</div>
+            <div class="sub">Active services</div>
+          </div>
+          <div class="stat-card accent-gold">
+            <div class="label">Bookings</div>
+            <div class="value" id="stat-bookings">—</div>
+            <div class="sub">Total requests</div>
+          </div>
+          <div class="stat-card accent-green">
+            <div class="label">Reviews</div>
+            <div class="value" id="stat-reviews">—</div>
+            <div class="sub">Client reviews</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="card-box">
+            <div class="card-box-header"><h3>Quick Actions</h3></div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:10px;">
+              <button class="btn btn-primary" onclick="navTo('services');document.getElementById('addServiceBtn').click()">
+                <i class="fas fa-plus"></i> Add New Portfolio Item
+              </button>
+              <button class="btn btn-outline" onclick="navTo('portfolio');document.getElementById('addPortfolioBtn').click()">
+                <i class="fas fa-camera"></i> Upload Service Photo
+              </button>
+              <button class="btn btn-outline" onclick="navTo('hero')">
+                <i class="fas fa-image"></i> Update Hero Images
+              </button>
+              <button class="btn btn-outline" onclick="navTo('carousel')">
+                <i class="fas fa-film"></i> Edit Carousel Slides
+              </button>
+              <button class="btn btn-outline" onclick="navTo('announcements')">
+                <i class="fas fa-bullhorn"></i> Edit Announcement Bar
+              </button>
+            </div>
+          </div>
+          <div class="card-box">
+            <div class="card-box-header"><h3>Site Links</h3></div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:8px;">
+              <a href="index.html" target="_blank" style="color:var(--brand);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:8px;"><i class="fas fa-home"></i> Homepage</a>
+              <a href="services.html" target="_blank" style="color:var(--brand);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:8px;"><i class="fas fa-cut"></i> Services Page</a>
+              <a href="portfolio.html" target="_blank" style="color:var(--brand);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:8px;"><i class="fas fa-images"></i> Portfolio Page</a>
+              <a href="appointment.html" target="_blank" style="color:var(--brand);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:8px;"><i class="fas fa-calendar"></i> Booking Page</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HERO IMAGES ── -->
+      <div class="panel" id="panel-hero">
+        <div class="section-head">
+          <div>
+            <h2>Hero Images</h2>
+            <p>Upload and replace images across the Homepage and About page. Changes apply to the live site immediately.</p>
+          </div>
+          <button class="btn btn-primary" onclick="saveHeroImages()"><i class="fas fa-save"></i> Save All</button>
+        </div>
+        <div class="hero-slots" id="heroSlots">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- ── CAROUSEL ── -->
+      <div class="panel" id="panel-carousel">
+        <div class="section-head">
+          <div>
+            <h2>Carousel Images</h2>
+            <p>Manage the 3D rotating carousel on the homepage. Upload images and set labels for each card. Max 12 slides.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCarouselAddModal()"><i class="fas fa-plus"></i> Add Slide</button>
+        </div>
+        <div id="carouselList" class="carousel-admin-grid">
+          <div class="empty-state"><i class="fas fa-film"></i><p>Loading carousel…</p></div>
+        </div>
+      </div>
+
+      <!-- ── SERVICES ── -->
+      <div class="panel" id="panel-services">
+        <div class="section-head">
+          <div>
+            <h2>Portfolio</h2>
+            <p>Manage all portfolio styles shown on the Services and Portfolio pages.</p>
+          </div>
+          <button class="btn btn-primary" id="addServiceBtn" onclick="openServiceModal()">
+            <i class="fas fa-plus"></i> Add Portfolio Item
+          </button>
+        </div>
+        <div class="svc-list" id="svcList">
+          <div class="empty-state"><i class="fas fa-cut"></i><p>Loading services…</p></div>
+        </div>
+      </div>
+
+      <!-- ── PORTFOLIO ── -->
+      <div class="panel" id="panel-portfolio">
+        <div class="section-head">
+          <div>
+            <h2>Services</h2>
+            <p>Upload standalone service photos. These appear on the Services page gallery.</p>
+          </div>
+          <button class="btn btn-primary" id="addPortfolioBtn" onclick="openPortfolioModal()">
+            <i class="fas fa-camera"></i> Upload Service Photo
+          </button>
+        </div>
+        <div class="portfolio-grid" id="portfolioGrid">
+          <div class="empty-state" style="grid-column:1/-1"><i class="fas fa-images"></i><p>Loading portfolio…</p></div>
+        </div>
+      </div>
+
+      <!-- ── ANNOUNCEMENTS ── -->
+      <div class="panel" id="panel-announcements">
+        <div class="section-head">
+          <div><h2>Announcement Bar</h2><p>The top banner text shown on all pages.</p></div>
+        </div>
+        <div class="card-box" style="max-width:640px;">
+          <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+            <div class="field">
+              <label>Announcement Text</label>
+              <input type="text" id="announcementText" placeholder="e.g. ✨ Ani Braids — Premium Protective Styling, Worldwide Bookings Available">
+            </div>
+            <div class="field">
+              <label>Highlighted Word / Phrase (bold gold)</label>
+              <input type="text" id="announcementHighlight" placeholder="e.g. ✨ Ani Braids">
+            </div>
+            <button class="btn btn-primary" style="align-self:flex-start;" onclick="saveAnnouncement()">
+              <i class="fas fa-save"></i> Save Announcement
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BOOKINGS ── -->
+      <div class="panel" id="panel-bookings">
+        <div class="section-head"><div><h2>Bookings</h2><p>Appointment requests from clients.</p></div></div>
+        <div class="card-box">
+          <div id="bookingsList" style="padding:20px;">
+            <div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Loading bookings…</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REVIEWS ── -->
+      <div class="panel" id="panel-reviews">
+        <div class="section-head"><div><h2>Reviews</h2><p>Client reviews submitted through the website.</p></div></div>
+        <div class="card-box">
+          <div id="reviewsList" style="padding:20px;">
+            <div class="empty-state"><i class="fas fa-star"></i><p>Loading reviews…</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-wrap -->
+</div><!-- /adminShell -->
+
+<!-- ═══════════════════════ SERVICE MODAL ═══════════════════════════════════ -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="serviceModalTitle">Add Portfolio Item</h3>
+      <button class="modal-close" onclick="closeServiceModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-basic')">Basic Info</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-images')">Images</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-pricing')">Pricing</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-category')">Category & Tags</button>
+    </div>
+
+    <!-- Tab: Basic -->
+    <div class="tab-panel active" id="tab-basic">
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Service Name *</label>
+          <input type="text" id="svc-name" placeholder="e.g. Knotless Box Braids">
+        </div>
+        <div class="field span2">
+          <label>Description</label>
+          <textarea id="svc-desc" placeholder="Describe this service…"></textarea>
+        </div>
+        <div class="field">
+          <label>Duration</label>
+          <input type="text" id="svc-duration" placeholder="e.g. 4–6 hrs">
+        </div>
+        <div class="field">
+          <label>Emoji Icon</label>
+          <input type="text" id="svc-emoji" placeholder="e.g. 🌸" maxlength="4">
+        </div>
+        <div class="field">
+          <label>Badge</label>
+          <select id="svc-badge">
+            <option value="">— None —</option>
+            <option value="New">New</option>
+            <option value="Popular">Popular</option>
+            <option value="Trending">Trending</option>
+            <option value="Sale">Sale</option>
+            <option value="Limited">Limited</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Hair Type</label>
+          <select id="svc-hairtype">
+            <option value="All types">All types</option>
+            <option value="Natural">Natural</option>
+            <option value="Relaxed">Relaxed</option>
+            <option value="Fine">Fine</option>
+            <option value="Thick">Thick</option>
+            <option value="4C">4C</option>
+            <option value="4B">4B</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Rating (0–5)</label>
+          <input type="number" id="svc-rating" min="0" max="5" step="0.1" value="5.0">
+        </div>
+        <div class="field">
+          <label>Bookings Count</label>
+          <input type="number" id="svc-bookings" min="0" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Images -->
+    <div class="tab-panel" id="tab-images">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        Upload images for this portfolio item. First image shown as the card thumbnail. All images uploaded to Cloudinary.
+      </p>
+      <div class="upload-zone" id="svcUploadZone">
+        <input type="file" id="svcImageInput" accept="image/*" multiple onchange="handleSvcImages(this)">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p><strong>Click or drag images here</strong></p>
+        <p>JPG, PNG, WEBP · Max 10MB each</p>
+        <div class="upload-progress" id="svcUploadProgress">
+          <div class="upload-progress-bar" id="svcUploadBar"></div>
+        </div>
+      </div>
+      <div class="img-preview-grid" id="svcImgPreview"></div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:12px;" id="svcImgCount"></p>
+    </div>
+
+    <!-- Tab: Pricing -->
+    <div class="tab-panel" id="tab-pricing">
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Price Mode</label>
+          <select id="svc-priceMode" onchange="updatePriceFields()">
+            <option value="fixed">Fixed Price</option>
+            <option value="range">Price Range</option>
+            <option value="promo">Promo / Sale</option>
+          </select>
+        </div>
+        <div class="field" id="priceField">
+          <label id="priceLabel">Price ($) *</label>
+          <input type="number" id="svc-price" min="0" placeholder="e.g. 120">
+        </div>
+        <div class="field" id="priceMaxField" style="display:none;">
+          <label>Max Price ($)</label>
+          <input type="number" id="svc-priceMax" min="0" placeholder="e.g. 200">
+        </div>
+        <div class="field" id="originalPriceField" style="display:none;">
+          <label>Original Price ($)</label>
+          <input type="number" id="svc-originalPrice" min="0" placeholder="e.g. 150">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Category -->
+    <div class="tab-panel" id="tab-category">
+      <div class="field" style="margin-bottom:20px;">
+        <label>Assign to Categories (select all that apply)</label>
+        <div class="checkbox-group" style="margin-top:10px;">
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="trending"> 🔥 Trending</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="new"> ✨ New Arrivals</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="most-booked"> 👑 Most Booked</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="luxury"> 💎 Luxury</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="budget"> 💸 Budget Friendly</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="bridal"> 💍 Bridal & Events</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="kids"> 🎀 Kids Styles</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="mens"> ✂️ Men's Braids</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="quick"> ⚡ Quick Styles</label>
+          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="transformations"> 🪄 Transformations</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Show on Services Page</label>
+        <select id="svc-showPortfolio">
+          <option value="yes">Yes — show in services</option>
+          <option value="no">No — portfolio page only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeServiceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveService()">
+        <i class="fas fa-save"></i> <span id="saveServiceBtnText">Save Service</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PORTFOLIO MODAL ════════════════════════════════ -->
+<div class="modal-overlay" id="portfolioModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Upload Service Photo</h3>
+      <button class="modal-close" onclick="closePortfolioModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Style Name *</label>
+      <input type="text" id="port-name" placeholder="e.g. Knotless Braids — Client Aisha">
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Category Tag</label>
+      <select id="port-category">
+        <option value="trending">🔥 Trending</option>
+        <option value="most-booked">👑 Most Booked</option>
+        <option value="luxury">💎 Luxury</option>
+        <option value="bridal">💍 Bridal</option>
+        <option value="kids">🎀 Kids</option>
+        <option value="mens">✂️ Men's</option>
+        <option value="quick">⚡ Quick Styles</option>
+        <option value="transformations">🪄 Transformation</option>
+      </select>
+    </div>
+    <div class="upload-zone" id="portUploadZone">
+      <input type="file" id="portImageInput" accept="image/*" onchange="handlePortImage(this)">
+      <i class="fas fa-camera"></i>
+      <p><strong>Click to choose a photo</strong></p>
+      <p>JPG, PNG, WEBP · Max 10MB</p>
+      <div class="upload-progress" id="portUploadProgress">
+        <div class="upload-progress-bar" id="portUploadBar"></div>
+      </div>
+    </div>
+    <div class="img-preview-grid" id="portImgPreview" style="margin-top:12px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closePortfolioModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePortfolioItem()">
+        <i class="fas fa-upload"></i> Upload & Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ HERO UPLOAD MODAL ═════════════════════════════ -->
+<div class="modal-overlay" id="heroModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3 id="heroModalTitle">Upload Hero Image</h3>
+      <button class="modal-close" onclick="closeHeroModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="upload-zone">
+      <input type="file" id="heroImageInput" accept="image/*" onchange="handleHeroImage(this)">
+      <i class="fas fa-image"></i>
+      <p><strong>Click to choose image</strong></p>
+      <p>Recommended: wide landscape, min 1400px wide</p>
+      <div class="upload-progress" id="heroUploadProgress">
+        <div class="upload-progress-bar" id="heroUploadBar"></div>
+      </div>
+    </div>
+    <div class="img-preview-grid" id="heroImgPreview" style="margin-top:12px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeHeroModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveHeroSlot()">
+        <i class="fas fa-save"></i> Save Image
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ CAROUSEL MODAL ════════════════════════════════ -->
+<div class="modal-overlay" id="carouselModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 id="carouselModalTitle">Add Carousel Slide</h3>
+      <button class="modal-close" onclick="closeCarouselModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Slide Label *</label>
+      <input type="text" id="crl-label" placeholder="e.g. Knotless Box Braids">
+    </div>
+    <div class="upload-zone" id="crlUploadZone">
+      <input type="file" id="crlImageInput" accept="image/*" onchange="handleCrlImage(this)">
+      <i class="fas fa-film"></i>
+      <p><strong>Click to choose photo</strong></p>
+      <p>Portrait recommended · JPG, PNG, WEBP · Max 10MB</p>
+      <div class="upload-progress" id="crlUploadProgress">
+        <div class="upload-progress-bar" id="crlUploadBar"></div>
+      </div>
+    </div>
+    <div class="img-preview-grid" id="crlImgPreview" style="margin-top:12px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeCarouselModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCarouselSlide()">
+        <i class="fas fa-save"></i> Save Slide
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><i id="toast-icon" class="fas fa-check-circle"></i><span id="toast-msg"></span></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CLOUDINARY CONFIG
+═══════════════════════════════════════════════════════ */
+const CLOUD = {
+  cloudName:   'YOUR_CLOUD_NAME',       // ← replace with your Cloudinary cloud name
+  uploadPreset:'YOUR_UPLOAD_PRESET',    // ← replace with your unsigned upload preset
+};
+
+async function uploadToCloudinary(file, onProgress) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUD.uploadPreset);
+  fd.append('folder', 'ani-braids');
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD.cloudName}/image/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
+      else reject(new Error('Upload failed: ' + xhr.responseText));
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(fd);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el   = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = 'show ' + type;
+  icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════ */
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; return; }
+  try {
+    await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+  } catch(e) {
+    errEl.textContent = e.code === 'auth/invalid-credential'
+      ? 'Incorrect email or password.' : e.message;
+  }
+}
+document.getElementById('loginPass')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogout() {
+  await window._fb.signOut(window._fb.auth);
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════ */
+const PANEL_TITLES = {
+  dashboard:'Dashboard', hero:'Hero Images', carousel:'Carousel Images', services:'Portfolio',
+  portfolio:'Services', announcements:'Announcements',
+  bookings:'Bookings', reviews:'Reviews', settings:'Site Settings'
+};
+
+function navTo(panelId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-panel="${panelId}"]`)?.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + panelId)?.classList.add('active');
+  document.getElementById('panelTitle').textContent = PANEL_TITLES[panelId] || panelId;
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.addEventListener('click', () => navTo(n.dataset.panel));
+});
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════════════════════
+   TABS (inside modal)
+═══════════════════════════════════════════════════════ */
+function switchTab(btn, tabId) {
+  btn.closest('.modal').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.modal').querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN READY — load all data
+═══════════════════════════════════════════════════════ */
+window._adminReady = async function() {
+  initHeroSlots();
+  await Promise.all([loadServices(), loadPortfolio(), loadAnnouncement(), loadStats(), loadCarousel()]);
+  loadBookings();
+  loadReviews();
+};
+
+/* ═══════════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════════ */
+async function loadStats() {
+  const { db, doc, getDoc, collection, getDocs } = window._fb;
+  // Services count from settings/services
+  const sSnap = await getDoc(doc(db, 'settings', 'services'));
+  const list  = sSnap.exists() ? (sSnap.data().list || []) : [];
+  document.getElementById('stat-services').textContent = list.length;
+
+  // Portfolio count
+  try {
+    const pSnap = await getDocs(collection(db, 'portfolio'));
+    document.getElementById('stat-portfolio').textContent = pSnap.size;
+  } catch(e) { document.getElementById('stat-portfolio').textContent = '0'; }
+
+  // Bookings count
+  try {
+    const bSnap = await getDocs(collection(db, 'bookings'));
+    document.getElementById('stat-bookings').textContent = bSnap.size;
+  } catch(e) { document.getElementById('stat-bookings').textContent = '0'; }
+
+  // Reviews count
+  try {
+    const rSnap = await getDocs(collection(db, 'reviews'));
+    document.getElementById('stat-reviews').textContent = rSnap.size;
+  } catch(e) { document.getElementById('stat-reviews').textContent = '0'; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HERO IMAGES
+   Stored in Firestore: settings/heroImages  { slots: [{key,label,url,alt}] }
+═══════════════════════════════════════════════════════ */
+const HERO_SLOTS_DEF = [
+  // ── Homepage ──
+  { key: 'welcome',        label: '[Home] Welcome Article Image',      page: 'index',  alt: 'Ani Braids salon interior',              url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1400&q=80' },
+  { key: 'apart',          label: '[Home] What Sets Us Apart Image',   page: 'index',  alt: 'Braiding expertise at Ani Braids',        url: 'https://images.unsplash.com/photo-1560066984-138daaa4e1e4?w=900&q=80' },
+  { key: 'env',            label: '[Home] Environment Article Image',  page: 'index',  alt: 'Welcoming salon atmosphere',              url: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=1400&q=80' },
+  // ── About Page ──
+  { key: 'about_banner',   label: '[About] Hero Banner Image',         page: 'about',  alt: 'Beautiful braided hair at Ani Braids',    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1400&q=80' },
+  { key: 'about_story',    label: '[About] Our Story Image',           page: 'about',  alt: 'Braiding process at Ani Braids',          url: 'https://images.unsplash.com/photo-1533577116850-9cc66cad8a9b?w=1200&q=80' },
+  { key: 'about_why',      label: '[About] Why Choose Us Image',       page: 'about',  alt: 'Customer enjoying hair styling',          url: 'https://images.unsplash.com/photo-1543168251-3b500ecf8b2e?w=1200&q=80' },
+  { key: 'about_services', label: '[About] Our Services Image',        page: 'about',  alt: 'Braided hairstyle examples',              url: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&q=80' },
+  { key: 'about_book',     label: '[About] Book Appointment Image',    page: 'about',  alt: 'Appointment booking for braiding',        url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80' },
+  { key: 'about_community',label: '[About] Community Section Image',   page: 'about',  alt: 'Community of clients at Ani Braids',      url: 'https://images.unsplash.com/photo-1525330256525-4646d3e2109a?w=1200&q=80' },
+];
+let heroData = JSON.parse(JSON.stringify(HERO_SLOTS_DEF));
+let activeHeroKey = null;
+let pendingHeroUrl = null;
+
+async function initHeroSlots() {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'heroImages'));
+    if (snap.exists() && snap.data().slots) {
+      heroData = snap.data().slots;
+    }
+  } catch(e) { /* use defaults */ }
+  renderHeroSlots();
+}
+
+function renderHeroSlots() {
+  const wrap = document.getElementById('heroSlots');
+  // Group by page
+  const pages = [...new Set(heroData.map(s => s.page || 'index'))];
+  const pageLabels = { index: 'Homepage (index.html)', about: 'About Page (about.html)' };
+  wrap.innerHTML = pages.map(page => {
+    const slots = heroData.filter(s => (s.page || 'index') === page);
+    return `
+      <div class="hero-page-group">
+        <div class="hero-page-label"><i class="fas fa-file-alt"></i> ${pageLabels[page] || page}</div>
+        <div class="hero-page-slots">
+          ${slots.map(slot => `
+            <div class="hero-slot" id="heroSlot-${slot.key}">
+              <div class="hero-slot-img">
+                ${slot.url
+                  ? `<img src="${slot.url}" alt="${slot.label}" id="heroSlotImg-${slot.key}">`
+                  : `<div class="hero-slot-img-empty"><i class="fas fa-image"></i><span>No image set</span></div>`
+                }
+              </div>
+              <div class="hero-slot-body">
+                <div class="hero-slot-label">${slot.label.replace(/^\[.*?\]\s*/,'')}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn btn-primary btn-sm" onclick="openHeroModal('${slot.key}','${slot.label}')">
+                    <i class="fas fa-upload"></i> Replace Image
+                  </button>
+                  ${slot.url ? `<button class="btn btn-outline btn-sm" onclick="clearHeroSlot('${slot.key}')">Clear</button>` : ''}
+                </div>
+                ${slot.url ? `<p style="font-size:11px;color:var(--text-muted);margin-top:8px;word-break:break-all;">${slot.url.substring(0,60)}…</p>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openHeroModal(key, label) {
+  activeHeroKey = key;
+  pendingHeroUrl = null;
+  document.getElementById('heroModalTitle').textContent = 'Replace: ' + label;
+  document.getElementById('heroImgPreview').innerHTML = '';
+  document.getElementById('heroImageInput').value = '';
+  document.getElementById('heroUploadProgress').style.display = 'none';
+  document.getElementById('heroModal').classList.add('open');
+}
+function closeHeroModal() {
+  document.getElementById('heroModal').classList.remove('open');
+  activeHeroKey = null; pendingHeroUrl = null;
+}
+
+async function handleHeroImage(input) {
+  const file = input.files[0]; if (!file) return;
+  const bar  = document.getElementById('heroUploadBar');
+  const prog = document.getElementById('heroUploadProgress');
+  prog.style.display = 'block'; bar.style.width = '0%';
+  try {
+    const res = await uploadToCloudinary(file, pct => bar.style.width = pct + '%');
+    pendingHeroUrl = res.secure_url;
+    document.getElementById('heroImgPreview').innerHTML =
+      `<div class="img-thumb"><img src="${res.secure_url}" alt="preview"></div>`;
+    bar.style.width = '100%';
+    toast('Image uploaded! Click Save to apply.', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+    prog.style.display = 'none';
+  }
+}
+
+async function saveHeroSlot() {
+  if (!pendingHeroUrl || !activeHeroKey) { toast('Please upload an image first.', 'error'); return; }
+  const slot = heroData.find(s => s.key === activeHeroKey);
+  if (slot) slot.url = pendingHeroUrl;
+  await saveHeroImages();
+  closeHeroModal();
+}
+
+async function saveHeroImages() {
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'settings', 'heroImages'), { slots: heroData, updatedAt: new Date().toISOString() });
+    toast('Hero images saved!', 'success');
+    renderHeroSlots();
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+function clearHeroSlot(key) {
+  const slot = heroData.find(s => s.key === key);
+  if (slot) { slot.url = ''; renderHeroSlots(); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CAROUSEL IMAGES
+   Stored in Firestore: settings/carouselImages { slides: [{label, url, order}] }
+═══════════════════════════════════════════════════════ */
+let carouselSlides = [];
+let editingCrlIndex = null;
+let pendingCrlUrl = null;
+
+async function loadCarousel() {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'carouselImages'));
+    carouselSlides = snap.exists() ? (snap.data().slides || []) : [];
+  } catch(e) { carouselSlides = []; }
+  renderCarouselList();
+}
+
+function renderCarouselList() {
+  const el = document.getElementById('carouselList');
+  if (!carouselSlides.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-film"></i><p>No carousel slides yet. Add your first slide!</p></div>`;
+    return;
+  }
+  el.innerHTML = carouselSlides.map((s, i) => `
+    <div class="carousel-admin-card">
+      <div class="card-img">
+        ${s.url
+          ? `<img src="${s.url}" alt="${s.label}">`
+          : `<div class="card-img-placeholder"><i class="fas fa-image"></i><span>No image</span></div>`
+        }
+        <div class="carousel-drag-handle"><i class="fas fa-grip-vertical"></i> ${i + 1}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-label">${s.label || 'Untitled'}</div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-sm" onclick="openCarouselEditModal(${i})">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCarouselSlide(${i})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openCarouselAddModal() {
+  if (carouselSlides.length >= 12) { toast('Maximum 12 slides allowed.', 'error'); return; }
+  editingCrlIndex = null;
+  pendingCrlUrl = null;
+  document.getElementById('carouselModalTitle').textContent = 'Add Carousel Slide';
+  document.getElementById('crl-label').value = '';
+  document.getElementById('crlImgPreview').innerHTML = '';
+  document.getElementById('crlImageInput').value = '';
+  document.getElementById('crlUploadProgress').style.display = 'none';
+  document.getElementById('carouselModal').classList.add('open');
+}
+
+function openCarouselEditModal(index) {
+  editingCrlIndex = index;
+  pendingCrlUrl = null;
+  const s = carouselSlides[index];
+  document.getElementById('carouselModalTitle').textContent = 'Edit Slide: ' + (s.label || '');
+  document.getElementById('crl-label').value = s.label || '';
+  document.getElementById('crlImgPreview').innerHTML = s.url
+    ? `<div class="img-thumb"><img src="${s.url}" alt="current"></div>`
+    : '';
+  document.getElementById('crlImageInput').value = '';
+  document.getElementById('crlUploadProgress').style.display = 'none';
+  document.getElementById('carouselModal').classList.add('open');
+}
+
+function closeCarouselModal() {
+  document.getElementById('carouselModal').classList.remove('open');
+  editingCrlIndex = null; pendingCrlUrl = null;
+}
+
+async function handleCrlImage(input) {
+  const file = input.files[0]; if (!file) return;
+  const bar  = document.getElementById('crlUploadBar');
+  const prog = document.getElementById('crlUploadProgress');
+  prog.style.display = 'block'; bar.style.width = '0%';
+  try {
+    const res = await uploadToCloudinary(file, pct => bar.style.width = pct + '%');
+    pendingCrlUrl = res.secure_url;
+    document.getElementById('crlImgPreview').innerHTML =
+      `<div class="img-thumb"><img src="${res.secure_url}" alt="preview"></div>`;
+    bar.style.width = '100%';
+    toast('Photo uploaded! Click Save to publish.', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+    prog.style.display = 'none';
+  }
+}
+
+async function saveCarouselSlide() {
+  const label = document.getElementById('crl-label').value.trim();
+  if (!label) { toast('Please enter a slide label.', 'error'); return; }
+
+  if (editingCrlIndex !== null) {
+    // Edit existing
+    carouselSlides[editingCrlIndex].label = label;
+    if (pendingCrlUrl) carouselSlides[editingCrlIndex].url = pendingCrlUrl;
+  } else {
+    // New slide — require image
+    if (!pendingCrlUrl) { toast('Please upload an image first.', 'error'); return; }
+    carouselSlides.push({ label, url: pendingCrlUrl, order: carouselSlides.length });
+  }
+
+  await persistCarouselSlides();
+  closeCarouselModal();
+}
+
+async function deleteCarouselSlide(index) {
+  if (!confirm('Delete this carousel slide?')) return;
+  carouselSlides.splice(index, 1);
+  // Re-assign order values
+  carouselSlides.forEach((s, i) => s.order = i);
+  await persistCarouselSlides();
+}
+
+async function persistCarouselSlides() {
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'settings', 'carouselImages'), {
+      slides: carouselSlides,
+      updatedAt: new Date().toISOString()
+    });
+    toast('Carousel saved!', 'success');
+    renderCarouselList();
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SERVICES
+   Stored in Firestore: settings/services  { list: [...] }
+═══════════════════════════════════════════════════════ */
+let servicesList = [];
+let editingServiceId = null; // index in list, or null for new
+let pendingSvcImages = []; // { url, publicId }
+
+async function loadServices() {
+  const { db, doc, getDoc } = window._fb;
+  const snap = await getDoc(doc(db, 'settings', 'services'));
+  servicesList = snap.exists() ? (snap.data().list || []) : [];
+  renderServicesList();
+}
+
+function renderServicesList() {
+  const el = document.getElementById('svcList');
+  if (!servicesList.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-cut"></i><p>No portfolio items yet. Add your first item!</p></div>`;
+    return;
+  }
+  el.innerHTML = servicesList.map((s, i) => {
+    const imgUrl = (s.imageUrls && s.imageUrls[0]) || s.imageUrl || '';
+    return `
+    <div class="svc-item">
+      <div class="svc-item-img">
+        ${imgUrl
+          ? `<img src="${imgUrl}" alt="${s.name}">`
+          : `<div class="svc-item-img-placeholder">${s.emoji || '✂️'}</div>`}
+      </div>
+      <div class="svc-item-body">
+        <div class="svc-item-name">${s.name}</div>
+        <div class="svc-item-meta">
+          ${s.price ? '$'+s.price : ''}${s.duration ? ' · ' + s.duration : ''}
+          ${s.badge ? ' · <span style="color:var(--pink)">'+s.badge+'</span>' : ''}
+        </div>
+        <div class="svc-item-actions">
+          <button class="btn btn-outline btn-sm" onclick="openServiceModal(${i})"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteService(${i})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openServiceModal(index) {
+  pendingSvcImages = [];
+  editingServiceId = (index !== undefined) ? index : null;
+  document.getElementById('serviceModalTitle').textContent = editingServiceId !== null ? 'Edit Portfolio Item' : 'Add Portfolio Item';
+  document.getElementById('saveServiceBtnText').textContent = editingServiceId !== null ? 'Update Portfolio Item' : 'Save Portfolio Item';
+
+  // Reset all tabs to first
+  document.querySelectorAll('#serviceModal .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('#serviceModal .tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+
+  if (editingServiceId !== null) {
+    const s = servicesList[editingServiceId];
+    document.getElementById('svc-name').value     = s.name || '';
+    document.getElementById('svc-desc').value     = s.description || '';
+    document.getElementById('svc-duration').value = s.duration || '';
+    document.getElementById('svc-emoji').value    = s.emoji || '';
+    document.getElementById('svc-badge').value    = s.badge || '';
+    document.getElementById('svc-hairtype').value = s.hairType || 'All types';
+    document.getElementById('svc-rating').value   = s.rating || 5.0;
+    document.getElementById('svc-bookings').value = s.bookings || 0;
+    document.getElementById('svc-priceMode').value= s.priceMode || 'fixed';
+    document.getElementById('svc-price').value    = s.price || '';
+    document.getElementById('svc-priceMax').value = s.priceMax || '';
+    document.getElementById('svc-originalPrice').value = s.originalPrice || '';
+    document.getElementById('svc-showPortfolio').value = s.showPortfolio !== false ? 'yes' : 'no';
+    // categories
+    document.querySelectorAll('[name="svc-cat"]').forEach(cb => {
+      cb.checked = Array.isArray(s.category) && s.category.includes(cb.value);
+    });
+    // existing images
+    const urls = Array.isArray(s.imageUrls) ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []);
+    pendingSvcImages = urls.map(u => ({ url: u, existing: true }));
+    renderSvcImgPreview();
+    updatePriceFields();
+  } else {
+    // Clear form
+    ['svc-name','svc-desc','svc-duration','svc-emoji','svc-price','svc-priceMax','svc-originalPrice']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('svc-badge').value = '';
+    document.getElementById('svc-hairtype').value = 'All types';
+    document.getElementById('svc-rating').value = '5.0';
+    document.getElementById('svc-bookings').value = '0';
+    document.getElementById('svc-priceMode').value = 'fixed';
+    document.getElementById('svc-showPortfolio').value = 'yes';
+    document.querySelectorAll('[name="svc-cat"]').forEach(cb => cb.checked = false);
+    pendingSvcImages = [];
+    renderSvcImgPreview();
+    updatePriceFields();
+  }
+  document.getElementById('svcUploadProgress').style.display = 'none';
+  document.getElementById('svcImageInput').value = '';
+  document.getElementById('serviceModal').classList.add('open');
+}
+
+function closeServiceModal() {
+  document.getElementById('serviceModal').classList.remove('open');
+}
+
+function updatePriceFields() {
+  const mode = document.getElementById('svc-priceMode').value;
+  document.getElementById('priceLabel').textContent = mode === 'range' ? 'Min Price ($) *' : 'Price ($) *';
+  document.getElementById('priceMaxField').style.display      = mode === 'range' ? '' : 'none';
+  document.getElementById('originalPriceField').style.display = mode === 'promo' ? '' : 'none';
+}
+
+async function handleSvcImages(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  const bar  = document.getElementById('svcUploadBar');
+  const prog = document.getElementById('svcUploadProgress');
+  prog.style.display = 'block';
+
+  for (let i = 0; i < files.length; i++) {
+    bar.style.width = Math.round((i / files.length) * 100) + '%';
+    try {
+      const res = await uploadToCloudinary(files[i], pct => {
+        bar.style.width = Math.round((i / files.length * 100) + pct / files.length) + '%';
+      });
+      pendingSvcImages.push({ url: res.secure_url, publicId: res.public_id });
+    } catch(e) {
+      toast('Failed uploading ' + files[i].name + ': ' + e.message, 'error');
+    }
+  }
+  bar.style.width = '100%';
+  renderSvcImgPreview();
+  document.getElementById('svcImgCount').textContent = pendingSvcImages.length + ' image(s) ready';
+  toast(files.length + ' image(s) uploaded!', 'success');
+}
+
+function renderSvcImgPreview() {
+  const el = document.getElementById('svcImgPreview');
+  el.innerHTML = pendingSvcImages.map((img, i) => `
+    <div class="img-thumb">
+      <img src="${img.url}" alt="img ${i+1}">
+      <button class="img-thumb-remove" onclick="removeSvcImg(${i})"><i class="fas fa-times"></i></button>
+    </div>
+  `).join('');
+}
+
+function removeSvcImg(i) {
+  pendingSvcImages.splice(i, 1);
+  renderSvcImgPreview();
+}
+
+async function saveService() {
+  const name = document.getElementById('svc-name').value.trim();
+  if (!name) { toast('Service name is required.', 'error'); return; }
+
+  const cats = [...document.querySelectorAll('[name="svc-cat"]:checked')].map(cb => cb.value);
+
+  const svc = {
+    name,
+    description:   document.getElementById('svc-desc').value.trim(),
+    duration:      document.getElementById('svc-duration').value.trim(),
+    emoji:         document.getElementById('svc-emoji').value.trim(),
+    badge:         document.getElementById('svc-badge').value,
+    hairType:      document.getElementById('svc-hairtype').value,
+    rating:        parseFloat(document.getElementById('svc-rating').value) || 5.0,
+    bookings:      parseInt(document.getElementById('svc-bookings').value) || 0,
+    priceMode:     document.getElementById('svc-priceMode').value,
+    price:         parseFloat(document.getElementById('svc-price').value) || 0,
+    priceMax:      parseFloat(document.getElementById('svc-priceMax').value) || 0,
+    originalPrice: parseFloat(document.getElementById('svc-originalPrice').value) || 0,
+    category:      cats,
+    showPortfolio: document.getElementById('svc-showPortfolio').value === 'yes',
+    imageUrls:     pendingSvcImages.map(img => img.url),
+    imageUrl:      pendingSvcImages[0]?.url || '',
+    updatedAt:     new Date().toISOString(),
+  };
+
+  if (editingServiceId !== null) {
+    servicesList[editingServiceId] = svc;
+  } else {
+    svc.createdAt = new Date().toISOString();
+    servicesList.push(svc);
+  }
+
+  await persistServices();
+  closeServiceModal();
+  toast(editingServiceId !== null ? 'Portfolio item updated!' : 'Portfolio item added!', 'success');
+}
+
+async function deleteService(i) {
+  if (!confirm('Delete this service? This cannot be undone.')) return;
+  servicesList.splice(i, 1);
+  await persistServices();
+  toast('Portfolio item deleted.', 'success');
+}
+
+async function persistServices() {
+  const { db, doc, setDoc } = window._fb;
+  await setDoc(doc(db, 'settings', 'services'), { list: servicesList, updatedAt: new Date().toISOString() });
+  renderServicesList();
+  document.getElementById('stat-services').textContent = servicesList.length;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PORTFOLIO
+   Stored in Firestore collection: portfolio/{id}
+   { name, category, imageUrl, createdAt }
+═══════════════════════════════════════════════════════ */
+let portfolioItems = [];
+let pendingPortUrl = null;
+
+async function loadPortfolio() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  try {
+    const snap = await getDocs(query(collection(db, 'portfolio'), orderBy('createdAt','desc')));
+    portfolioItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { portfolioItems = []; }
+  renderPortfolioGrid();
+}
+
+function renderPortfolioGrid() {
+  const el = document.getElementById('portfolioGrid');
+  if (!portfolioItems.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-images"></i><p>No service photos yet.</p></div>`;
+    return;
+  }
+  el.innerHTML = portfolioItems.map(item => `
+    <div class="portfolio-item">
+      <img src="${item.imageUrl}" alt="${item.name}" loading="lazy">
+      <div class="portfolio-item-overlay">
+        <div class="portfolio-item-name">${item.name}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-danger btn-sm" onclick="deletePortfolioItem('${item.id}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openPortfolioModal() {
+  pendingPortUrl = null;
+  document.getElementById('port-name').value = '';
+  document.getElementById('portImgPreview').innerHTML = '';
+  document.getElementById('portImageInput').value = '';
+  document.getElementById('portUploadProgress').style.display = 'none';
+  document.getElementById('portfolioModal').classList.add('open');
+}
+function closePortfolioModal() { document.getElementById('portfolioModal').classList.remove('open'); }
+
+async function handlePortImage(input) {
+  const file = input.files[0]; if (!file) return;
+  const bar  = document.getElementById('portUploadBar');
+  const prog = document.getElementById('portUploadProgress');
+  prog.style.display = 'block'; bar.style.width = '0%';
+  try {
+    const res = await uploadToCloudinary(file, pct => bar.style.width = pct + '%');
+    pendingPortUrl = res.secure_url;
+    document.getElementById('portImgPreview').innerHTML =
+      `<div class="img-thumb"><img src="${res.secure_url}" alt="preview"></div>`;
+    bar.style.width = '100%';
+    toast('Photo uploaded! Click Save to publish.', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+async function savePortfolioItem() {
+  const name = document.getElementById('port-name').value.trim();
+  if (!name) { toast('Please enter a style name.', 'error'); return; }
+  if (!pendingPortUrl) { toast('Please upload a photo first.', 'error'); return; }
+  const { db, collection, addDoc, serverTimestamp } = window._fb;
+  try {
+    await addDoc(collection(db, 'portfolio'), {
+      name,
+      category: document.getElementById('port-category').value,
+      imageUrl: pendingPortUrl,
+      createdAt: serverTimestamp(),
+    });
+    toast('Service photo published!', 'success');
+    closePortfolioModal();
+    await loadPortfolio();
+    document.getElementById('stat-portfolio').textContent = portfolioItems.length;
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function deletePortfolioItem(id) {
+  if (!confirm('Delete this photo from the portfolio?')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'portfolio', id));
+    toast('Photo deleted.', 'success');
+    await loadPortfolio();
+    document.getElementById('stat-portfolio').textContent = portfolioItems.length;
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANNOUNCEMENT BAR
+   Stored in: settings/announcement { text, highlight }
+═══════════════════════════════════════════════════════ */
+async function loadAnnouncement() {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'announcement'));
+    if (snap.exists()) {
+      document.getElementById('announcementText').value      = snap.data().text || '';
+      document.getElementById('announcementHighlight').value = snap.data().highlight || '';
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function saveAnnouncement() {
+  const { db, doc, setDoc } = window._fb;
+  const text      = document.getElementById('announcementText').value.trim();
+  const highlight = document.getElementById('announcementHighlight').value.trim();
+  if (!text) { toast('Announcement text cannot be empty.', 'error'); return; }
+  try {
+    await setDoc(doc(db, 'settings', 'announcement'), { text, highlight, updatedAt: new Date().toISOString() });
+    toast('Announcement saved!', 'success');
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOOKINGS (read-only list)
+═══════════════════════════════════════════════════════ */
+async function loadBookings() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const el = document.getElementById('bookingsList');
+  try {
+    const snap = await getDocs(query(collection(db, 'bookings'), orderBy('createdAt','desc')));
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No bookings yet.</p></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);">
+            <th style="padding:10px 12px;text-align:left;font-weight:500;">Name</th>
+            <th style="padding:10px 12px;text-align:left;font-weight:500;">Service</th>
+            <th style="padding:10px 12px;text-align:left;font-weight:500;">Date</th>
+            <th style="padding:10px 12px;text-align:left;font-weight:500;">Contact</th>
+            <th style="padding:10px 12px;text-align:left;font-weight:500;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${snap.docs.map(d => {
+            const b = d.data();
+            const dt = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString() : (b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '—');
+            return `<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:10px 12px;">${b.name || b.firstName || '—'}</td>
+              <td style="padding:10px 12px;">${b.service || b.style || '—'}</td>
+              <td style="padding:10px 12px;">${b.appointmentDate || b.date || '—'}</td>
+              <td style="padding:10px 12px;">${b.email || b.phone || '—'}</td>
+              <td style="padding:10px 12px;"><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(34,201,122,0.15);color:var(--success);">${b.status || 'Pending'}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Could not load bookings.</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   REVIEWS (read-only list)
+═══════════════════════════════════════════════════════ */
+async function loadReviews() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const el = document.getElementById('reviewsList');
+  try {
+    const snap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt','desc')));
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>No reviews yet.</p></div>`;
+      return;
+    }
+    el.innerHTML = snap.docs.map(d => {
+      const r = d.data();
+      const stars = '★'.repeat(Math.round(r.rating || 5)) + '☆'.repeat(5 - Math.round(r.rating || 5));
+      return `
+        <div style="padding:16px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:14px;">${r.name || 'Anonymous'}</strong>
+            <span style="color:var(--gold);font-size:14px;">${stars}</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);">${r.review || r.text || '—'}</p>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>Could not load reviews.</p></div>`;
+  }
+}
+
+/* ─── drag-over visual on upload zones ─── */
+document.querySelectorAll('.upload-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', () => zone.classList.remove('drag-over'));
+});
+</script>
+</body>
+</html>

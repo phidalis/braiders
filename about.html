@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About – Ani Braids – Premium Braiding Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --brand: #9B1FBE;
+      --brand-light: #E8447A;
+      --dark: #1a1a1a;
+      --white: #ffffff;
+      --mid: #666666;
+      --light-bg: #F8F4FB;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: #6B0E85;
+      color: #ffffff;
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .topbar strong { color: #D4A843; }
+
+    /* ── HEADER ── */
+    header {
+      background: #ffffff;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .sticky-header-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #9B1FBE;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: #E8447A; }
+
+    /* ── HEADER SEARCH ── */
+    .header-search {
+      display: flex;
+      align-items: center;
+      background: #F8F4FB;
+      border: 1.5px solid rgba(155,31,190,0.2);
+      border-radius: 50px;
+      padding: 6px 16px;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+    .header-search:focus-within {
+      border-color: #9B1FBE;
+    }
+    .header-search input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #2A2A2A;
+      width: 180px;
+    }
+    .header-search input::placeholder { color: #aaa; }
+    .header-search button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9B1FBE;
+      display: flex;
+      align-items: center;
+      padding: 0;
+      font-size: 15px;
+    }
+    .header-search button:hover { color: #E8447A; }
+
+    /* ── SECONDARY NAV ── */
+    .secondary-nav {
+      background: #111111;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .secondary-nav-top {
+      display: none;
+    }
+    .secondary-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .secondary-nav-inner a {
+      color: rgba(255,255,255,0.82);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      padding: 11px 13px;
+      white-space: nowrap;
+      transition: color 0.2s, background 0.2s;
+      border-radius: 4px;
+      display: block;
+    }
+    .secondary-nav-inner a:hover {
+      color: #ffffff;
+      background: rgba(255,255,255,0.07);
+    }
+
+    @media (max-width: 768px) {
+      .secondary-nav-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+      .secondary-nav-top span {
+        color: rgba(255,255,255,0.7);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 12px 0;
+      }
+      .nav-toggle-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 8px 4px;
+      }
+      .nav-toggle-btn i {
+        color: rgba(255,255,255,0.85);
+        font-size: 18px;
+      }
+      .secondary-nav-inner {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      .secondary-nav-inner.open {
+        display: flex;
+      }
+      .secondary-nav-inner a {
+        padding: 13px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        font-size: 14px;
+        white-space: normal;
+      }
+      .secondary-nav-inner a:last-child {
+        border-bottom: none;
+      }
+      .header-search input { width: 130px; }
+    }
+
+    .page-section {
+      padding: 60px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      display: inline-block;
+      background: var(--light-bg);
+      color: var(--brand);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .section-title em {
+      color: var(--brand);
+      font-style: normal;
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--mid);
+      margin-bottom: 40px;
+    }
+
+    .about-hero {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .about-hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .about-image-block {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 60px;
+      aspect-ratio: 16/9;
+    }
+
+    .about-image-block img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .about-mission {
+      background: var(--light-bg);
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 60px;
+      text-align: center;
+    }
+
+    .about-mission h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .about-mission p {
+      color: var(--mid);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .about-article-img {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    .article-copy h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .article-copy p {
+      color: var(--mid);
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    .about-article-img img {
+      width: 100%;
+      border-radius: 12px;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+
+    .about-why {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+      margin-bottom: 60px;
+    }
+
+    .why-copy h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .why-copy p {
+      color: var(--mid);
+      margin-bottom: 30px;
+      font-size: 15px;
+    }
+
+    .why-features {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .why-card {
+      background: var(--light-bg);
+      padding: 24px;
+      border-radius: 8px;
+    }
+
+    .why-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--brand);
+    }
+
+    .why-card p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .about-why img {
+      width: 100%;
+      border-radius: 12px;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+
+    .services-highlight {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    .services-copy h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .services-copy p {
+      color: var(--mid);
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+
+    .service-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .service-item {
+      color: var(--mid);
+      font-size: 15px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .service-item span {
+      color: var(--brand);
+    }
+
+    .services-highlight img {
+      width: 100%;
+      border-radius: 12px;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+
+    .about-book {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    .about-book-copy h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .about-book-copy p {
+      color: var(--mid);
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+
+    .btn-book-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--brand);
+      color: var(--white);
+      padding: 14px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.3s;
+      border: none;
+    }
+
+    .btn-book-cta:hover {
+      background: #7a1599;
+    }
+
+    .about-book img {
+      width: 100%;
+      border-radius: 12px;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+
+    .community-block {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .community-block h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .community-block p {
+      color: var(--mid);
+      margin-bottom: 30px;
+      font-size: 15px;
+    }
+
+    .community-block img {
+      width: 100%;
+      max-width: 1000px;
+      border-radius: 12px;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+
+    footer {
+      background: var(--dark);
+      color: var(--white);
+      padding: 60px 20px 20px;
+    }
+
+    .footer-brand {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .footer-brand .logo {
+      color: var(--white);
+      font-size: 28px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .footer-brand p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .footer-body {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .footer-col h4 {
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .footer-col a {
+      display: block;
+      text-decoration: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      margin-bottom: 8px;
+      transition: color 0.3s;
+    }
+
+    .footer-col a:hover {
+      color: var(--white);
+    }
+
+    .footer-col p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .social-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      font-size: 16px;
+      text-decoration: none;
+    }
+
+    .social-links a:hover {
+      background: var(--brand);
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .newsletter-form button {
+      padding: 10px 16px;
+      background: var(--brand);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+
+    .newsletter-form button:hover {
+      background: #7a1599;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 768px) {
+      .about-article-img,
+      .about-why,
+      .services-highlight,
+      .about-book {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      .footer-body {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+
+      .section-title {
+        font-size: 32px;
+      }
+
+      .about-mission h2 {
+        font-size: 28px;
+      }
+
+      .article-copy h2,
+      .why-copy h2,
+      .services-copy h2,
+      .about-book-copy h2 {
+        font-size: 28px;
+      }
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // Map hero slot keys to their img element IDs on this page
+    const ABOUT_HERO_MAP = {
+      about_banner:    'about-img-banner',
+      about_story:     'about-img-story',
+      about_why:       'about-img-why',
+      about_services:  'about-img-services',
+      about_book:      'about-img-book',
+      about_community: 'about-img-community',
+    };
+
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'heroImages'));
+        if (!snap.exists()) return;
+        const slots = snap.data().slots || [];
+        slots.forEach(slot => {
+          const imgId = ABOUT_HERO_MAP[slot.key];
+          if (imgId && slot.url) {
+            const el = document.getElementById(imgId);
+            if (el) { el.src = slot.url; if (slot.alt) el.alt = slot.alt; }
+          }
+        });
+      } catch(e) { /* silently fall back to default images */ }
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <strong>✨ Ani Braids</strong> — Premium Protective Styling, Worldwide Bookings Available
+  </div>
+
+  <div class="sticky-header-wrap">
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <div class="header-search">
+        <input type="text" placeholder="Search...">
+        <button aria-label="Search"><i class="fas fa-search"></i></button>
+      </div>
+    </div>
+  </header>
+
+    <!-- SECONDARY NAV -->
+    <nav class="secondary-nav">
+      <div class="secondary-nav-top">
+        <span>Menu</span>
+        <button class="nav-toggle-btn" id="navToggle" aria-label="Toggle navigation">
+          <i class="fas fa-bars" id="navToggleIcon"></i>
+        </button>
+      </div>
+            <div class="secondary-nav-inner" id="secondaryNavLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="appointment.html">Appointment</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="customer.html">Customer Cabinet</a>
+        <a href="contact.html">Contact us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund &amp; Returns</a>
+        <a href="reviews.html">Reviews</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ABOUT SECTION -->
+  <section class="about-section page-section">
+    <div class="about-hero">
+      <div class="section-label">About Ani Braids</div>
+      <h1>About Ani Braids</h1>
+      <p>Ani Braids is a premium braiding studio built on craftsmanship, care, and community. We create beautiful protective styles while protecting your natural hair with every service.</p>
+    </div>
+
+    <div class="about-image-block">
+      <img id="about-img-banner" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1400&q=80" alt="Beautiful braided hair at Ani Braids" loading="lazy" />
+    </div>
+
+    <div class="about-mission">
+      <div class="section-label">Our Mission</div>
+      <h2>Our mission is to celebrate hair, culture, and confidence.</h2>
+      <p>We are dedicated to providing protective styling that honors your natural hair health, boosts your self-esteem, and creates styles that feel effortless, elegant, and easy to maintain.</p>
+    </div>
+
+    <div class="about-article-img">
+      <div class="article-copy">
+        <div class="section-label">Our Story</div>
+        <h2>From Inspiration to Expert Braiding</h2>
+        <p>Ani Braids began with a love for intricate braid artistry and a commitment to creating a safe, welcoming salon experience. Our team blends traditional techniques with modern style so every client leaves feeling confident and cared for.</p>
+        <p>Whether you are booking for a special event, a protective style refresh, or a new seasonal look, we listen first, then create a tailored plan that fits your hair goals and lifestyle.</p>
+      </div>
+      <img id="about-img-story" src="https://images.unsplash.com/photo-1533577116850-9cc66cad8a9b?w=1200&q=80" alt="Braiding process at Ani Braids" loading="lazy" />
+    </div>
+
+    <div class="about-why">
+      <div class="why-copy">
+        <div class="section-label">Why Choose Us</div>
+        <h2>Why choose Ani Braids?</h2>
+        <p>We stand apart by focusing on your hair's long-term health and delivering styles that feel personalized, polished, and practical. Our salon combines expert technique, clean service, and a warm environment for every appointment.</p>
+        <div class="why-features">
+          <div class="why-card">
+            <h3>Care-First Styling</h3>
+            <p>We use gentle tension and premium hair to preserve your natural texture and protect your edges.</p>
+          </div>
+          <div class="why-card">
+            <h3>Inclusive Salon Experience</h3>
+            <p>Everyone is welcome here. We create looks for all hair types, textures, and personal styles.</p>
+          </div>
+          <div class="why-card">
+            <h3>Clear Communication</h3>
+            <p>From consultation to finish, we make sure you understand your style, maintenance, and aftercare.</p>
+          </div>
+        </div>
+      </div>
+      <img id="about-img-why" src="https://images.unsplash.com/photo-1543168251-3b500ecf8b2e?w=1200&q=80" alt="Customer enjoying hair styling at Ani Braids" loading="lazy" />
+    </div>
+
+    <div class="services-highlight">
+      <div class="services-copy">
+        <div class="section-label">Our Services</div>
+        <h2>Protective styles made for you.</h2>
+        <p>We offer a curated range of braiding and twist services, designed to look gorgeous while giving your hair the care it deserves. Each style is custom-fit to your texture, preference, and schedule.</p>
+        <div class="service-list">
+          <div class="service-item"><span>•</span> Knotless braids that feel lightweight and comfortable.</div>
+          <div class="service-item"><span>•</span> Custom box braids, cornrows, and triangle parts.</div>
+          <div class="service-item"><span>•</span> Passion twists, spring twists, and natural protective styling.</div>
+        </div>
+      </div>
+      <img id="about-img-services" src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&q=80" alt="Braided hairstyle examples" loading="lazy" />
+    </div>
+
+    <div class="about-book">
+      <div class="about-book-copy">
+        <div class="section-label">Book Now</div>
+        <h2>Book your appointment today</h2>
+        <p>Reserve your time with Ani Braids and start the journey to a stunning protective style. We make booking simple and welcome clients from near and far.</p>
+        <a href="appointment.html" class="btn-book-cta"><i class="fas fa-calendar-check"></i> Book Appointment</a>
+      </div>
+      <img id="about-img-book" src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80" alt="Appointment booking for braiding service" loading="lazy" />
+    </div>
+
+    <div class="community-block">
+      <div class="section-label">Join Our Community</div>
+      <h2>Join our community</h2>
+      <p>Become part of the Ani Braids family. Follow our updates for fresh hairstyle inspiration, care tips, and exclusive booking opportunities.</p>
+      <img id="about-img-community" src="https://images.unsplash.com/photo-1525330256525-4646d3e2109a?w=1200&q=80" alt="Community of clients at Ani Braids" loading="lazy" />
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <p>Premium Protective Styling Studio — Worldwide</p>
+    </div>
+    <div class="footer-body">
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>
+        <a href="tel:+1234567890">+1 (234) 567-890</a>
+        <p>Available worldwide via online booking</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="privacy.html">Policies</a>
+        <a href="appointment.html">Book Now</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Stay Updated</h4>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Your email address">
+          <button type="button">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 Ani Braids. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', () => {
+        const links = document.getElementById('secondaryNavLinks');
+        const icon = document.getElementById('navToggleIcon');
+        links.classList.toggle('open');
+        icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+      });
+    }
+  </script>
+</body>
+</html>

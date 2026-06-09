@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio – Ani Braids – Premium Braiding Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    async function loadPortfolio() {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'services'));
+        const services = snap.exists() ? (snap.data().list || []) : [];
+        window._portfolioServices = services;
+      } catch(e) {
+        window._portfolioServices = [];
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderPortfolio);
+      } else {
+        renderPortfolio();
+      }
+    }
+    loadPortfolio();
+  </script>
+
+  <style>
+    :root {
+      --brand: #9B1FBE;
+      --brand-light: #C94FE8;
+      --brand-dark: #6B0E85;
+      --pink: #E8447A;
+      --pink-light: #FF77A9;
+      --gold: #D4A843;
+      --dark: #111111;
+      --dark2: #1A1A1A;
+      --mid: #666666;
+      --light: #F8F4FB;
+      --white: #ffffff;
+      --text: #2A2A2A;
+      --font-heading: 'Cormorant Garamond', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--white); color: var(--text); overflow-x: hidden; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--brand-dark);
+      color: var(--white);
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .topbar strong { color: var(--gold); }
+
+    /* ── HEADER ── */
+    header { background: var(--white); box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+    .sticky-header-wrap { position: sticky; top: 0; z-index: 1000; }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      height: 72px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-family: var(--font-heading); font-size: 28px; font-weight: 700;
+      color: var(--brand); text-decoration: none; letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--pink); }
+    .header-search {
+      display: flex; align-items: center; background: var(--light);
+      border: 1.5px solid rgba(155,31,190,0.2); border-radius: 50px; padding: 6px 16px; gap: 8px;
+    }
+    .header-search input {
+      border: none; background: transparent; outline: none;
+      font-family: var(--font-body); font-size: 14px; color: var(--text); width: 180px;
+    }
+    .header-search input::placeholder { color: #aaa; }
+    .header-search button { background: none; border: none; cursor: pointer; color: var(--brand); font-size: 15px; }
+    .header-search button:hover { color: var(--pink); }
+
+    /* ── SECONDARY NAV ── */
+    .secondary-nav { background: #111111; border-top: 1px solid rgba(255,255,255,0.06); }
+    .secondary-nav-top { display: none; }
+    .secondary-nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 16px;
+      display: flex; align-items: center; flex-wrap: wrap;
+    }
+    .secondary-nav-inner a {
+      color: rgba(255,255,255,0.82); text-decoration: none; font-size: 13px;
+      font-weight: 500; padding: 11px 13px; white-space: nowrap;
+      transition: color 0.2s, background 0.2s; border-radius: 4px; display: block;
+    }
+    .secondary-nav-inner a:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .secondary-nav-inner a.active { color: #fff; background: rgba(155,31,190,0.3); }
+
+    @media (max-width: 768px) {
+      .secondary-nav-top {
+        display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+      }
+      .secondary-nav-top span {
+        color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;
+        letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 0;
+      }
+      .nav-toggle-btn { background: none; border: none; cursor: pointer; padding: 8px 4px; }
+      .nav-toggle-btn i { color: rgba(255,255,255,0.85); font-size: 18px; }
+      .secondary-nav-inner {
+        display: none; flex-direction: column; align-items: stretch;
+        padding: 0; border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      .secondary-nav-inner.open { display: flex; }
+      .secondary-nav-inner a {
+        padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0; font-size: 14px; white-space: normal;
+      }
+      .secondary-nav-inner a:last-child { border-bottom: none; }
+      .header-search input { width: 130px; }
+    }
+
+    /* ── PAGE HERO ── */
+    .page-hero {
+      background: linear-gradient(135deg, #6B0E85, #9B1FBE, #E8447A);
+      color: #fff; padding: 56px 24px 48px; text-align: center;
+    }
+    .page-hero .breadcrumb {
+      font-size: 13px; opacity: 0.7; margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .page-hero .breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+    .page-hero h1 {
+      font-family: var(--font-heading); font-size: clamp(36px, 6vw, 60px);
+      font-weight: 700; margin-bottom: 10px; letter-spacing: -1px;
+    }
+    .page-hero p { font-size: 16px; opacity: 0.88; max-width: 520px; margin: 0 auto; font-weight: 300; }
+
+    /* ── HAIR TYPE FILTER ── */
+    .ht-filter-bar {
+      background: var(--white); border-bottom: 1px solid #eee;
+      padding: 16px 24px; display: flex; align-items: center;
+      gap: 10px; flex-wrap: wrap; position: sticky; top: 108px; z-index: 90;
+    }
+    .ht-filter-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid); margin-right: 4px; }
+    .ht-btn {
+      padding: 6px 16px; border-radius: 50px;
+      border: 1.5px solid rgba(155,31,190,0.2);
+      background: var(--white); color: var(--mid);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: var(--font-body); white-space: nowrap;
+    }
+    .ht-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .ht-btn.active { background: var(--brand); border-color: var(--brand); color: var(--white); }
+
+    /* ── LOADING / EMPTY ── */
+    .portfolio-loading {
+      text-align: center; padding: 80px 24px; color: var(--mid);
+    }
+    .portfolio-loading i { font-size: 2.5rem; color: var(--brand); margin-bottom: 16px; display: block; }
+
+    /* ── CATEGORY SECTIONS ── */
+    .cat-section {
+      padding: 72px 0 56px; position: relative; overflow: hidden;
+    }
+    .cat-section-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 32px;
+    }
+    .cat-section-header {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 16px;
+    }
+    .cat-section-header-left { flex: 1; min-width: 240px; }
+    .cat-section-badge { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cat-section-icon { font-size: 1.3rem; line-height: 1; }
+    .cat-section-eyebrow {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.16em; padding: 4px 14px; border-radius: 50px;
+    }
+    .cat-section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      font-weight: 700; line-height: 1.1; margin-bottom: 8px;
+    }
+    .title-underline { position: relative; display: inline-block; padding-bottom: 4px; }
+    .title-underline::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 100%;
+      height: 4px; border-radius: 3px; background: currentColor; opacity: 0.22;
+    }
+    .cat-section-subtitle { font-size: 0.9rem; line-height: 1.7; opacity: 0.7; max-width: 400px; }
+    .cat-section-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+    .cat-section-count {
+      font-size: 0.76rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; padding: 4px 12px; border-radius: 50px; background: rgba(0,0,0,0.06);
+    }
+    .cat-section-divider {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 32px;
+    }
+    .divider-line { flex: 1; height: 1px; border-radius: 2px; background: currentColor; opacity: 0.14; }
+    .divider-gem { font-size: 1rem; opacity: 0.5; }
+
+    /* ── STYLE CARDS GRID ── */
+    .styles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .style-card {
+      background: white; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; position: relative;
+    }
+    .style-card:hover { transform: translateY(-8px); }
+    .card-img-wrap {
+      position: relative; aspect-ratio: 3/4;
+      background: linear-gradient(135deg, var(--light), #fce8ee); overflow: hidden;
+    }
+    .card-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.6s ease;
+    }
+    .style-card:hover .card-img-wrap img { transform: scale(1.05); }
+    .card-img-placeholder {
+      width: 100%; height: 100%; display: flex; align-items: center;
+      justify-content: center; font-size: 4rem; opacity: 0.35;
+    }
+    .card-badge-pill {
+      position: absolute; top: 10px; left: 10px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.68rem; font-weight: 700; z-index: 2;
+    }
+    .card-duration-pill {
+      position: absolute; bottom: 10px; left: 10px;
+      background: rgba(0,0,0,0.48); backdrop-filter: blur(6px);
+      color: rgba(255,255,255,0.9); font-size: 0.68rem; font-weight: 500;
+      padding: 3px 9px; border-radius: 50px;
+      display: flex; align-items: center; gap: 4px; z-index: 2;
+    }
+    .card-body { padding: 14px 16px; }
+    .card-title {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 600;
+      color: var(--text); margin-bottom: 6px; line-height: 1.3;
+    }
+    .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .card-stars { display: flex; gap: 2px; }
+    .card-stars i { font-size: 0.7rem; color: var(--gold); }
+    .card-stars i.far { color: #ddd; }
+    .card-rating-val { font-size: 0.74rem; font-weight: 700; color: var(--gold); margin-left: 4px; }
+    .card-bookings { font-size: 0.7rem; color: var(--mid); }
+    .card-price { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .card-price .original { text-decoration: line-through; color: var(--mid); font-size: 0.83rem; margin-left: 6px; }
+    .btn-card-book {
+      width: 100%; border: none; padding: 10px; border-radius: 10px;
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 0.02em;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      cursor: pointer; transition: all 0.2s; font-family: var(--font-body);
+      text-decoration: none;
+    }
+
+    /* ── CATEGORY THEMES ── */
+    /* Trending — Rose */
+    .theme-rose { background: linear-gradient(160deg, #fff0f8 0%, #ffe0f3 60%, #ffd0ee 100%); color: #2d0020; }
+    .theme-rose .cat-section-eyebrow { background: linear-gradient(135deg, #ff2d87, #ff9fce); color: white; }
+    .theme-rose .cat-section-title { color: #2d0020; }
+    .theme-rose .title-underline { color: #ff2d87; }
+    .theme-rose .title-underline::after { background: linear-gradient(90deg,#ff2d87,#ff9fce); opacity:1; height:5px; }
+    .theme-rose .cat-section-subtitle { color: #8a2060; }
+    .theme-rose .cat-section-count { background: rgba(255,45,135,0.1); color: #ff2d87; }
+    .theme-rose .divider-line { background: #ff2d87; }
+    .theme-rose .style-card:hover { box-shadow: 0 20px 52px rgba(255,45,135,0.22); }
+    .theme-rose .btn-card-book { background: linear-gradient(135deg,#ff2d87,#f7006e); color: white; }
+    .theme-rose .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,45,135,0.45); transform: translateY(-1px); }
+
+    /* New Arrivals — Mauve */
+    .theme-mauve { background: linear-gradient(160deg, #f5eeff 0%, #ecd4ff 60%, #e0b8ff 100%); color: #1a0040; }
+    .theme-mauve .cat-section-eyebrow { background: linear-gradient(135deg,#9b00ff,#c354ff); color: white; }
+    .theme-mauve .cat-section-title { color: #1a0040; }
+    .theme-mauve .title-underline { color: #9b00ff; }
+    .theme-mauve .title-underline::after { background: linear-gradient(90deg,#9b00ff,#c354ff); opacity:1; height:5px; }
+    .theme-mauve .cat-section-subtitle { color: #5a1a80; }
+    .theme-mauve .cat-section-count { background: rgba(155,0,255,0.1); color: #9b00ff; }
+    .theme-mauve .divider-line { background: #9b00ff; }
+    .theme-mauve .style-card:hover { box-shadow: 0 20px 52px rgba(155,0,255,0.22); }
+    .theme-mauve .btn-card-book { background: linear-gradient(135deg,#9b00ff,#6600cc); color: white; }
+    .theme-mauve .btn-card-book:hover { box-shadow: 0 6px 24px rgba(155,0,255,0.45); transform: translateY(-1px); }
+
+    /* Most Booked — Gold */
+    .theme-gold { background: linear-gradient(160deg, #fffbee 0%, #fff3c0 60%, #ffe880 100%); color: #2d1800; }
+    .theme-gold .cat-section-eyebrow { background: linear-gradient(135deg,#ff9f00,#ffd740); color: #1a0a2e; }
+    .theme-gold .cat-section-title { color: #2d1800; }
+    .theme-gold .title-underline { color: #ff9f00; }
+    .theme-gold .title-underline::after { background: linear-gradient(90deg,#ff9f00,#ffd740); opacity:1; height:5px; }
+    .theme-gold .cat-section-subtitle { color: #7a4800; }
+    .theme-gold .cat-section-count { background: rgba(255,159,0,0.13); color: #cc7000; }
+    .theme-gold .divider-line { background: #ff9f00; }
+    .theme-gold .style-card:hover { box-shadow: 0 20px 52px rgba(255,159,0,0.28); }
+    .theme-gold .btn-card-book { background: linear-gradient(135deg,#ff9f00,#ff6b00); color: white; }
+    .theme-gold .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,107,0,0.45); transform: translateY(-1px); }
+
+    /* Luxury — Plum / Dark */
+    .theme-plum { background: linear-gradient(160deg,#1a0a2e 0%,#2d1050 50%,#1a0a2e 100%); color: #fff0f5; }
+    .theme-plum .cat-section-eyebrow { background: linear-gradient(135deg,#ffd740,#ff9f00); color: #1a0a2e; }
+    .theme-plum .cat-section-title { color: #fff0f5; }
+    .theme-plum .title-underline { color: #ffd740; }
+    .theme-plum .title-underline::after { background: linear-gradient(90deg,#ffd740,#ff6eb4); opacity:1; height:5px; }
+    .theme-plum .cat-section-subtitle { color: rgba(255,240,245,0.6); }
+    .theme-plum .cat-section-count { background: rgba(255,215,64,0.15); color: #ffd740; }
+    .theme-plum .divider-line { background: #ffd740; }
+    .theme-plum .style-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,215,64,0.2); }
+    .theme-plum .card-title { color: #fff0f5; }
+    .theme-plum .style-card:hover { background: rgba(255,255,255,0.12); box-shadow: 0 20px 52px rgba(255,26,26,0.3); }
+    .theme-plum .btn-card-book { background: linear-gradient(135deg,#ff2d87,#9b00ff); color: white; }
+    .theme-plum .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,45,135,0.45); transform: translateY(-1px); }
+    .theme-plum .card-bookings { color: rgba(255,240,245,0.5); }
+    .theme-plum .card-price { color: #ffd740; }
+
+    /* Budget — Teal */
+    .theme-teal { background: linear-gradient(160deg,#e8fffd 0%,#c0fff8 60%,#98fff0 100%); color: #002828; }
+    .theme-teal .cat-section-eyebrow { background: linear-gradient(135deg,#00a89f,#00d4c8); color: white; }
+    .theme-teal .cat-section-title { color: #002828; }
+    .theme-teal .title-underline { color: #00a89f; }
+    .theme-teal .title-underline::after { background: linear-gradient(90deg,#00a89f,#00d4c8); opacity:1; height:5px; }
+    .theme-teal .cat-section-subtitle { color: #006060; }
+    .theme-teal .cat-section-count { background: rgba(0,168,159,0.1); color: #00a89f; }
+    .theme-teal .divider-line { background: #00a89f; }
+    .theme-teal .style-card:hover { box-shadow: 0 20px 52px rgba(0,168,159,0.25); }
+    .theme-teal .btn-card-book { background: linear-gradient(135deg,#00a89f,#007a74); color: white; }
+    .theme-teal .btn-card-book:hover { box-shadow: 0 6px 24px rgba(0,168,159,0.45); transform: translateY(-1px); }
+
+    /* Bridal — Blush */
+    .theme-blush { background: linear-gradient(160deg,#fff5fc 0%,#ffe8f8 50%,#ffd0f0 100%); color: #2d0028; }
+    .theme-blush .cat-section-eyebrow { background: linear-gradient(135deg,#ff2d87,#ff9fce); color: white; }
+    .theme-blush .cat-section-title { color: #2d0028; }
+    .theme-blush .title-underline { color: #ff2d87; }
+    .theme-blush .title-underline::after { background: linear-gradient(90deg,#ff2d87,#ff9fce); opacity:1; height:5px; }
+    .theme-blush .cat-section-subtitle { color: #8a1060; }
+    .theme-blush .cat-section-count { background: rgba(255,45,135,0.1); color: #e00070; }
+    .theme-blush .divider-line { background: #ff2d87; }
+    .theme-blush .style-card:hover { box-shadow: 0 20px 52px rgba(255,45,135,0.25); }
+    .theme-blush .btn-card-book { background: linear-gradient(135deg,#ff2d87,#cc0050); color: white; }
+    .theme-blush .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,45,135,0.45); transform: translateY(-1px); }
+
+    /* Kids — Lavender */
+    .theme-lavender { background: linear-gradient(160deg,#f5eaff 0%,#ead4ff 60%,#e0c0ff 100%); color: #1a0040; }
+    .theme-lavender .cat-section-eyebrow { background: linear-gradient(135deg,#c354ff,#9b00ff); color: white; }
+    .theme-lavender .cat-section-title { color: #1a0040; }
+    .theme-lavender .title-underline { color: #c354ff; }
+    .theme-lavender .title-underline::after { background: linear-gradient(90deg,#c354ff,#e0a0ff); opacity:1; height:5px; }
+    .theme-lavender .cat-section-subtitle { color: #6a2090; }
+    .theme-lavender .cat-section-count { background: rgba(195,84,255,0.1); color: #c354ff; }
+    .theme-lavender .divider-line { background: #c354ff; }
+    .theme-lavender .style-card:hover { box-shadow: 0 20px 52px rgba(195,84,255,0.25); }
+    .theme-lavender .btn-card-book { background: linear-gradient(135deg,#c354ff,#9b00ff); color: white; }
+    .theme-lavender .btn-card-book:hover { box-shadow: 0 6px 24px rgba(195,84,255,0.45); transform: translateY(-1px); }
+
+    /* Men's — Slate/Teal-2 */
+    .theme-slate { background: linear-gradient(160deg,#e0fffe 0%,#c0fffb 60%,#98fff7 100%); color: #002020; }
+    .theme-slate .cat-section-eyebrow { background: linear-gradient(135deg,#007a74,#00d4c8); color: white; }
+    .theme-slate .cat-section-title { color: #002020; }
+    .theme-slate .title-underline { color: #00a89f; }
+    .theme-slate .title-underline::after { background: linear-gradient(90deg,#00a89f,#00d4c8); opacity:1; height:5px; }
+    .theme-slate .cat-section-subtitle { color: #004848; }
+    .theme-slate .cat-section-count { background: rgba(0,168,159,0.1); color: #007a74; }
+    .theme-slate .divider-line { background: #00a89f; }
+    .theme-slate .style-card:hover { box-shadow: 0 20px 52px rgba(0,168,159,0.22); }
+    .theme-slate .btn-card-book { background: linear-gradient(135deg,#00a89f,#007a74); color: white; }
+    .theme-slate .btn-card-book:hover { box-shadow: 0 6px 24px rgba(0,168,159,0.45); transform: translateY(-1px); }
+
+    /* Quick — Amber */
+    .theme-amber { background: linear-gradient(160deg,#fffae0 0%,#fff0a0 60%,#ffe060 100%); color: #2d1800; }
+    .theme-amber .cat-section-eyebrow { background: linear-gradient(135deg,#ff6b00,#ff9f00); color: white; }
+    .theme-amber .cat-section-title { color: #2d1800; }
+    .theme-amber .title-underline { color: #ff6b00; }
+    .theme-amber .title-underline::after { background: linear-gradient(90deg,#ff6b00,#ffd740); opacity:1; height:5px; }
+    .theme-amber .cat-section-subtitle { color: #803000; }
+    .theme-amber .cat-section-count { background: rgba(255,107,0,0.1); color: #cc5000; }
+    .theme-amber .divider-line { background: #ff6b00; }
+    .theme-amber .style-card:hover { box-shadow: 0 20px 52px rgba(255,107,0,0.25); }
+    .theme-amber .btn-card-book { background: linear-gradient(135deg,#ff6b00,#cc4400); color: white; }
+    .theme-amber .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,107,0,0.45); transform: translateY(-1px); }
+
+    /* Transformations — Forest Red */
+    .theme-forest { background: linear-gradient(160deg,#fff0f0 0%,#ffe0e0 60%,#ffc8c8 100%); color: #2d0000; }
+    .theme-forest .cat-section-eyebrow { background: linear-gradient(135deg,#ff1a1a,#ff6060); color: white; }
+    .theme-forest .cat-section-title { color: #2d0000; }
+    .theme-forest .title-underline { color: #ff1a1a; }
+    .theme-forest .title-underline::after { background: linear-gradient(90deg,#ff1a1a,#ff8080); opacity:1; height:5px; }
+    .theme-forest .cat-section-subtitle { color: #801010; }
+    .theme-forest .cat-section-count { background: rgba(255,26,26,0.1); color: #cc0000; }
+    .theme-forest .divider-line { background: #ff1a1a; }
+    .theme-forest .style-card:hover { box-shadow: 0 20px 52px rgba(255,26,26,0.25); }
+    .theme-forest .btn-card-book { background: linear-gradient(135deg,#ff1a1a,#cc0000); color: white; }
+    .theme-forest .btn-card-book:hover { box-shadow: 0 6px 24px rgba(255,26,26,0.45); transform: translateY(-1px); }
+
+    /* badge colour helpers */
+    .badge-trending  { background: rgba(255,45,135,0.14); color: #ff2d87; }
+    .badge-new       { background: linear-gradient(135deg,#9b00ff,#ff2d87); color: white; }
+    .badge-popular   { background: linear-gradient(135deg,#ff9f00,#ffd740); color: #1a0a2e; }
+    .badge-luxury    { background: linear-gradient(135deg,#ffd740,#ff9f00); color: #1a0a2e; }
+    .badge-offer     { background: linear-gradient(135deg,#ff6b00,#ffd740); color: white; }
+    .badge-bridal    { background: linear-gradient(135deg,#ff2d87,#cc0050); color: white; }
+    .badge-kids      { background: linear-gradient(135deg,#c354ff,#ff6eb4); color: white; }
+    .badge-mens      { background: linear-gradient(135deg,#00a89f,#00d4c8); color: white; }
+    .badge-quick     { background: linear-gradient(135deg,#ff6b00,#ff9f00); color: white; }
+
+    /* ── EMPTY SECTION ── */
+    .empty-cat {
+      text-align: center; padding: 40px 20px;
+      color: var(--mid); font-size: 0.88rem; font-style: italic;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) { .styles-grid { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 768px)  {
+      .cat-section { padding: 52px 0 40px; }
+      .cat-section-inner { padding: 0 16px; }
+      .cat-section-header { flex-direction: column; align-items: flex-start; }
+      .cat-section-header-right { align-items: flex-start; }
+      .styles-grid { grid-template-columns: repeat(2,1fr); gap: 1px; background: rgba(0,0,0,0.08); }
+      .styles-grid .style-card { border-radius: 0; box-shadow: none; }
+      .ht-filter-bar { top: 104px; }
+    }
+    @media (max-width: 480px) { .styles-grid { grid-template-columns: repeat(2,1fr); } }
+
+    /* ── FOOTER ── */
+    footer { background: #0A0A0A; color: var(--white); }
+    .footer-brand {
+      text-align: center; padding: 60px 24px 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-brand .logo { font-size: 36px; display: block; text-align: center; }
+    .footer-brand p { color: rgba(255,255,255,0.45); font-size: 14px; margin-top: 10px; font-weight: 300; }
+    .footer-body {
+      max-width: 1200px; margin: 0 auto; padding: 60px 24px;
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 40px;
+    }
+    .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
+    .footer-col a, .footer-col p { display: block; font-size: 14px; color: rgba(255,255,255,0.7); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; font-weight: 300; }
+    .footer-col a:hover { color: var(--pink-light); }
+    .social-links { display: flex; gap: 12px; margin-top: 4px; }
+    .social-links a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 16px; color: rgba(255,255,255,0.6); margin: 0; transition: background 0.2s, color 0.2s; }
+    .social-links a:hover { background: var(--brand); color: var(--white); }
+    .newsletter-form { display: flex; flex-direction: column; gap: 10px; }
+    .newsletter-form input { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: var(--white); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-family: var(--font-body); outline: none; }
+    .newsletter-form input::placeholder { color: rgba(255,255,255,0.35); }
+    .newsletter-form input:focus { border-color: var(--brand); }
+    .newsletter-form button { background: linear-gradient(135deg,var(--brand),var(--pink)); color: var(--white); border: none; border-radius: 8px; padding: 10px 14px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .newsletter-form button:hover { opacity: 0.85; }
+    .footer-bottom { text-align: center; padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(255,255,255,0.3); }
+    @media (max-width: 768px) { .footer-body { grid-template-columns: 1fr 1fr; gap: 30px; } }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <strong>✨ Ani Braids</strong> — Premium Protective Styling, Worldwide Bookings Available
+  </div>
+
+  <div class="sticky-header-wrap">
+    <header>
+      <div class="header-inner">
+        <a href="index.html" class="logo">Ani <span>Braids</span></a>
+        <div class="header-search">
+          <input type="text" placeholder="Search...">
+          <button aria-label="Search"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="secondary-nav">
+      <div class="secondary-nav-top">
+        <span>Menu</span>
+        <button class="nav-toggle-btn" id="navToggle" aria-label="Toggle navigation">
+          <i class="fas fa-bars" id="navToggleIcon"></i>
+        </button>
+      </div>
+      <div class="secondary-nav-inner" id="secondaryNavLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="appointment.html">Appointment</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html" class="active">Portfolio</a>
+        <a href="customer.html">Customer Cabinet</a>
+        <a href="contact.html">Contact us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund &amp; Returns</a>
+        <a href="reviews.html">Reviews</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- PAGE HERO -->
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+      <span>Portfolio</span>
+    </div>
+    <h1>Our Style Portfolio</h1>
+    <p>Browse every braiding style we offer — from trending looks to luxury creations, all crafted with care.</p>
+  </div>
+
+  <!-- HAIR TYPE FILTER -->
+  <div class="ht-filter-bar" id="htFilterBar">
+    <span class="ht-filter-label">Filter by hair type:</span>
+    <button class="ht-btn active" data-ht="all">All Types</button>
+  </div>
+
+  <!-- PORTFOLIO CONTAINER -->
+  <div id="portfolioRoot">
+    <div class="portfolio-loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Loading styles…</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <p>Premium Protective Styling Studio — Worldwide</p>
+    </div>
+    <div class="footer-body">
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>
+        <a href="tel:+1234567890">+1 (234) 567-890</a>
+        <p>Available worldwide via online booking</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="services.html">Our Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="privacy.html">Policies</a>
+        <a href="appointment.html">Book Now</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Stay Updated</h4>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Your email address">
+          <button type="button">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Ani Braids. All rights reserved.</div>
+  </footer>
+
+  <script>
+  /* ─── CATEGORY CONFIG ─── */
+  const CATEGORIES = [
+    { key: 'trending',        label: 'Trending Now',       icon: '🔥', eyebrow: '🔥 Trending',       theme: 'theme-rose',     gem: '🌹', subtitle: 'The styles everyone is booking right now.' },
+    { key: 'new',             label: 'New Arrivals',        icon: '✨', eyebrow: '✨ New Arrivals',    theme: 'theme-mauve',    gem: '💫', subtitle: 'Fresh styles just added to our menu.' },
+    { key: 'most-booked',     label: 'Most Booked',         icon: '👑', eyebrow: '👑 Most Booked',    theme: 'theme-gold',     gem: '⭐', subtitle: 'Client favourites — proven and loved.' },
+    { key: 'luxury',          label: 'Luxury Collection',   icon: '💎', eyebrow: '💎 Luxury',         theme: 'theme-plum',     gem: '✦',  subtitle: 'Premium, intricate styles for the queen in you.' },
+    { key: 'budget',          label: 'Budget Friendly',     icon: '💸', eyebrow: '💸 Budget Friendly', theme: 'theme-teal',     gem: '🌿', subtitle: 'Beautiful protective styles at accessible prices.' },
+    { key: 'bridal',          label: 'Bridal & Events',     icon: '💍', eyebrow: '💍 Bridal & Events', theme: 'theme-blush',    gem: '🌸', subtitle: 'Exquisite styles for your most special moments.' },
+    { key: 'kids',            label: 'Kids Styles',         icon: '🎀', eyebrow: '🎀 Kids Styles',    theme: 'theme-lavender', gem: '🦋', subtitle: 'Gentle, fun braids for little queens.' },
+    { key: 'mens',            label: "Men's Braids",        icon: '✂️', eyebrow: "✂️ Men's Braids",   theme: 'theme-slate',    gem: '⚡', subtitle: 'Sharp, clean braiding styles for men.' },
+    { key: 'quick',           label: 'Quick Styles',        icon: '⚡', eyebrow: '⚡ Quick Styles',   theme: 'theme-amber',    gem: '🌟', subtitle: 'Great looks done efficiently — in & out in style.' },
+    { key: 'transformations', label: 'Transformations',     icon: '🪄', eyebrow: '🪄 Transformations', theme: 'theme-forest',   gem: '🎭', subtitle: 'Bold, dramatic styles for a complete new look.' },
+  ];
+
+  /* ─── PRICE FORMATTER ─── */
+  function fmtPrice(s) {
+    const fmt = n => '$' + Number(n).toLocaleString();
+    if (s.priceMode === 'range' && s.priceMax)       return `${fmt(s.price)}–${fmt(s.priceMax)}`;
+    if (s.priceMode === 'promo' && s.originalPrice)  return `<span>${fmt(s.price)}</span><span class="original">${fmt(s.originalPrice)}</span>`;
+    return fmt(s.price || 0);
+  }
+
+  /* ─── STAR BUILDER ─── */
+  function buildStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += i <= Math.round(rating || 0)
+        ? '<i class="fas fa-star"></i>'
+        : '<i class="far fa-star"></i>';
+    }
+    return html;
+  }
+
+  /* ─── BADGE CLASS ─── */
+  function badgeClass(badge) {
+    if (!badge) return '';
+    const b = badge.toLowerCase();
+    if (b.includes('trend'))   return 'badge-trending';
+    if (b.includes('new'))     return 'badge-new';
+    if (b.includes('most') || b.includes('popular')) return 'badge-popular';
+    if (b.includes('luxu') || b.includes('premium')) return 'badge-luxury';
+    if (b.includes('offer') || b.includes('sale'))   return 'badge-offer';
+    if (b.includes('brid'))    return 'badge-bridal';
+    if (b.includes('kid'))     return 'badge-kids';
+    if (b.includes("men"))     return 'badge-mens';
+    if (b.includes('quick'))   return 'badge-quick';
+    return 'badge-trending';
+  }
+
+  /* ─── CARD HTML ─── */
+  function cardHTML(s) {
+    const imageUrls = Array.isArray(s.imageUrls) && s.imageUrls.length ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []);
+    const imgHTML = imageUrls.length
+      ? `<img src="${imageUrls[0]}" alt="${s.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>${s.emoji||'✂️'}</div>'">`
+      : `<div class="card-img-placeholder">${s.emoji || '✂️'}</div>`;
+    const badgePill = s.badge
+      ? `<span class="card-badge-pill ${badgeClass(s.badge)}">${s.badge}</span>` : '';
+    const durationPill = s.duration
+      ? `<div class="card-duration-pill"><i class="fas fa-clock"></i>${s.duration}</div>` : '';
+    const rating = s.rating || 5.0;
+    return `
+      <div class="style-card" onclick="window.location.href='appointment.html'">
+        <div class="card-img-wrap">
+          ${imgHTML}
+          ${badgePill}
+          ${durationPill}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${s.name}</div>
+          <div class="card-meta">
+            <div>
+              <div class="card-stars" style="display:flex;align-items:center;gap:3px;">
+                ${buildStars(rating)}
+                <span class="card-rating-val">${Number(rating).toFixed(1)}</span>
+              </div>
+            </div>
+            <span class="card-bookings">${s.bookings || 0} booked</span>
+          </div>
+          <div class="card-price">${fmtPrice(s)}</div>
+          <a href="appointment.html" class="btn-card-book" onclick="event.stopPropagation();">
+            <i class="fas fa-calendar-check"></i> Book Now
+          </a>
+        </div>
+      </div>`;
+  }
+
+  /* ─── SECTION HTML ─── */
+  function sectionHTML(cat, services, activeHt) {
+    const filtered = activeHt === 'all'
+      ? services
+      : services.filter(s => {
+          const ht = (s.hairType || '').toLowerCase();
+          return ht.includes(activeHt.toLowerCase()) || ht === 'all types';
+        });
+
+    const cardsHTML = filtered.length
+      ? filtered.map(cardHTML).join('')
+      : `<div class="empty-cat">No styles in this category yet. Check back soon! ✨</div>`;
+
+    return `
+      <section class="cat-section ${cat.theme}" data-cat="${cat.key}">
+        <div class="cat-section-inner">
+          <div class="cat-section-header">
+            <div class="cat-section-header-left">
+              <div class="cat-section-badge">
+                <span class="cat-section-icon">${cat.icon}</span>
+                <span class="cat-section-eyebrow">${cat.eyebrow}</span>
+              </div>
+              <h2 class="cat-section-title"><span class="title-underline">${cat.label}</span></h2>
+              <p class="cat-section-subtitle">${cat.subtitle}</p>
+            </div>
+            <div class="cat-section-header-right">
+              <span class="cat-section-count">${filtered.length} style${filtered.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div class="cat-section-divider">
+            <div class="divider-line"></div>
+            <span class="divider-gem">${cat.gem}</span>
+            <div class="divider-line"></div>
+          </div>
+          <div class="styles-grid">${cardsHTML}</div>
+        </div>
+      </section>`;
+  }
+
+  /* ─── RENDER ─── */
+  let currentHt = 'all';
+
+  function renderPortfolio() {
+    const services = window._portfolioServices || [];
+    const root = document.getElementById('portfolioRoot');
+    if (!root) return;
+
+    // Build hair-type filter buttons from service data
+    const htSet = new Set(['all']);
+    services.forEach(s => {
+      if (s.hairType && s.hairType !== 'All types') htSet.add(s.hairType);
+    });
+    buildHtButtons([...htSet]);
+
+    // Group services by category
+    const byCat = {};
+    CATEGORIES.forEach(c => byCat[c.key] = []);
+    services.forEach(s => {
+      const cats = Array.isArray(s.category) ? s.category : [];
+      cats.forEach(c => { if (byCat[c]) byCat[c].push(s); });
+    });
+
+    // Only show categories that have at least 1 service assigned (ignore 'all' key)
+    const visibleCats = CATEGORIES.filter(c => byCat[c.key] && byCat[c.key].length > 0);
+
+    if (!visibleCats.length) {
+      root.innerHTML = `
+        <div class="portfolio-loading">
+          <i class="fas fa-cut"></i>
+          <p>No services have been added to the portfolio yet.<br>Check back soon or <a href="appointment.html" style="color:var(--brand);">book a consultation</a>.</p>
+        </div>`;
+      return;
+    }
+
+    root.innerHTML = visibleCats.map(cat => sectionHTML(cat, byCat[cat.key], currentHt)).join('');
+  }
+
+  function buildHtButtons(types) {
+    const bar = document.getElementById('htFilterBar');
+    // Remove old dynamic buttons
+    bar.querySelectorAll('.ht-btn').forEach(b => b.remove());
+    types.forEach(ht => {
+      const btn = document.createElement('button');
+      btn.className = 'ht-btn' + (ht === currentHt ? ' active' : '');
+      btn.dataset.ht = ht;
+      btn.textContent = ht === 'all' ? 'All Types' : ht;
+      btn.addEventListener('click', () => {
+        currentHt = ht;
+        bar.querySelectorAll('.ht-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPortfolio();
+      });
+      bar.appendChild(btn);
+    });
+  }
+
+  /* ─── NAV TOGGLE ─── */
+  document.getElementById('navToggle')?.addEventListener('click', () => {
+    const links = document.getElementById('secondaryNavLinks');
+    const icon  = document.getElementById('navToggleIcon');
+    links.classList.toggle('open');
+    icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+  });
+
+  /* Kick off render if Firebase already resolved before DOM was ready */
+  if (window._portfolioServices !== undefined) renderPortfolio();
+  </script>
+</body>
+</html>

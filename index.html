@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ani Braids – Premium Braiding Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+  <style>
+    /* index.html is now a standard multi-section page — show all sections */
+    .page-section { display: block !important; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <strong>✨ Ani Braids</strong> — Premium Protective Styling, Worldwide Bookings Available
+  </div>
+
+  <div class="sticky-header-wrap">
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <div class="header-search">
+        <input type="text" placeholder="Search...">
+        <button aria-label="Search"><i class="fas fa-search"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECONDARY NAV -->
+  <nav class="secondary-nav">
+    <div class="secondary-nav-top">
+      <span>Menu</span>
+      <button class="nav-toggle-btn" id="navToggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars" id="navToggleIcon"></i>
+      </button>
+    </div>
+    <div class="secondary-nav-inner" id="secondaryNavLinks">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="appointment.html">Appointment</a>
+      <a href="services.html">Services</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="customer.html">Customer Cabinet</a>
+      <a href="contact.html">Contact us</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="refund.html">Refund & Returns</a>
+      <a href="reviews.html">Reviews</a>
+    </div>
+  </nav>
+  </div>
+
+  <!-- TAGLINE BANNER -->
+  <div class="tagline-banner page-section page-home">⚡ Your Premier Braiding Specialist — Worldwide Bookings Available</div>
+
+  <!-- WELCOME HEADING -->
+  <div class="welcome-heading page-section page-home">
+    <h1>WELCOME TO ANI BRAIDS</h1>
+    <hr class="welcome-divider">
+  </div>
+
+  <!-- CAROUSEL -->
+  <section class="carousel-section page-section page-home">
+    <div class="carousel-wrap">
+      <div class="scn">
+        <div class="crl" id="carousel">
+          <!-- Placeholder gradient images since we can't use external hair salon images -->
+          <div class="carousel-placeholder" style="width:200px;height:260px;position:absolute;border-radius:12px;top:50%;left:50%;margin:-130px 0 0 -100px;background:linear-gradient(135deg,#9B1FBE,#E8447A);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;text-align:center;padding:16px;">Knotless<br>Box Braids</div>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-controls">
+      <div class="ctrl-group">
+        <label for="rSpd">Speed</label>
+        <input type="range" id="rSpd" min="0.001" max="0.02" step="0.001" value="0.005">
+      </div>
+      <div class="ctrl-group">
+        <label for="tAng">Tilt</label>
+        <input type="range" id="tAng" min="0" max="45" step="1" value="20">
+      </div>
+      <div class="ctrl-group">
+        <label for="sFac">Scale</label>
+        <input type="range" id="sFac" min="1" max="2" step="0.1" value="1.2">
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <a href="appointment.html" class="btn-book-cta">
+        <i class="fas fa-calendar-check"></i> Book Appointment
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       ARTICLE 1 — WELCOME (image top, text below)
+  ═══════════════════════════════════════════════ -->
+  <section class="art-welcome page-section page-home">
+    <div class="art-welcome__img-wrap">
+      <img
+        src=""
+        alt="Ani Braids salon interior"
+        class="art-welcome__img"
+        data-img-key="welcome"
+        loading="lazy"
+      />
+      <div class="art-welcome__img-overlay">
+        <span>Ani Braids</span>
+        <span>Maryland</span>
+      </div>
+    </div>
+    <div class="art-welcome__body">
+      <div class="art-tag">Welcome</div>
+      <h2 class="art-h2">Welcome to <em>Ani Braids</em></h2>
+      <p>Welcome to Ani Braids, your ultimate destination for all things braids, twists, and protective hairstyles in Maryland. Our salon is proud to provide a warm, inclusive space where every client feels valued and confident in the artistry we deliver.</p>
+      <p>We believe in giving you a thorough overview — covering everything from our philosophy and mission to our booking policies and frequently asked questions — so you feel well-informed before even setting foot in our salon.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       ARTICLE 2 — WHAT SETS US APART (text left, image right)
+  ═══════════════════════════════════════════════ -->
+  <section class="art-apart page-section page-home">
+    <div class="art-apart__inner">
+    <div class="art-apart__text">
+      <div class="art-tag art-tag--pink">Our Edge</div>
+      <h2 class="art-h2">What Sets Us <em>Apart</em></h2>
+      <p>At Ani Braids, we don't just braid hair — we create an experience rooted in precision, care, and cultural pride. Every client who walks through our doors is treated like family, and every style we craft is a reflection of our passion for protective artistry.</p>
+      <p>Our braiders bring years of hands-on expertise and ongoing education to every appointment. We stay ahead of trends while honoring timeless techniques, ensuring you always leave with a look that's fresh, flawless, and uniquely yours.</p>
+      <ul class="art-list">
+        <li><i class="fas fa-check-circle"></i> Tension-free installations that protect your scalp</li>
+        <li><i class="fas fa-check-circle"></i> Personalized style consultations for every visit</li>
+        <li><i class="fas fa-check-circle"></i> Premium-grade hair used in all extensions</li>
+        <li><i class="fas fa-check-circle"></i> A clean, comfortable, welcoming environment</li>
+      </ul>
+    </div>
+    <div class="art-apart__img-wrap">
+      <img
+        src=""
+        alt="Braiding expertise at Ani Braids"
+        class="art-apart__img"
+        data-img-key="apart"
+        loading="lazy"
+      />
+    </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       ARTICLE 3 — WELCOMING ENVIRONMENT (image top, text below)
+  ═══════════════════════════════════════════════ -->
+  <section class="art-env page-section page-home">
+    <div class="art-env__img-wrap">
+      <img
+        src=""
+        alt="Welcoming salon atmosphere at Ani Braids"
+        class="art-env__img"
+        data-img-key="env"
+        loading="lazy"
+      />
+    </div>
+    <div class="art-env__body">
+      <div class="art-tag">Our Space</div>
+      <h2 class="art-h2">A <em>Welcoming</em> Environment</h2>
+      <p>From the moment you arrive at Ani Braids, you'll notice the difference. Our salon is designed to be a refuge — a place where you can relax, be yourself, and leave feeling more beautiful than when you walked in. We celebrate all hair textures, backgrounds, and identities.</p>
+      <p>We've worked hard to cultivate an atmosphere where clients feel heard and respected. Whether it's your first braiding appointment or your fiftieth, you'll always be welcomed with warmth, transparency, and genuine care. That's the Ani Braids promise.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       ARTICLE 5 — POLICY & CLOSING NOTES (image left, text right)
+  ═══════════════════════════════════════════════ -->
+  <section class="art-policy-outer page-section page-policies">
+    <div class="art-policy">
+    <div class="art-policy__img-wrap">
+      <img
+        src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=900&q=80"
+        alt="Ani Braids policy and care"
+        class="art-policy__img"
+        loading="lazy"
+      />
+    </div>
+    <div class="art-policy__text">
+      <div class="art-tag art-tag--pink">Good to Know</div>
+      <h2 class="art-h2">Policy &amp; <em>Closing Notes</em></h2>
+      <p>To give every client the experience they deserve, we ask that you arrive on time, come with clean and detangled hair, and communicate any concerns before your appointment begins. A deposit is required to hold your slot — this is applied toward your final balance.</p>
+      <p>Cancellations with less than 48 hours' notice may result in a forfeited deposit, as our braiders reserve their time specifically for you. We deeply appreciate your understanding and respect for their craft and schedule.</p>
+      <p>Photography of your completed style may be taken for our portfolio and social media — please let us know in advance if you'd prefer to opt out. Your privacy is important to us and we never share your personal information.</p>
+      <p>We are endlessly grateful for every client who chooses Ani Braids. Your trust inspires us to keep growing, learning, and creating. We can't wait to meet you. 💜</p>
+    </div>
+    </div>
+  </section>
+
+  <!-- BOOKING CTA -->
+  <section class="booking-section page-section page-appointment" id="appointment">
+    <h2>Ready for Your<br>New Look?</h2>
+    <p>Book your appointment online — we work with clients worldwide, including virtual consultations.</p>
+    <a href="#" class="btn-white">
+      <i class="fas fa-calendar-check"></i>
+      Book Your Appointment
+    </a>
+  </section>
+
+  <!-- WHY US -->
+  <section id="why" class="page-section page-home">
+    <div class="why-section">
+      <div class="section-label">Why Choose Us</div>
+      <h2 class="section-title">The Ani Braids <em>Difference</em></h2>
+      <div class="why-grid">
+        <div style="width:100%;aspect-ratio:4/5;border-radius:16px;background:linear-gradient(180deg,#F8F4FB 0%,#E8D5F5 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:40px;">
+            <i class="fas fa-hands-holding-heart" style="font-size:64px;color:var(--brand);margin-bottom:24px;display:block;"></i>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--dark);">Your Hair.<br>Your Crown.</div>
+            <div style="font-size:14px;color:var(--mid);margin-top:12px;font-weight:300;">We treat every client's hair like our own.</div>
+          </div>
+        </div>
+        <div class="why-points">
+          <div class="why-point">
+            <div class="why-point-icon">🌿</div>
+            <div>
+              <h3>Hair Health First</h3>
+              <p>Every technique we use prioritizes the health and integrity of your natural hair. No style is worth damage — we ensure tension-free, healthy installations every time.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">🌍</div>
+            <div>
+              <h3>Worldwide Clientele</h3>
+              <p>We serve clients globally. Whether you're booking in person or reaching out for a virtual consultation, Ani Braids is accessible wherever you are.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">⚡</div>
+            <div>
+              <h3>Efficient & Precise</h3>
+              <p>Our braiders work quickly yet meticulously — reducing your time in the chair without ever sacrificing neatness, symmetry, or durability.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">💬</div>
+            <div>
+              <h3>Expert Consultation</h3>
+              <p>Unsure which style suits you? We consult with every client to recommend the perfect technique based on your hair type, lifestyle, and goals.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEW FORM -->
+  <section class="reviews-section page-section page-reviews" id="reviews">
+    <div class="section-label">Client Reviews</div>
+    <h2 class="section-title">Share Your <em>Experience</em></h2>
+    <p class="section-subtitle">We'd love to hear from you — your feedback helps us grow.</p>
+    <div class="review-form">
+      <form id="reviewForm" onsubmit="submitReview(event)">
+        <div class="form-row">
+          <label>Your Overall Rating</label>
+          <div class="star-rating">
+            <input type="radio" id="s5" name="rating" value="5"><label for="s5">★</label>
+            <input type="radio" id="s4" name="rating" value="4"><label for="s4">★</label>
+            <input type="radio" id="s3" name="rating" value="3"><label for="s3">★</label>
+            <input type="radio" id="s2" name="rating" value="2"><label for="s2">★</label>
+            <input type="radio" id="s1" name="rating" value="1"><label for="s1">★</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="rTitle">Title of Your Review</label>
+          <input type="text" id="rTitle" placeholder="Summarize your experience" required>
+        </div>
+        <div class="form-row">
+          <label for="rContent">Your Review</label>
+          <textarea id="rContent" placeholder="Tell others about your experience with Ani Braids..." required></textarea>
+        </div>
+        <div class="form-row">
+          <label for="rName">Your Name</label>
+          <input type="text" id="rName" placeholder="Your name" required>
+        </div>
+        <div class="form-row">
+          <label for="rEmail">Your Email</label>
+          <input type="email" id="rEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="terms-row">
+          <input type="checkbox" id="rTerms" required>
+          <label for="rTerms">This review is based on my own experience and is my genuine opinion.</label>
+        </div>
+        <button type="submit" class="btn-submit">Submit Review</button>
+        <div id="formSuccess" style="display:none;text-align:center;margin-top:16px;color:var(--brand);font-weight:600;">
+          🎉 Thank you for your review!
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <p class="footer-tagline">Premium Protective Styling Studio — Worldwide</p>
+    </div>
+    <div class="footer-body">
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <a href="mailto:hello@anibraids.com" class="footer-email">hello@anibraids.com</a>
+        <a href="tel:+1234567890" class="footer-phone">+1 (234) 567-890</a>
+        <p>Available worldwide via online booking</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="services.html">Our Services</a>
+        <a href="privacy.html">Policies</a>
+        <a href="appointment.html">Book Now</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Stay Updated</h4>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Your email address">
+          <button type="button">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copyright">&copy; 2026 Ani Braids. All rights reserved.copy; 2026 Ani Braids. All rights reserved.</span>
+    </div>
+  </footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ── SITE CONFIG ──
+    async function loadSiteConfig() {
+      try {
+        const snap = await getDoc(doc(db,'settings','siteConfig'));
+        if (!snap.exists()) return;
+        const c = snap.data();
+        if (c.topbarText) document.querySelector('.topbar').innerHTML = c.topbarText;
+        if (c.email) document.querySelectorAll('.footer-email').forEach(el=>{el.href=`mailto:${c.email}`;el.textContent=c.email;});
+        if (c.phone) document.querySelectorAll('.footer-phone').forEach(el=>{el.href=`tel:${c.phone.replace(/\D/g,'')}`;el.textContent=c.phone;});
+        if (c.footerTagline) document.querySelectorAll('.footer-tagline').forEach(el=>el.textContent=c.footerTagline);
+        if (c.copyright) document.querySelectorAll('.footer-copyright').forEach(el=>el.textContent=c.copyright);
+        const s = c.social||{};
+        const socialMap = {instagram:'fa-instagram',tiktok:'fa-tiktok',facebook:'fa-facebook',pinterest:'fa-pinterest',youtube:'fa-youtube',twitter:'fa-twitter'};
+        const socialEl = document.querySelector('.social-links');
+        if (socialEl) {
+          const links = Object.entries(socialMap).filter(([k])=>s[k])
+            .map(([k,icon])=>`<a href="${s[k]}" target="_blank" rel="noopener" aria-label="${k}"><i class="fab ${icon}"></i></a>`).join('');
+          if (links) socialEl.innerHTML = links;
+        }
+      } catch(e) {}
+    }
+
+    // Default fallback slides used when Firestore has no carousel data yet
+    const DEFAULT_SLIDES = [
+      { bg: 'linear-gradient(135deg,#9B1FBE,#E8447A)', label: 'Knotless Box Braids' },
+      { bg: 'linear-gradient(135deg,#1A0028,#9B1FBE)', label: 'Cornrows' },
+      { bg: 'linear-gradient(135deg,#E8447A,#D4A843)', label: 'Boho Knotless' },
+      { bg: 'linear-gradient(135deg,#D4A843,#9B1FBE)', label: 'Passion Twists' },
+      { bg: 'linear-gradient(135deg,#2d0050,#E8447A)', label: 'Senegalese Twists' },
+      { bg: 'linear-gradient(135deg,#0d1b2a,#9B1FBE)', label: 'Micro Braids' },
+      { bg: 'linear-gradient(135deg,#9B1FBE,#D4A843)', label: 'Spring Twists' },
+      { bg: 'linear-gradient(135deg,#E8447A,#9B1FBE)', label: 'Triangle Braids' },
+    ];
+
+    // Gradient pool used for slides that have an image but no custom bg
+    const GRAD_POOL = [
+      'linear-gradient(135deg,#9B1FBE,#E8447A)',
+      'linear-gradient(135deg,#1A0028,#9B1FBE)',
+      'linear-gradient(135deg,#E8447A,#D4A843)',
+      'linear-gradient(135deg,#D4A843,#9B1FBE)',
+      'linear-gradient(135deg,#2d0050,#E8447A)',
+      'linear-gradient(135deg,#0d1b2a,#9B1FBE)',
+    ];
+
+    async function buildCarousel() {
+      const container = document.querySelector('.crl');
+      if (!container) return;
+      container.innerHTML = '';
+
+      let slides = [];
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'carouselImages'));
+        if (snap.exists() && snap.data().slides && snap.data().slides.length) {
+          slides = snap.data().slides;
+        }
+      } catch(e) { /* fall through to defaults */ }
+
+      const useDefaults = slides.length === 0;
+      const items = useDefaults ? DEFAULT_SLIDES : slides;
+
+      const count = items.length;
+      const angle = (2 * Math.PI) / count;
+      const radius = 220;
+      let speed = 0.005, tilt = 20, scale = 1.2, t = 0;
+
+      const els = items.map((item, idx) => {
+        const el = document.createElement('div');
+        el.style.cssText = `
+          width:200px;height:260px;position:absolute;border-radius:12px;
+          top:50%;left:50%;margin:-130px 0 0 -100px;
+          overflow:hidden;
+          border:2px solid rgba(255,255,255,0.2);
+          box-shadow:0 0 30px rgba(155,31,190,0.3);
+        `;
+
+        if (!useDefaults && item.url) {
+          el.style.background = GRAD_POOL[idx % GRAD_POOL.length];
+          el.innerHTML = `
+            <img src="${item.url}" alt="${item.label}"
+              style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div style="position:absolute;bottom:0;left:0;right:0;
+              background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);
+              color:#fff;font-size:12px;font-weight:600;
+              padding:24px 10px 10px;text-align:center;">
+              ${item.label}
+            </div>`;
+        } else {
+          el.style.cssText += `background:${item.bg || GRAD_POOL[idx % GRAD_POOL.length]};
+            display:flex;align-items:center;justify-content:center;
+            color:white;font-size:13px;font-weight:600;text-align:center;padding:16px;`;
+          el.textContent = item.label;
+        }
+
+        container.appendChild(el);
+        return el;
+      });
+
+      document.getElementById('rSpd').addEventListener('input', e => speed = parseFloat(e.target.value));
+      document.getElementById('tAng').addEventListener('input', e => tilt = parseFloat(e.target.value));
+      document.getElementById('sFac').addEventListener('input', e => scale = parseFloat(e.target.value));
+
+      function animate() {
+        t += speed;
+        container.style.transform = `rotateY(${t}rad)`;
+        els.forEach((el, i) => {
+          const phase = (t + i * angle) % (2 * Math.PI);
+          const s = 1 + (scale - 1) * Math.cos(phase);
+          const rx = tilt * Math.sin(phase);
+          el.style.transform = `
+            translateX(${radius * Math.cos(angle * i)}px)
+            translateZ(${radius * Math.sin(angle * i)}px)
+            rotateY(${i * (360 / count)}deg)
+            rotateX(${rx}deg)
+            scale(${s})
+          `;
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // ── HOME ARTICLE IMAGES ──
+    // ── HERO IMAGES (from admin Hero Images panel) ──
+    // Reads settings/heroImages { slots: [{key, url, alt}] }
+    // Matches slot key to data-img-key on <img> elements.
+    async function loadHeroImages() {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'heroImages'));
+        if (!snap.exists()) return;
+        const slots = snap.data().slots || [];
+        slots.forEach(slot => {
+          if (!slot.url) return;
+          const img = document.querySelector('img[data-img-key="' + slot.key + '"]');
+          if (img) img.src = slot.url;
+        });
+      } catch(e) { /* silently keep empty src */ }
+    }
+
+    loadSiteConfig();
+    buildCarousel();
+    loadHeroImages();
+  </script>
+
+  <script>
+    // Mobile nav toggle
+    const navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', () => {
+        const links = document.getElementById('secondaryNavLinks');
+        const icon = document.getElementById('navToggleIcon');
+        links.classList.toggle('open');
+        icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -379,7 +379,7 @@
         <div class="accordion-body">
           <p>Our website address is: <strong>anibraids.com</strong></p>
           <p>Ani Braids is a premium protective styling studio offering braiding services worldwide through online booking. We are committed to protecting your privacy and ensuring your personal data is handled responsibly.</p>
-          <p>If you have any questions about this policy, you can reach us at <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>.</p>
+          <p>If you have any questions about this policy, you can reach us at <a href="mailto:hello@anibraids.com" class="footer-email">hello@anibraids.com</a>.</p>
         </div>
       </div>
 
@@ -479,7 +479,7 @@
             <li>Withdraw consent at any time where processing is based on consent</li>
             <li>Lodge a complaint with a supervisory authority</li>
           </ul>
-          <p>To exercise any of these rights, please contact us at <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>.</p>
+          <p>To exercise any of these rights, please contact us at <a href="mailto:hello@anibraids.com" class="footer-email">hello@anibraids.com</a>.</p>
         </div>
       </div>
 
@@ -599,13 +599,13 @@
   <footer>
     <div class="footer-brand">
       <a href="home.html" class="logo">Ani <span>Braids</span></a>
-      <p>Premium Protective Styling Studio — Worldwide</p>
+      <p class="footer-tagline">Premium Protective Styling Studio — Worldwide</p>
     </div>
     <div class="footer-body">
       <div class="footer-col">
         <h4>Contact Us</h4>
-        <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>
-        <a href="tel:+1234567890">+1 (234) 567-890</a>
+        <a href="mailto:hello@anibraids.com" class="footer-email">hello@anibraids.com</a>
+        <a href="tel:+1234567890" class="footer-phone">+1 (234) 567-890</a>
         <p>Available worldwide via online booking</p>
       </div>
       <div class="footer-col">
@@ -635,7 +635,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Ani Braids. All rights reserved.
+      <span class="footer-copyright">&copy; 2026 Ani Braids. All rights reserved.copy; 2026 Ani Braids. All rights reserved.</span>
     </div>
   </footer>
 
@@ -664,6 +664,38 @@
         icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
       });
     }
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const _app = initializeApp({
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    });
+    const _db = getFirestore(_app);
+    (async () => {
+      try {
+        const snap = await getDoc(doc(_db,'settings','siteConfig'));
+        if (!snap.exists()) return;
+        const c = snap.data();
+        if (c.topbarText) { const tb=document.querySelector('.topbar'); if(tb) tb.innerHTML=c.topbarText; }
+        if (c.email) document.querySelectorAll('.footer-email').forEach(el=>{el.href=`mailto:${c.email}`;el.textContent=c.email;});
+        if (c.phone) document.querySelectorAll('.footer-phone').forEach(el=>{el.href=`tel:${c.phone.replace(/\D/g,'')}`;el.textContent=c.phone;});
+        if (c.footerTagline) document.querySelectorAll('.footer-tagline').forEach(el=>el.textContent=c.footerTagline);
+        if (c.copyright) document.querySelectorAll('.footer-copyright').forEach(el=>el.textContent=c.copyright);
+        const s=c.social||{};
+        const sMap={instagram:'fa-instagram',tiktok:'fa-tiktok',facebook:'fa-facebook',pinterest:'fa-pinterest',youtube:'fa-youtube',twitter:'fa-twitter'};
+        const socialEl=document.querySelector('.social-links');
+        if (socialEl) {
+          const lnks=Object.entries(sMap).filter(([k])=>s[k]).map(([k,ic])=>`<a href="${s[k]}" target="_blank" rel="noopener" aria-label="${k}"><i class="fab ${ic}"></i></a>`).join('');
+          if (lnks) socialEl.innerHTML=lnks;
+        }
+      } catch(e) {}
+    })();
   </script>
 </body>
 </html>

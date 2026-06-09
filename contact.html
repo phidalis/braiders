@@ -561,13 +561,13 @@
   <footer>
     <div class="footer-brand">
       <a href="home.html" class="logo">Ani <span>Braids</span></a>
-      <p>Premium Protective Styling Studio — Worldwide</p>
+      <p class="footer-tagline">Premium Protective Styling Studio — Worldwide</p>
     </div>
     <div class="footer-body">
       <div class="footer-col">
         <h4>Contact Us</h4>
-        <a href="mailto:hello@anibraids.com">hello@anibraids.com</a>
-        <a href="tel:+1234567890">+1 (234) 567-890</a>
+        <a href="mailto:hello@anibraids.com" class="footer-email">hello@anibraids.com</a>
+        <a href="tel:+1234567890" class="footer-phone">+1 (234) 567-890</a>
         <p>Available worldwide via online booking</p>
       </div>
       <div class="footer-col">
@@ -597,38 +597,96 @@
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Ani Braids. All rights reserved.
+      <span class="footer-copyright">&copy; 2026 Ani Braids. All rights reserved.copy; 2026 Ani Braids. All rights reserved.</span>
     </div>
   </footer>
 
-  <script>
-    // Mobile nav toggle
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // Nav toggle
     const navToggle = document.getElementById('navToggle');
     if (navToggle) {
       navToggle.addEventListener('click', () => {
         const links = document.getElementById('secondaryNavLinks');
-        const icon = document.getElementById('navToggleIcon');
+        const icon  = document.getElementById('navToggleIcon');
         links.classList.toggle('open');
         icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
       });
     }
 
-    // Form submit handler
-    function handleSubmit() {
+    // Site config
+    async function loadSiteConfig() {
+      try {
+        const snap = await getDoc(doc(db,'settings','siteConfig'));
+        if (!snap.exists()) return;
+        const c = snap.data();
+        if (c.topbarText) document.querySelector('.topbar').innerHTML = c.topbarText;
+        if (c.email) document.querySelectorAll('.footer-email').forEach(el=>{el.href=`mailto:${c.email}`;el.textContent=c.email;});
+        if (c.phone) document.querySelectorAll('.footer-phone').forEach(el=>{el.href=`tel:${c.phone.replace(/\D/g,'')}`;el.textContent=c.phone;});
+        if (c.footerTagline) document.querySelectorAll('.footer-tagline').forEach(el=>el.textContent=c.footerTagline);
+        if (c.copyright) document.querySelectorAll('.footer-copyright').forEach(el=>el.textContent=c.copyright);
+        const s = c.social||{};
+        const socialMap = {instagram:'fa-instagram',tiktok:'fa-tiktok',facebook:'fa-facebook',pinterest:'fa-pinterest',youtube:'fa-youtube',twitter:'fa-twitter'};
+        const socialEl = document.querySelector('.social-links');
+        if (socialEl) {
+          const links = Object.entries(socialMap).filter(([k])=>s[k])
+            .map(([k,icon])=>`<a href="${s[k]}" target="_blank" rel="noopener" aria-label="${k}"><i class="fab ${icon}"></i></a>`).join('');
+          if (links) socialEl.innerHTML = links;
+        }
+        // Also update contact info on the page itself if present
+        if (c.email) document.querySelectorAll('.contact-email-display').forEach(el=>{el.href=`mailto:${c.email}`;el.textContent=c.email;});
+        if (c.phone) document.querySelectorAll('.contact-phone-display').forEach(el=>{el.href=`tel:${c.phone.replace(/\D/g,'')}`;el.textContent=c.phone;});
+        if (c.address) document.querySelectorAll('.contact-address-display').forEach(el=>el.textContent=c.address);
+        if (c.hours) document.querySelectorAll('.contact-hours-display').forEach(el=>el.textContent=c.hours);
+        if (c.whatsapp) {
+          document.querySelectorAll('.contact-whatsapp-link').forEach(el=>{
+            el.href=`https://wa.me/${c.whatsapp}`;
+          });
+        }
+      } catch(e) {}
+    }
+
+    // Form submit — saves to Firestore
+    window.handleSubmit = async function() {
       const firstName = document.getElementById('firstName').value.trim();
-      const email = document.getElementById('email').value.trim();
+      const lastName  = document.getElementById('lastName')?.value.trim() || '';
+      const email     = document.getElementById('email').value.trim();
+      const message   = document.getElementById('message').value.trim();
       if (!firstName || !email) {
         alert('Please fill in your name and email before submitting.');
         return;
       }
       const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Sending…';
-      setTimeout(() => {
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        await addDoc(collection(db,'contactMessages'), {
+          name: `${firstName} ${lastName}`.trim(),
+          email, message,
+          createdAt: serverTimestamp(),
+        });
         btn.style.display = 'none';
         document.getElementById('formSuccess').style.display = 'block';
-      }, 800);
-    }
+      } catch(e) {
+        btn.disabled = false; btn.textContent = 'Submit';
+        alert('Failed to send message. Please try again.');
+      }
+    };
+
+    loadSiteConfig();
   </script>
 </body>
 </html>

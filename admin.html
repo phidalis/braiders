@@ -701,11 +701,139 @@
       </div>
 
       <!-- ── REVIEWS ── -->
+      <!-- ── REVIEWS ── -->
       <div class="panel" id="panel-reviews">
-        <div class="section-head"><div><h2>Reviews</h2><p>Client reviews submitted through the website.</p></div></div>
+        <div class="section-head">
+          <div><h2>Reviews</h2><p>Approve, feature, or delete client reviews.</p></div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select id="reviewFilterStatus" onchange="loadReviews()" style="background:var(--dark2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+              <option value="all">All Reviews</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="featured">Featured</option>
+            </select>
+          </div>
+        </div>
         <div class="card-box">
           <div id="reviewsList" style="padding:20px;">
             <div class="empty-state"><i class="fas fa-star"></i><p>Loading reviews…</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SITE SETTINGS ── -->
+      <div class="panel" id="panel-settings">
+        <div class="section-head"><div><h2>Site Settings</h2><p>Configure your website content, contact info, and social links.</p></div>
+          <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Save All Settings</button>
+        </div>
+
+        <!-- Business Info -->
+        <div class="card-box" style="margin-bottom:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Business Information</div>
+          <div class="form-grid" style="padding:0 20px 20px;">
+            <div class="field">
+              <label>Business Name</label>
+              <input type="text" id="cfg-businessName" placeholder="Ani Braids">
+            </div>
+            <div class="field">
+              <label>Tagline</label>
+              <input type="text" id="cfg-tagline" placeholder="Premium Protective Styling Studio — Worldwide">
+            </div>
+            <div class="field">
+              <label>Email Address</label>
+              <input type="email" id="cfg-email" placeholder="hello@anibraids.com">
+            </div>
+            <div class="field">
+              <label>Phone Number</label>
+              <input type="text" id="cfg-phone" placeholder="+1 (234) 567-890">
+            </div>
+            <div class="field span2">
+              <label>WhatsApp Number (with country code, digits only)</label>
+              <input type="text" id="cfg-whatsapp" placeholder="12345678900">
+            </div>
+            <div class="field span2">
+              <label>Physical Address</label>
+              <input type="text" id="cfg-address" placeholder="4500 Forbes Blvd, Lanham, Maryland 20706">
+            </div>
+            <div class="field span2">
+              <label>Business Hours</label>
+              <input type="text" id="cfg-hours" placeholder="Mon–Sat: 9am–7pm, Sun: Closed">
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Bar & Footer -->
+        <div class="card-box" style="margin-bottom:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Top Bar & Footer</div>
+          <div class="form-grid cols1" style="padding:0 20px 20px;">
+            <div class="field">
+              <label>Top Bar Text (HTML allowed, use &lt;strong&gt; for highlights)</label>
+              <input type="text" id="cfg-topbarText" placeholder="✨ Ani Braids — Premium Protective Styling, Worldwide Bookings Available">
+            </div>
+            <div class="field">
+              <label>Footer Brand Tagline</label>
+              <input type="text" id="cfg-footerTagline" placeholder="Premium Protective Styling Studio — Worldwide">
+            </div>
+            <div class="field">
+              <label>Copyright Text</label>
+              <input type="text" id="cfg-copyright" placeholder="© 2026 Ani Braids. All rights reserved.">
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="card-box" style="margin-bottom:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Social Media Links</div>
+          <div class="form-grid" style="padding:0 20px 20px;">
+            <div class="field">
+              <label><i class="fab fa-instagram" style="color:#E1306C;margin-right:6px;"></i>Instagram URL</label>
+              <input type="url" id="cfg-instagram" placeholder="https://instagram.com/anibraids">
+            </div>
+            <div class="field">
+              <label><i class="fab fa-tiktok" style="margin-right:6px;"></i>TikTok URL</label>
+              <input type="url" id="cfg-tiktok" placeholder="https://tiktok.com/@anibraids">
+            </div>
+            <div class="field">
+              <label><i class="fab fa-facebook" style="color:#1877F2;margin-right:6px;"></i>Facebook URL</label>
+              <input type="url" id="cfg-facebook" placeholder="https://facebook.com/anibraids">
+            </div>
+            <div class="field">
+              <label><i class="fab fa-pinterest" style="color:#E60023;margin-right:6px;"></i>Pinterest URL</label>
+              <input type="url" id="cfg-pinterest" placeholder="https://pinterest.com/anibraids">
+            </div>
+            <div class="field">
+              <label><i class="fab fa-youtube" style="color:#FF0000;margin-right:6px;"></i>YouTube URL</label>
+              <input type="url" id="cfg-youtube" placeholder="https://youtube.com/@anibraids">
+            </div>
+            <div class="field">
+              <label><i class="fab fa-twitter" style="color:#1DA1F2;margin-right:6px;"></i>X / Twitter URL</label>
+              <input type="url" id="cfg-twitter" placeholder="https://twitter.com/anibraids">
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="card-box" style="margin-bottom:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Accepted Payment Methods</div>
+          <div style="padding:0 20px 20px;">
+            <div class="checkbox-group" id="cfg-paymentMethods">
+              <label class="checkbox-item"><input type="checkbox" value="Cash"> Cash</label>
+              <label class="checkbox-item"><input type="checkbox" value="Zelle"> Zelle</label>
+              <label class="checkbox-item"><input type="checkbox" value="Venmo"> Venmo</label>
+              <label class="checkbox-item"><input type="checkbox" value="CashApp"> CashApp</label>
+              <label class="checkbox-item"><input type="checkbox" value="PayPal"> PayPal</label>
+              <label class="checkbox-item"><input type="checkbox" value="Apple Pay"> Apple Pay</label>
+              <label class="checkbox-item"><input type="checkbox" value="Credit Card"> Credit/Debit Card</label>
+              <label class="checkbox-item"><input type="checkbox" value="Stripe"> Stripe</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Newsletter / Contact Inbox -->
+        <div class="card-box">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Contact Messages <span style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">(from Contact page)</span></div>
+          <div id="contactMessagesList" style="padding:0 20px 20px;">
+            <div class="empty-state"><i class="fas fa-envelope"></i><p>Loading messages…</p></div>
           </div>
         </div>
       </div>
@@ -1073,6 +1201,8 @@ window._adminReady = async function() {
   await Promise.all([loadServices(), loadPortfolio(), loadAnnouncement(), loadStats(), loadCarousel()]);
   loadBookings();
   loadReviews();
+  loadSettings();
+  loadContactMessages();
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -1727,29 +1857,184 @@ async function loadBookings() {
    REVIEWS (read-only list)
 ═══════════════════════════════════════════════════════ */
 async function loadReviews() {
-  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const { db, collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } = window._fb;
   const el = document.getElementById('reviewsList');
+  const filter = document.getElementById('reviewFilterStatus')?.value || 'all';
+  el.innerHTML = `<div style="padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>`;
   try {
     const snap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt','desc')));
     if (snap.empty) {
       el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>No reviews yet.</p></div>`;
       return;
     }
-    el.innerHTML = snap.docs.map(d => {
-      const r = d.data();
+    let docs = snap.docs;
+    if (filter === 'pending')  docs = docs.filter(d => !d.data().approved && !d.data().featured);
+    if (filter === 'approved') docs = docs.filter(d => d.data().approved && !d.data().featured);
+    if (filter === 'featured') docs = docs.filter(d => d.data().featured);
+    if (!docs.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>No reviews in this category.</p></div>`;
+      return;
+    }
+    el.innerHTML = docs.map(d => {
+      const r = d.data(); const id = d.id;
       const stars = '★'.repeat(Math.round(r.rating || 5)) + '☆'.repeat(5 - Math.round(r.rating || 5));
+      const statusBadge = r.featured
+        ? `<span style="background:rgba(212,168,67,0.2);color:var(--gold);border:1px solid rgba(212,168,67,0.4);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;">Featured</span>`
+        : r.approved
+        ? `<span style="background:rgba(34,201,122,0.15);color:var(--success);border:1px solid rgba(34,201,122,0.3);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;">Approved</span>`
+        : `<span style="background:rgba(245,166,35,0.15);color:var(--warning);border:1px solid rgba(245,166,35,0.3);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;">Pending</span>`;
+      const ts = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
       return `
-        <div style="padding:16px;border-bottom:1px solid var(--border);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <strong style="font-size:14px;">${r.name || 'Anonymous'}</strong>
-            <span style="color:var(--gold);font-size:14px;">${stars}</span>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+            <div>
+              <strong style="font-size:14px;">${r.name || 'Anonymous'}</strong>
+              ${r.email ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${r.email}</span>` : ''}
+              <span style="color:var(--gold);font-size:14px;margin-left:10px;">${stars}</span>
+              ${r.title ? `<div style="font-size:13px;font-weight:600;margin-top:4px;">${r.title}</div>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              ${statusBadge}
+              ${ts ? `<span style="font-size:11px;color:var(--text-muted);">${ts}</span>` : ''}
+            </div>
           </div>
-          <p style="font-size:13px;color:var(--text-muted);">${r.review || r.text || '—'}</p>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">${r.review || r.text || '—'}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${!r.approved && !r.featured ? `<button class="btn btn-success btn-sm" onclick="approveReview('${id}')"><i class="fas fa-check"></i> Approve</button>` : ''}
+            ${r.approved && !r.featured ? `<button class="btn btn-sm" style="background:rgba(212,168,67,0.15);border:1px solid rgba(212,168,67,0.4);color:var(--gold);" onclick="featureReview('${id}')"><i class="fas fa-star"></i> Feature</button>` : ''}
+            ${r.featured ? `<button class="btn btn-outline btn-sm" onclick="unfeatureReview('${id}')"><i class="fas fa-star-half-alt"></i> Unfeature</button>` : ''}
+            ${r.approved || r.featured ? `<button class="btn btn-outline btn-sm" onclick="unapproveReview('${id}')"><i class="fas fa-undo"></i> Unapprove</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="deleteReview('${id}')"><i class="fas fa-trash"></i> Delete</button>
+          </div>
         </div>`;
     }).join('');
   } catch(e) {
-    el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>Could not load reviews.</p></div>`;
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>Could not load reviews: ${e.message}</p></div>`;
   }
+}
+
+async function approveReview(id) {
+  const { db, doc, updateDoc } = window._fb;
+  await updateDoc(doc(db,'reviews',id), { approved: true });
+  toast('Review approved — now visible on site'); loadReviews();
+}
+async function featureReview(id) {
+  const { db, doc, updateDoc } = window._fb;
+  await updateDoc(doc(db,'reviews',id), { approved: true, featured: true });
+  toast('Review featured'); loadReviews();
+}
+async function unfeatureReview(id) {
+  const { db, doc, updateDoc } = window._fb;
+  await updateDoc(doc(db,'reviews',id), { featured: false });
+  toast('Review unfeatured'); loadReviews();
+}
+async function unapproveReview(id) {
+  const { db, doc, updateDoc } = window._fb;
+  await updateDoc(doc(db,'reviews',id), { approved: false, featured: false });
+  toast('Review moved back to pending'); loadReviews();
+}
+async function deleteReview(id) {
+  if (!confirm('Delete this review permanently?')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  await deleteDoc(doc(db,'reviews',id));
+  toast('Review deleted','error'); loadReviews();
+}
+
+/* ─── SITE SETTINGS ─── */
+async function loadSettings() {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db,'settings','siteConfig'));
+    if (!snap.exists()) return;
+    const c = snap.data();
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    set('cfg-businessName', c.businessName);
+    set('cfg-tagline', c.tagline);
+    set('cfg-email', c.email);
+    set('cfg-phone', c.phone);
+    set('cfg-whatsapp', c.whatsapp);
+    set('cfg-address', c.address);
+    set('cfg-hours', c.hours);
+    set('cfg-topbarText', c.topbarText);
+    set('cfg-footerTagline', c.footerTagline);
+    set('cfg-copyright', c.copyright);
+    set('cfg-instagram', c.social?.instagram);
+    set('cfg-tiktok', c.social?.tiktok);
+    set('cfg-facebook', c.social?.facebook);
+    set('cfg-pinterest', c.social?.pinterest);
+    set('cfg-youtube', c.social?.youtube);
+    set('cfg-twitter', c.social?.twitter);
+    // payment checkboxes
+    if (c.paymentMethods) {
+      document.querySelectorAll('#cfg-paymentMethods input[type=checkbox]').forEach(cb => {
+        cb.checked = c.paymentMethods.includes(cb.value);
+      });
+    }
+  } catch(e) { toast('Could not load settings: ' + e.message, 'error'); }
+}
+
+async function saveSettings() {
+  const { db, doc, setDoc } = window._fb;
+  const val = id => document.getElementById(id)?.value.trim() || '';
+  const paymentMethods = [...document.querySelectorAll('#cfg-paymentMethods input[type=checkbox]')]
+    .filter(cb => cb.checked).map(cb => cb.value);
+  const config = {
+    businessName: val('cfg-businessName'),
+    tagline: val('cfg-tagline'),
+    email: val('cfg-email'),
+    phone: val('cfg-phone'),
+    whatsapp: val('cfg-whatsapp'),
+    address: val('cfg-address'),
+    hours: val('cfg-hours'),
+    topbarText: val('cfg-topbarText'),
+    footerTagline: val('cfg-footerTagline'),
+    copyright: val('cfg-copyright'),
+    social: {
+      instagram: val('cfg-instagram'),
+      tiktok: val('cfg-tiktok'),
+      facebook: val('cfg-facebook'),
+      pinterest: val('cfg-pinterest'),
+      youtube: val('cfg-youtube'),
+      twitter: val('cfg-twitter'),
+    },
+    paymentMethods,
+    updatedAt: window._fb.serverTimestamp(),
+  };
+  try {
+    await setDoc(doc(db,'settings','siteConfig'), config, { merge: true });
+    toast('Site settings saved successfully');
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function loadContactMessages() {
+  const { db, collection, getDocs, query, orderBy, doc, deleteDoc } = window._fb;
+  const el = document.getElementById('contactMessagesList');
+  try {
+    const snap = await getDocs(query(collection(db,'contactMessages'), orderBy('createdAt','desc')));
+    if (snap.empty) { el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No messages yet.</p>`; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const m = d.data(); const id = d.id;
+      const ts = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+          <strong style="font-size:13px;">${m.name || '—'}</strong>
+          <div style="display:flex;gap:8px;align-items:center;">
+            ${ts ? `<span style="font-size:11px;color:var(--text-muted);">${ts}</span>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="deleteContactMsg('${id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <a href="mailto:${m.email}" style="font-size:12px;color:var(--brand);">${m.email || ''}</a>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:6px;">${m.message || '—'}</p>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p style="color:var(--danger);font-size:13px;">Could not load: ${e.message}</p>`; }
+}
+
+async function deleteContactMsg(id) {
+  if (!confirm('Delete this message?')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  await deleteDoc(doc(db,'contactMessages',id));
+  toast('Message deleted','error'); loadContactMessages();
 }
 
 /* ─── drag-over visual on upload zones ─── */

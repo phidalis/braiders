@@ -181,11 +181,18 @@
     }
 
     @media (max-width: 768px) {
+      .secondary-nav {
+        width: 100%;
+        display: block;
+      }
       .secondary-nav-top {
         display: flex;
+        flex-direction: row;
         align-items: center;
-        justify-content: space-between;
         padding: 0 16px;
+        width: 100%;
+        min-height: 48px;
+        box-sizing: border-box;
       }
       .secondary-nav-top span {
         color: rgba(255,255,255,0.7);
@@ -194,15 +201,19 @@
         letter-spacing: 1.5px;
         text-transform: uppercase;
         padding: 12px 0;
+        flex: 1;
+        white-space: nowrap;
       }
       .nav-toggle-btn {
         background: none;
         border: none;
         cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 8px 4px;
+        flex-shrink: 0;
+        margin-left: auto;
       }
       .nav-toggle-btn i {
         color: rgba(255,255,255,0.85);
@@ -214,6 +225,14 @@
         align-items: stretch;
         padding: 0;
         border-top: 1px solid rgba(255,255,255,0.06);
+        position: static !important;
+        width: 100% !important;
+        background: #111111;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        box-shadow: none !important;
+        float: none;
       }
       .secondary-nav-inner.open {
         display: flex;
@@ -224,6 +243,9 @@
         border-radius: 0;
         font-size: 14px;
         white-space: normal;
+        text-align: left !important;
+        width: 100%;
+        box-sizing: border-box;
       }
       .secondary-nav-inner a:last-child {
         border-bottom: none;
@@ -1041,6 +1063,8 @@
     .art-apart {
       background: var(--light);
       padding: 80px 20px;
+      height: auto;
+      min-height: unset;
     }
     .art-apart__inner {
       max-width: var(--content-max);
@@ -1048,7 +1072,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 72px;
-      align-items: center;
+      align-items: start;
     }
     .art-apart__text { padding-right: 20px; }
     .art-apart__text p {
@@ -1235,6 +1259,15 @@
       .art-policy__img-wrap { aspect-ratio: 3/2; }
     }
     @media (max-width: 600px) {
+      .art-apart {
+        padding: 48px 16px 56px;
+      }
+      .art-apart__inner {
+        gap: 32px;
+      }
+      .art-apart__img-wrap {
+        aspect-ratio: 4/3;
+      }
       .art-welcome__img-wrap, .art-env__img-wrap { height: 240px; }
     }
 

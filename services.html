@@ -191,6 +191,40 @@
       .header-search input { width: 130px; }
     }
 
+    /* ── SERVICE ONE BANNER ── */
+    .svc-banner {
+      width: 100%;
+      height: 420px;
+      overflow: hidden;
+      position: relative;
+    }
+    .svc-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .svc-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.45) 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 32px;
+    }
+    .svc-banner-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    @media (max-width: 768px) {
+      .svc-banner { height: 240px; }
+      .svc-banner-title { font-size: 28px; }
+    }
+
     /* ── SERVICES GRID ── */
     .services-grid-section {
       display: grid;
@@ -233,6 +267,7 @@
       flex-direction: column;
       padding: 16px 16px 0;
       text-align: center;
+      min-height: 0;
     }
 
     .service-title {
@@ -242,19 +277,27 @@
       color: #9B1FBE;
       margin-bottom: 8px;
       line-height: 1.2;
+      flex-shrink: 0;
     }
 
     .service-desc {
       font-size: 13px;
       color: #555;
       line-height: 1.5;
-      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex-shrink: 1;
+      min-height: 0;
     }
 
     .service-actions {
       display: flex;
       gap: 10px;
       padding: 14px 16px 16px;
+      flex-shrink: 0;
+      margin-top: auto;
     }
 
     .btn-wa,
@@ -467,6 +510,14 @@
     </nav>
   </div>
 
+  <!-- SERVICE ONE BANNER — image controlled via Admin > Hero Images > Services Page -->
+  <div class="svc-banner" id="svOneBanner" style="display:none;">
+    <img src="" alt="Services at Ani Braids" id="svOneImg">
+    <div class="svc-banner-overlay">
+      <span class="svc-banner-title">Our Services</span>
+    </div>
+  </div>
+
   <!-- SERVICES GRID — rendered dynamically from Firestore settings/services -->
   <section class="services-grid-section" id="servicesGrid">
     <!-- skeleton placeholders while loading -->
@@ -576,7 +627,8 @@
       }
       grid.innerHTML = visible.map(s => {
         const imgUrl = (s.imageUrls && s.imageUrls[0]) || s.imageUrl || '';
-        const waLink = s.waLink || 'https://wa.me/1234567890';
+        const waMsg = encodeURIComponent("Hello Ani Braids!\nI need help in booking an appointment\nwhich day/time hasn't been Booked I check my schedule\nThank You");
+        const waLink = s.waLink || `https://wa.me/12024244894?text=${waMsg}`;
         return `
         <div class="service-card">
           <div class="service-img-wrap">
@@ -615,6 +667,19 @@
         // Fallback: render seed data from memory so page never stays blank
         renderServices(SEED_SERVICES);
       }
+
+      // ── service_one banner ──
+      try {
+        const hSnap = await getDoc(doc(db, 'settings', 'heroImages'));
+        if (hSnap.exists() && hSnap.data().slots) {
+          const slot = hSnap.data().slots.find(s => s.key === 'service_one');
+          if (slot && slot.url) {
+            const banner = document.getElementById('svOneBanner');
+            document.getElementById('svOneImg').src = slot.url;
+            banner.style.display = 'block';
+          }
+        }
+      } catch(e) {}
 
       // ── site config (topbar, footer) ──
       try {

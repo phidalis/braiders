@@ -666,6 +666,22 @@
         <div class="portfolio-grid" id="portfolioGrid">
           <div class="empty-state" style="grid-column:1/-1"><i class="fas fa-images"></i><p>Loading portfolio…</p></div>
         </div>
+
+        <!-- ── Services Page Hero Images ── -->
+        <div style="margin-top:36px;">
+          <div class="section-head" style="margin-bottom:16px;">
+            <div>
+              <h2 style="font-size:15px;">Services Page Images</h2>
+              <p>Hero/banner images used on <strong>services.html</strong>. Changes apply immediately after saving.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveServicesHeroImages()">
+              <i class="fas fa-save"></i> Save All
+            </button>
+          </div>
+          <div class="hero-slots" id="servicesHeroSlots">
+            <div class="empty-state"><i class="fas fa-image"></i><p>Loading…</p></div>
+          </div>
+        </div>
       </div>
 
       <!-- ── ANNOUNCEMENTS ── -->
@@ -1198,6 +1214,7 @@ function switchTab(btn, tabId) {
 ═══════════════════════════════════════════════════════ */
 window._adminReady = async function() {
   initHeroSlots();
+  initServicesHeroSlots();
   await Promise.all([loadServices(), loadPortfolio(), loadAnnouncement(), loadStats(), loadCarousel()]);
   loadBookings();
   loadReviews();
@@ -1243,6 +1260,7 @@ const HERO_SLOTS_DEF = [
   { key: 'welcome',        label: '[Home] Welcome Article Image',      page: 'index',  alt: 'Ani Braids salon interior',              url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1400&q=80' },
   { key: 'apart',          label: '[Home] What Sets Us Apart Image',   page: 'index',  alt: 'Braiding expertise at Ani Braids',        url: 'https://images.unsplash.com/photo-1560066984-138daaa4e1e4?w=900&q=80' },
   { key: 'env',            label: '[Home] Environment Article Image',  page: 'index',  alt: 'Welcoming salon atmosphere',              url: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=1400&q=80' },
+  { key: 'policy',        label: '[Home] Policy & Closing Notes Image', page: 'index', alt: 'Ani Braids policy and care',             url: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=900&q=80' },
   // ── About Page ──
   { key: 'about_banner',   label: '[About] Hero Banner Image',         page: 'about',  alt: 'Beautiful braided hair at Ani Braids',    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1400&q=80' },
   { key: 'about_story',    label: '[About] Our Story Image',           page: 'about',  alt: 'Braiding process at Ani Braids',          url: 'https://images.unsplash.com/photo-1533577116850-9cc66cad8a9b?w=1200&q=80' },
@@ -1260,7 +1278,15 @@ async function initHeroSlots() {
   try {
     const snap = await getDoc(doc(db, 'settings', 'heroImages'));
     if (snap.exists() && snap.data().slots) {
-      heroData = snap.data().slots;
+      // Merge: start from canonical defaults so new slots always appear,
+      // then overwrite URLs/alts from whatever is saved in Firestore.
+      const saved = snap.data().slots;
+      const savedMap = {};
+      saved.forEach(s => { savedMap[s.key] = s; });
+      heroData = HERO_SLOTS_DEF.map(def => savedMap[def.key]
+        ? { ...def, url: savedMap[def.key].url ?? def.url, alt: savedMap[def.key].alt ?? def.alt }
+        : { ...def }
+      );
     }
   } catch(e) { /* use defaults */ }
   renderHeroSlots();
@@ -1270,7 +1296,7 @@ function renderHeroSlots() {
   const wrap = document.getElementById('heroSlots');
   // Group by page
   const pages = [...new Set(heroData.map(s => s.page || 'index'))];
-  const pageLabels = { index: 'Homepage (index.html)', about: 'About Page (about.html)' };
+  const pageLabels = { index: 'Homepage (index.html)', about: 'About Page (about.html)', services: 'Services Page (services.html)' };
   wrap.innerHTML = pages.map(page => {
     const slots = heroData.filter(s => (s.page || 'index') === page);
     return `
@@ -1311,9 +1337,84 @@ function openHeroModal(key, label) {
   document.getElementById('heroUploadProgress').style.display = 'none';
   document.getElementById('heroModal').classList.add('open');
 }
+
+/* ═══════════════════════════════════════════════════════
+   SERVICES PAGE IMAGES
+   Stored alongside heroData in settings/heroImages but
+   scoped to page: 'services'. Managed separately in the
+   Services admin panel so they don't clutter Hero Images.
+═══════════════════════════════════════════════════════ */
+const SERVICES_HERO_SLOTS_DEF = [
+  { key: 'service_one', label: 'Service One Banner Image', page: 'services', alt: 'Featured service at Ani Braids', url: 'https://images.unsplash.com/photo-1611432579402-7037e3e2c1e4?w=900&q=80' },
+];
+let servicesHeroData = JSON.parse(JSON.stringify(SERVICES_HERO_SLOTS_DEF));
+let activeServicesHeroKey = null;
+let pendingServicesHeroUrl = null;
+
+async function initServicesHeroSlots() {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'heroImages'));
+    if (snap.exists() && snap.data().slots) {
+      const saved = snap.data().slots;
+      const savedMap = {};
+      saved.forEach(s => { savedMap[s.key] = s; });
+      servicesHeroData = SERVICES_HERO_SLOTS_DEF.map(def => savedMap[def.key]
+        ? { ...def, url: savedMap[def.key].url ?? def.url, alt: savedMap[def.key].alt ?? def.alt }
+        : { ...def }
+      );
+    }
+  } catch(e) { /* use defaults */ }
+  renderServicesHeroSlots();
+}
+
+function renderServicesHeroSlots() {
+  const wrap = document.getElementById('servicesHeroSlots');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="hero-page-slots" style="grid-template-columns:repeat(3,1fr);">
+      ${servicesHeroData.map(slot => `
+        <div class="hero-slot" id="svcHeroSlot-${slot.key}">
+          <div class="hero-slot-img">
+            ${slot.url
+              ? `<img src="${slot.url}" alt="${slot.label}" id="svcHeroSlotImg-${slot.key}">`
+              : `<div class="hero-slot-img-empty"><i class="fas fa-image"></i><span>No image set</span></div>`
+            }
+          </div>
+          <div class="hero-slot-body">
+            <div class="hero-slot-label">${slot.label}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="openServicesHeroModal('${slot.key}','${slot.label}')">
+                <i class="fas fa-upload"></i> Replace Image
+              </button>
+              ${slot.url ? `<button class="btn btn-outline btn-sm" onclick="clearServicesHeroSlot('${slot.key}')">Clear</button>` : ''}
+            </div>
+            ${slot.url ? `<p style="font-size:11px;color:var(--text-muted);margin-top:8px;word-break:break-all;">${slot.url.substring(0,60)}…</p>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function openServicesHeroModal(key, label) {
+  activeServicesHeroKey = key;
+  pendingServicesHeroUrl = null;
+  // Reuse the existing hero modal
+  document.getElementById('heroModalTitle').textContent = 'Replace: ' + label;
+  document.getElementById('heroImgPreview').innerHTML = '';
+  document.getElementById('heroImageInput').value = '';
+  document.getElementById('heroUploadProgress').style.display = 'none';
+  // Override save button to call services save
+  document.getElementById('heroModal').dataset.mode = 'services';
+  document.getElementById('heroModal').classList.add('open');
+}
+
 function closeHeroModal() {
-  document.getElementById('heroModal').classList.remove('open');
+  const modal = document.getElementById('heroModal');
+  modal.classList.remove('open');
+  modal.dataset.mode = '';
   activeHeroKey = null; pendingHeroUrl = null;
+  activeServicesHeroKey = null; pendingServicesHeroUrl = null;
 }
 
 async function handleHeroImage(input) {
@@ -1323,9 +1424,12 @@ async function handleHeroImage(input) {
   prog.style.display = 'block'; bar.style.width = '0%';
   try {
     const res = await uploadToCloudinary(file, pct => bar.style.width = pct + '%');
-    pendingHeroUrl = res.secure_url;
+    const url = res.secure_url;
+    const mode = document.getElementById('heroModal').dataset.mode;
+    if (mode === 'services') pendingServicesHeroUrl = url;
+    else pendingHeroUrl = url;
     document.getElementById('heroImgPreview').innerHTML =
-      `<div class="img-thumb"><img src="${res.secure_url}" alt="preview"></div>`;
+      `<div class="img-thumb"><img src="${url}" alt="preview"></div>`;
     bar.style.width = '100%';
     toast('Image uploaded! Click Save to apply.', 'success');
   } catch(e) {
@@ -1335,11 +1439,20 @@ async function handleHeroImage(input) {
 }
 
 async function saveHeroSlot() {
-  if (!pendingHeroUrl || !activeHeroKey) { toast('Please upload an image first.', 'error'); return; }
-  const slot = heroData.find(s => s.key === activeHeroKey);
-  if (slot) slot.url = pendingHeroUrl;
-  await saveHeroImages();
-  closeHeroModal();
+  const mode = document.getElementById('heroModal').dataset.mode;
+  if (mode === 'services') {
+    if (!pendingServicesHeroUrl || !activeServicesHeroKey) { toast('Please upload an image first.', 'error'); return; }
+    const slot = servicesHeroData.find(s => s.key === activeServicesHeroKey);
+    if (slot) slot.url = pendingServicesHeroUrl;
+    await saveServicesHeroImages();
+    closeHeroModal();
+  } else {
+    if (!pendingHeroUrl || !activeHeroKey) { toast('Please upload an image first.', 'error'); return; }
+    const slot = heroData.find(s => s.key === activeHeroKey);
+    if (slot) slot.url = pendingHeroUrl;
+    await saveHeroImages();
+    closeHeroModal();
+  }
 }
 
 async function saveHeroImages() {
@@ -1354,6 +1467,26 @@ async function saveHeroImages() {
 function clearHeroSlot(key) {
   const slot = heroData.find(s => s.key === key);
   if (slot) { slot.url = ''; renderHeroSlots(); }
+}
+
+async function saveServicesHeroImages() {
+  const { db, doc, getDoc, setDoc } = window._fb;
+  try {
+    // Merge services slots back into the full heroImages document
+    const snap = await getDoc(doc(db, 'settings', 'heroImages'));
+    let allSlots = snap.exists() ? (snap.data().slots || []) : [];
+    // Remove existing services-page slots, then append updated ones
+    allSlots = allSlots.filter(s => s.page !== 'services');
+    allSlots = allSlots.concat(servicesHeroData);
+    await setDoc(doc(db, 'settings', 'heroImages'), { slots: allSlots, updatedAt: new Date().toISOString() });
+    toast('Services page images saved!', 'success');
+    renderServicesHeroSlots();
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+function clearServicesHeroSlot(key) {
+  const slot = servicesHeroData.find(s => s.key === key);
+  if (slot) { slot.url = ''; renderServicesHeroSlots(); }
 }
 
 /* ═══════════════════════════════════════════════════════

@@ -592,19 +592,19 @@
       </button>
       <button class="nav-item" onclick="showPanel('appointments')">
         <i class="fas fa-calendar-check"></i> My Appointments
-        <span class="nav-badge">2</span>
+        <span class="nav-badge" id="navApptBadge" style="display:none">0</span>
       </button>
-      <button class="nav-item" onclick="showPanel('services')">
+      <button class="nav-item" onclick="window.location.href='dashboard-services.html'">
         <i class="fas fa-magic"></i> Services
       </button>
-      <button class="nav-item" onclick="showPanel('portfolio')">
+      <button class="nav-item" onclick="window.location.href='dashboard-portfolio.html'">
         <i class="fas fa-images"></i> Portfolio
       </button>
 
       <div class="nav-section-label">Perks</div>
       <button class="nav-item" onclick="showPanel('wishlist')">
         <i class="fas fa-heart"></i> Saved Styles
-        <span class="nav-badge">4</span>
+        <span class="nav-badge" id="navWishlistBadge" style="display:none">0</span>
       </button>
       <button class="nav-item" onclick="showPanel('reviews')">
         <i class="fas fa-star"></i> Reviews
@@ -650,25 +650,25 @@
           <div class="stat-card c1">
             <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
             <div class="stat-label">Upcoming</div>
-            <div class="stat-val">2</div>
+            <div class="stat-val" id="statUpcoming">–</div>
             <div class="stat-sub">Appointments booked</div>
           </div>
           <div class="stat-card c2">
             <div class="stat-icon"><i class="fas fa-scissors"></i></div>
             <div class="stat-label">Sessions Done</div>
-            <div class="stat-val">7</div>
+            <div class="stat-val" id="statDone">–</div>
             <div class="stat-sub">Styles completed</div>
           </div>
           <div class="stat-card c3">
             <div class="stat-icon"><i class="fas fa-star"></i></div>
             <div class="stat-label">Loyalty Points</div>
-            <div class="stat-val">340</div>
-            <div class="stat-sub">Earn 500 for a free add-on</div>
+            <div class="stat-val" id="statPoints">–</div>
+            <div class="stat-sub" id="statPointsSub">Loading…</div>
           </div>
           <div class="stat-card c4">
             <div class="stat-icon"><i class="fas fa-heart"></i></div>
             <div class="stat-label">Saved Styles</div>
-            <div class="stat-val">4</div>
+            <div class="stat-val" id="statWishlist">–</div>
             <div class="stat-sub">In your wishlist</div>
           </div>
         </div>
@@ -680,42 +680,21 @@
                 <h3>Upcoming Appointments</h3>
                 <span class="card-link" onclick="showPanel('appointments')">View all →</span>
               </div>
-              <div class="appt-item">
-                <div class="appt-date-box"><span class="day">18</span><span class="mon">Jun</span></div>
-                <div class="appt-info">
-                  <div class="appt-name">Knotless Box Braids – Medium</div>
-                  <div class="appt-meta"><i class="fas fa-clock" style="font-size:11px"></i> 10:00 AM · Est. 5 hrs</div>
-                </div>
-                <span class="appt-status status-confirmed">Confirmed</span>
-              </div>
-              <div class="appt-item">
-                <div class="appt-date-box"><span class="day">29</span><span class="mon">Jun</span></div>
-                <div class="appt-info">
-                  <div class="appt-name">Boho Knotless – Large</div>
-                  <div class="appt-meta"><i class="fas fa-clock" style="font-size:11px"></i> 9:00 AM · Est. 6 hrs</div>
-                </div>
-                <span class="appt-status status-pending">Pending</span>
-              </div>
-              <div class="appt-item">
-                <div class="appt-date-box" style="background:linear-gradient(135deg,#aaa,#ccc)"><span class="day">05</span><span class="mon">May</span></div>
-                <div class="appt-info">
-                  <div class="appt-name">Cornrows – Full Head</div>
-                  <div class="appt-meta"><i class="fas fa-clock" style="font-size:11px"></i> 11:00 AM · 3 hrs</div>
-                </div>
-                <span class="appt-status status-completed">Done ✓</span>
+              <div id="overviewApptList">
+                <div class="appt-item"><div style="width:100%;text-align:center;color:#aaa;padding:20px;font-size:13px">Loading…</div></div>
               </div>
             </div>
 
             <div class="card" style="margin-top:20px">
               <div class="card-header"><h3>Quick Actions</h3></div>
               <div class="quick-grid">
-                <button class="quick-btn" onclick="showPanel('appointments')">
+                <button class="quick-btn" onclick="window.location.href='appointment.html'">
                   <i class="fas fa-calendar-plus"></i> Book Appointment
                 </button>
-                <button class="quick-btn" onclick="showPanel('portfolio')">
+                <button class="quick-btn" onclick="window.location.href='dashboard-portfolio.html'">
                   <i class="fas fa-images"></i> Browse Portfolio
                 </button>
-                <button class="quick-btn" onclick="showPanel('services')">
+                <button class="quick-btn" onclick="window.location.href='dashboard-service.html'">
                   <i class="fas fa-magic"></i> View Services
                 </button>
                 <button class="quick-btn" onclick="showPanel('contact')">
@@ -728,24 +707,21 @@
           <div style="display:flex;flex-direction:column;gap:20px">
             <div class="card">
               <div class="card-header"><h3>Loyalty Rewards</h3></div>
-              <div class="loyalty-card">
+              <div class="loyalty-card" id="loyaltyCard">
                 <div style="display:flex;justify-content:space-between;align-items:baseline">
-                  <span style="font-size:28px;font-weight:700;color:var(--brand)">340 <span style="font-size:14px;color:var(--mid);font-weight:400">pts</span></span>
-                  <span style="font-size:12px;color:var(--gold)">✦ Loyal Client</span>
+                  <span style="font-size:28px;font-weight:700;color:var(--brand)" id="loyaltyPoints">– <span style="font-size:14px;color:var(--mid);font-weight:400">pts</span></span>
+                  <span style="font-size:12px;color:var(--gold)" id="loyaltyTier">✦ Loyal Client</span>
                 </div>
-                <div class="points-bar-wrap"><div class="points-bar" style="width:68%"></div></div>
-                <div class="points-meta"><span>160 pts to next reward</span><span>500 pts = Free add-on</span></div>
+                <div class="points-bar-wrap"><div class="points-bar" id="loyaltyBar" style="width:0%"></div></div>
+                <div class="points-meta"><span id="loyaltyToNext">Loading…</span><span id="loyaltyGoal">500 pts = Free add-on</span></div>
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.06);font-size:13px;color:var(--mid)">+10 pts per session · +5 pts per referral</div>
               </div>
             </div>
 
             <div class="card">
               <div class="card-header"><h3>Studio Hours</h3></div>
-              <div style="padding:16px 24px">
-                <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)"><span>Mon – Fri</span><span style="font-weight:600">9:00 AM – 7:00 PM</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)"><span>Saturday</span><span style="font-weight:600">8:00 AM – 5:00 PM</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0"><span>Sunday</span><span style="color:var(--mid)">By appointment</span></div>
-                <a href="appointment.html" style="display:block;text-align:center;margin-top:16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s" onmouseover="this.style.background='#ede6f5'" onmouseout="this.style.background='var(--light-bg)'">Book a Slot →</a>
+              <div id="studioHoursCard" style="padding:16px 24px">
+                <div style="text-align:center;color:#aaa;padding:20px;font-size:13px">Loading…</div>
               </div>
             </div>
           </div>
@@ -776,39 +752,8 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><strong>Knotless Box Braids – Medium</strong></td>
-                <td>Jun 18, 2026 · 10:00 AM</td>
-                <td>~5 hrs</td>
-                <td>$180</td>
-                <td><span class="appt-status status-confirmed">Confirmed</span></td>
-                <td><div class="action-btns"><button class="btn-sm btn-outline">Reschedule</button><button class="btn-sm btn-danger">Cancel</button></div></td>
-              </tr>
-              <tr>
-                <td><strong>Boho Knotless – Large</strong></td>
-                <td>Jun 29, 2026 · 9:00 AM</td>
-                <td>~6 hrs</td>
-                <td>$220</td>
-                <td><span class="appt-status status-pending">Pending</span></td>
-                <td><div class="action-btns"><button class="btn-sm btn-outline">Reschedule</button><button class="btn-sm btn-danger">Cancel</button></div></td>
-              </tr>
-              <tr>
-                <td><strong>Cornrows – Full Head</strong></td>
-                <td>May 5, 2026 · 11:00 AM</td>
-                <td>3 hrs</td>
-                <td>$120</td>
-                <td><span class="appt-status status-completed">Completed</span></td>
-                <td><div class="action-btns"><button class="btn-sm btn-outline">Rebook</button></div></td>
-              </tr>
-              <tr>
-                <td><strong>Senegalese Twists – Long</strong></td>
-                <td>Apr 12, 2026 · 10:00 AM</td>
-                <td>~7 hrs</td>
-                <td>$250</td>
-                <td><span class="appt-status status-completed">Completed</span></td>
-                <td><div class="action-btns"><button class="btn-sm btn-outline">Rebook</button></div></td>
-              </tr>
+            <tbody id="apptTableBody">
+              <tr><td colspan="6" style="text-align:center;color:#aaa;padding:32px;font-size:13px">Loading appointments…</td></tr>
             </tbody>
           </table>
         </div>
@@ -820,11 +765,13 @@
           <h2>Our Services</h2>
           <a href="appointment.html" class="btn-primary">Book Now</a>
         </div>
-        <!-- Skeleton placeholders shown while Firestore loads -->
-        <div class="services-grid" id="dashServicesGrid">
-          <div class="service-card" style="min-height:260px;background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
-          <div class="service-card" style="min-height:260px;background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
-          <div class="service-card" style="min-height:260px;background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">
+          <i class="fas fa-magic" style="font-size:52px;color:rgba(155,31,190,0.2);margin-bottom:20px"></i>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:8px">Explore All Services</h3>
+          <p style="font-size:14px;color:var(--mid);max-width:380px;line-height:1.6;margin-bottom:28px">Browse our full menu of braiding styles, pricing, and availability — all managed live from our studio.</p>
+          <a href="dashboard-service.html" class="btn-primary" style="padding:14px 36px;font-size:15px;display:inline-flex;align-items:center;gap:10px;">
+            <i class="fas fa-arrow-right"></i> View Services
+          </a>
         </div>
       </div>
 
@@ -834,12 +781,13 @@
           <h2>Style Portfolio</h2>
           <a href="dashboard-portfolio.html" class="btn-primary">Full Gallery</a>
         </div>
-        <!-- Rendered from Firestore settings/services imageUrls -->
-        <div class="portfolio-grid" id="dashPortfolioGrid">
-          <div class="port-item" style="background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
-          <div class="port-item" style="background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
-          <div class="port-item" style="background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
-          <div class="port-item" style="background:linear-gradient(90deg,#f0e8f8 25%,#f8f4fb 50%,#f0e8f8 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">
+          <i class="fas fa-images" style="font-size:52px;color:rgba(155,31,190,0.2);margin-bottom:20px"></i>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:8px">Our Style Gallery</h3>
+          <p style="font-size:14px;color:var(--mid);max-width:380px;line-height:1.6;margin-bottom:28px">See all the beautiful styles we've created. Browse the full portfolio for inspiration before your next appointment.</p>
+          <a href="dashboard-portfolio.html" class="btn-primary" style="padding:14px 36px;font-size:15px;display:inline-flex;align-items:center;gap:10px;">
+            <i class="fas fa-arrow-right"></i> Open Portfolio
+          </a>
         </div>
       </div>
 
@@ -847,45 +795,10 @@
       <div class="panel" id="panel-wishlist">
         <div class="section-header">
           <h2>Saved Styles</h2>
-          <button class="btn-primary" onclick="showPanel('services')"><i class="fas fa-plus" style="margin-right:6px"></i>Browse Services</button>
+          <button class="btn-primary" onclick="window.location.href='dashboard-service.html'"><i class="fas fa-plus" style="margin-right:6px"></i>Browse Services</button>
         </div>
-        <div class="wishlist-grid">
-          <div class="wishlist-card">
-            <div style="height:140px;background:linear-gradient(135deg,#E8447A,#D4A843);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600">Boho Knotless</div>
-            <button class="wishlist-remove" onclick="removeWishlist(this)"><i class="fas fa-times"></i></button>
-            <div style="padding:16px 18px">
-              <div style="font-size:15px;font-weight:600">Boho Knotless Braids</div>
-              <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">From $190 · 5–8 hrs</div>
-              <button class="btn-primary" style="width:100%;padding:10px" onclick="showPanel('appointments')">Book This Style</button>
-            </div>
-          </div>
-          <div class="wishlist-card">
-            <div style="height:140px;background:linear-gradient(135deg,#D4A843,#9B1FBE);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600">Passion Twists</div>
-            <button class="wishlist-remove" onclick="removeWishlist(this)"><i class="fas fa-times"></i></button>
-            <div style="padding:16px 18px">
-              <div style="font-size:15px;font-weight:600">Passion Twists</div>
-              <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">From $160 · 4–6 hrs</div>
-              <button class="btn-primary" style="width:100%;padding:10px" onclick="showPanel('appointments')">Book This Style</button>
-            </div>
-          </div>
-          <div class="wishlist-card">
-            <div style="height:140px;background:linear-gradient(135deg,#2d0050,#E8447A);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600">Senegalese Twists</div>
-            <button class="wishlist-remove" onclick="removeWishlist(this)"><i class="fas fa-times"></i></button>
-            <div style="padding:16px 18px">
-              <div style="font-size:15px;font-weight:600">Senegalese Twists</div>
-              <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">From $200 · 5–8 hrs</div>
-              <button class="btn-primary" style="width:100%;padding:10px" onclick="showPanel('appointments')">Book This Style</button>
-            </div>
-          </div>
-          <div class="wishlist-card">
-            <div style="height:140px;background:linear-gradient(135deg,#9B1FBE,#D4A843);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600">Spring Twists</div>
-            <button class="wishlist-remove" onclick="removeWishlist(this)"><i class="fas fa-times"></i></button>
-            <div style="padding:16px 18px">
-              <div style="font-size:15px;font-weight:600">Spring Twists</div>
-              <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">From $140 · 3–5 hrs</div>
-              <button class="btn-primary" style="width:100%;padding:10px" onclick="showPanel('appointments')">Book This Style</button>
-            </div>
-          </div>
+        <div class="wishlist-grid" id="wishlistGrid">
+          <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px;font-size:13px">Loading saved styles…</div>
         </div>
       </div>
 
@@ -895,52 +808,8 @@
           <h2>Client Reviews</h2>
           <a href="reviews.html" class="btn-primary">Leave a Review</a>
         </div>
-        <div class="reviews-header-row">
-          <div class="rating-summary">
-            <div class="big-rating">4.9</div>
-            <div class="stars-row">★★★★★</div>
-            <div class="rating-count">Based on 128 reviews</div>
-          </div>
-          <div class="rating-bars">
-            <div class="rbar-row"><span class="rbar-label">5 ★</span><div class="rbar-track"><div class="rbar-fill" style="width:87%"></div></div><span class="rbar-count">112</span></div>
-            <div class="rbar-row"><span class="rbar-label">4 ★</span><div class="rbar-track"><div class="rbar-fill" style="width:10%"></div></div><span class="rbar-count">12</span></div>
-            <div class="rbar-row"><span class="rbar-label">3 ★</span><div class="rbar-track"><div class="rbar-fill" style="width:3%"></div></div><span class="rbar-count">3</span></div>
-            <div class="rbar-row"><span class="rbar-label">2 ★</span><div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div><span class="rbar-count">1</span></div>
-            <div class="rbar-row"><span class="rbar-label">1 ★</span><div class="rbar-track"><div class="rbar-fill" style="width:0%"></div></div><span class="rbar-count">0</span></div>
-          </div>
-        </div>
-        <div class="review-card">
-          <div class="review-top">
-            <div class="reviewer">
-              <div class="reviewer-avatar">T</div>
-              <div><div class="reviewer-name">Tasha M.</div><div class="reviewer-date">June 3, 2026</div></div>
-            </div>
-            <div class="review-stars">★★★★★</div>
-          </div>
-          <div class="review-service">Boho Knotless Braids</div>
-          <div class="review-text">Absolutely obsessed with my boho braids! Ani took her time, my scalp never felt tight, and they lasted over 8 weeks. I get compliments every single day. Already booked my next appointment!</div>
-        </div>
-        <div class="review-card">
-          <div class="review-top">
-            <div class="reviewer">
-              <div class="reviewer-avatar" style="background:linear-gradient(135deg,#D4A843,#E8447A)">Z</div>
-              <div><div class="reviewer-name">Zara K.</div><div class="reviewer-date">May 20, 2026</div></div>
-            </div>
-            <div class="review-stars">★★★★★</div>
-          </div>
-          <div class="review-service">Knotless Box Braids – Medium</div>
-          <div class="review-text">Best braiding experience I've ever had. The studio was immaculate, Ani is incredibly skilled and so professional. Worth every penny for the quality and care that goes into each braid.</div>
-        </div>
-        <div class="review-card">
-          <div class="review-top">
-            <div class="reviewer">
-              <div class="reviewer-avatar" style="background:linear-gradient(135deg,#0d1b2a,#9B1FBE)">N</div>
-              <div><div class="reviewer-name">Nia O.</div><div class="reviewer-date">May 8, 2026</div></div>
-            </div>
-            <div class="review-stars">★★★★★</div>
-          </div>
-          <div class="review-service">Senegalese Twists</div>
-          <div class="review-text">My Senegalese twists came out absolutely flawless. I travel internationally for work and I specifically flew in for this appointment — 100% worth it. Professional, meticulous, and the results speak for themselves.</div>
+        <div id="reviewsContent">
+          <div style="text-align:center;color:#aaa;padding:60px 20px;font-size:13px">Loading reviews…</div>
         </div>
       </div>
 
@@ -952,25 +821,21 @@
             <h3>Get in Touch</h3>
             <div class="contact-item">
               <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-              <div><h4>Email</h4><p>hello@anibraids.com</p></div>
+              <div><h4>Email</h4><p id="contactEmail">Loading…</p></div>
             </div>
             <div class="contact-item">
               <div class="contact-icon"><i class="fas fa-phone"></i></div>
-              <div><h4>Phone / WhatsApp</h4><p>+1 (234) 567-890</p></div>
+              <div><h4>Phone / WhatsApp</h4><p id="contactPhone">Loading…</p></div>
             </div>
             <div class="contact-item">
               <div class="contact-icon"><i class="fas fa-globe"></i></div>
-              <div><h4>Bookings</h4><p>Available worldwide · Online booking only</p></div>
+              <div><h4>Bookings</h4><p id="contactBookings">Available worldwide · Online booking only</p></div>
             </div>
             <div class="contact-item">
               <div class="contact-icon"><i class="fas fa-clock"></i></div>
-              <div><h4>Response Time</h4><p>We reply within 24 hours</p></div>
+              <div><h4>Response Time</h4><p id="contactResponse">We reply within 24 hours</p></div>
             </div>
-            <div style="margin-top:24px;display:flex;gap:12px">
-              <a href="#" style="width:40px;height:40px;border-radius:10px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:18px;text-decoration:none"><i class="fab fa-instagram"></i></a>
-              <a href="#" style="width:40px;height:40px;border-radius:10px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:18px;text-decoration:none"><i class="fab fa-tiktok"></i></a>
-              <a href="#" style="width:40px;height:40px;border-radius:10px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:18px;text-decoration:none"><i class="fab fa-facebook"></i></a>
-            </div>
+            <div style="margin-top:24px;display:flex;gap:12px" id="contactSocials"></div>
           </div>
 
           <div class="contact-form-card">
@@ -1108,7 +973,10 @@
   import {
     getAuth, onAuthStateChanged, signOut
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getFirestore, doc, getDoc, collection, query, where,
+    orderBy, getDocs, updateDoc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const app = initializeApp({
     apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
@@ -1120,7 +988,7 @@
   });
 
   const auth = getAuth(app);
-  const db = getFirestore(app);
+  const db   = getFirestore(app);
 
   window.doLogout = async () => {
     await signOut(auth);
@@ -1130,122 +998,355 @@
   onAuthStateChanged(auth, (user) => {
     if (user) {
       document.getElementById('authGate').style.display = 'none';
-      document.getElementById('dashApp').style.display = 'block';
+      document.getElementById('dashApp').style.display  = 'block';
       loadUser(user);
     } else {
-      // Not authenticated — send to login page
       window.location.replace('customer.html');
     }
   });
 
-  function loadUser(user) {
-    const name = user.displayName || user.email.split('@')[0];
+  /* ─────────────────────────────────────────
+     LOAD USER
+  ───────────────────────────────────────── */
+  async function loadUser(user) {
+    const name    = user.displayName || user.email.split('@')[0];
     const initial = name.charAt(0).toUpperCase();
-    document.getElementById('sidebarAvatar').textContent = initial;
-    document.getElementById('sidebarName').textContent = name;
-    document.getElementById('topBarAvatar').textContent = initial;
+    document.getElementById('sidebarAvatar').textContent  = initial;
+    document.getElementById('sidebarName').textContent    = name;
+    document.getElementById('topBarAvatar').textContent   = initial;
     document.getElementById('settingsAvatar').textContent = initial;
-    document.getElementById('greetingText').textContent = `Welcome back, ${name.split(' ')[0]} 👋`;
-    document.getElementById('setEmail').value = user.email || '';
+    document.getElementById('greetingText').textContent   = `Welcome back, ${name.split(' ')[0]} 👋`;
+    document.getElementById('setEmail').value             = user.email || '';
     const parts = name.split(' ');
     document.getElementById('setFirstName').value = parts[0] || '';
-    document.getElementById('setLastName').value = parts.slice(1).join(' ') || '';
+    document.getElementById('setLastName').value  = parts.slice(1).join(' ') || '';
 
-    // Load site config
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db,'settings','siteConfig'));
-        if (!snap.exists()) return;
-        const c = snap.data();
-        if (c.email) document.querySelectorAll('.footer-email').forEach(el => { el.href=`mailto:${c.email}`; el.textContent=c.email; });
-      } catch(e) {}
-    })();
-
-    // Load real services + portfolio from Firestore
-    loadDashServices();
-    loadDashPortfolio();
+    // Run all Firestore loads in parallel
+    await Promise.all([
+      loadSiteConfig(),
+      loadAppointments(user.uid),
+      loadLoyalty(user.uid),
+      loadWishlist(user.uid),
+      loadReviews(),
+      loadContactInfo(),
+    ]);
   }
 
-  /* ── SEED DATA (same as services.html) ── */
-  const DASH_SEED_SERVICES = [
-    { name: 'Knotless Braids',   description: 'Lightweight and tension-free, perfect for a natural and long-lasting style.',       imageUrls: ['https://images.unsplash.com/photo-1611432579402-7037e3e2c1e4?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Cornrows',          description: 'Timeless and versatile, styled in various patterns for a low-maintenance look.',     imageUrls: ['https://images.unsplash.com/photo-1605980776566-0486c3ac7617?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Box Braids',        description: 'Classic and customizable, perfect for experimenting with length and color.',         imageUrls: ['https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Boho Knotless',     description: 'Combines the natural look of knotless braids with a bohemian, wavy style.',         imageUrls: ['https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Passion Twists',    description: 'Bohemian twists with a gorgeous spring curl finish. Lightweight and stunning.',     imageUrls: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Senegalese Twists', description: 'Silky, rope-style twists that are elegant, sleek, and versatile for any occasion.', imageUrls: ['https://images.unsplash.com/photo-1516914589923-f105f1535f88?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Goddess Braids',    description: 'Thick, elegant braids that make a statement with effortless regality.',             imageUrls: ['https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-    { name: 'Feed-In Braids',    description: 'Seamless, scalp-friendly braids built up gradually for a natural finish.',          imageUrls: ['https://images.unsplash.com/photo-1626954079979-ec4f633aa900?w=800&q=80&fit=crop'], showPortfolio: 'yes' },
-  ];
-
-  async function loadDashServices() {
-    const grid = document.getElementById('dashServicesGrid');
-    if (!grid) return;
+  /* ─────────────────────────────────────────
+     SITE CONFIG (studio hours, email, socials)
+  ───────────────────────────────────────── */
+  async function loadSiteConfig() {
     try {
-      const ref  = doc(db, 'settings', 'services');
-      let   snap = await getDoc(ref);
-      if (!snap.exists() || !(snap.data().list || []).length) {
-        await setDoc(ref, { list: DASH_SEED_SERVICES, seededAt: new Date().toISOString() });
-        snap = await getDoc(ref);
+      const snap = await getDoc(doc(db, 'settings', 'siteConfig'));
+      if (!snap.exists()) return;
+      const c = snap.data();
+
+      // Update email references
+      if (c.email) {
+        document.querySelectorAll('.footer-email').forEach(el => {
+          el.href = `mailto:${c.email}`; el.textContent = c.email;
+        });
+        const ce = document.getElementById('contactEmail');
+        if (ce) ce.textContent = c.email;
       }
-      const list = (snap.data().list || []).filter(s => s.showPortfolio !== 'no');
-      if (!list.length) { grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;padding:40px">No services available yet.</p>'; return; }
-      const waMsg = encodeURIComponent("Hello Ani Braids!\nI'd like to book an appointment.\nThank You");
-      grid.innerHTML = list.map(s => {
-        const imgUrl = (s.imageUrls && s.imageUrls[0]) || s.imageUrl || '';
-        const waLink = s.waLink || `https://wa.me/12024244894?text=${waMsg}`;
-        const imgEl  = imgUrl
-          ? `<img src="${imgUrl}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease;"
-               onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">`
-          : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#9B1FBE,#E8447A);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;padding:16px;text-align:center;">${s.name}</div>`;
-        return `
-          <div class="service-card">
-            <div class="service-thumb" style="padding:0;overflow:hidden;">${imgEl}</div>
-            <div class="service-body">
-              <h4>${s.name}</h4>
-              <p>${s.description || ''}</p>
-              <div class="service-footer" style="flex-direction:column;gap:10px;align-items:stretch;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="service-price">${s.price ? '$' + s.price : 'Contact for price'}</span>
-                  ${s.duration ? `<span class="service-duration"><i class="fas fa-clock"></i> ${s.duration}</span>` : ''}
-                </div>
-                <div style="display:flex;gap:8px;">
-                  <a href="${waLink}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 8px;background:#25D366;color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#1ebe5c'" onmouseout="this.style.background='#25D366'"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                  <a href="appointment.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 8px;background:var(--brand);color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#7a1599'" onmouseout="this.style.background='var(--brand)'"><i class="fas fa-calendar-check"></i> Book</a>
-                </div>
-              </div>
+
+      // Studio hours card
+      const hoursWrap = document.getElementById('studioHoursCard');
+      if (hoursWrap) {
+        const hours = c.hours || {};
+        const rows = [
+          { label: 'Mon – Fri',  val: hours.weekdays  || null },
+          { label: 'Saturday',   val: hours.saturday  || null },
+          { label: 'Sunday',     val: hours.sunday    || null },
+        ].filter(r => r.val);
+        if (rows.length) {
+          hoursWrap.innerHTML = rows.map((r, i) => `
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;${i < rows.length-1 ? 'border-bottom:1px solid rgba(0,0,0,0.05)' : ''}">
+              <span>${r.label}</span><span style="font-weight:600">${r.val}</span>
+            </div>`).join('') +
+            `<a href="appointment.html" style="display:block;text-align:center;margin-top:16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s"
+              onmouseover="this.style.background='#ede6f5'" onmouseout="this.style.background='var(--light-bg)'">Book a Slot →</a>`;
+        } else {
+          hoursWrap.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:16px">Hours not available yet.</p>
+            <a href="appointment.html" style="display:block;text-align:center;margin:0 0 16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none">Book a Slot →</a>`;
+        }
+      }
+    } catch(e) { console.error('siteConfig load:', e); }
+  }
+
+  /* ─────────────────────────────────────────
+     APPOINTMENTS
+  ───────────────────────────────────────── */
+  async function loadAppointments(uid) {
+    try {
+      const q    = query(collection(db, 'appointments'), where('userId', '==', uid), orderBy('date', 'desc'));
+      const snap = await getDocs(q);
+      const all  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const now       = new Date();
+      const upcoming  = all.filter(a => a.status !== 'cancelled' && a.status !== 'completed' && new Date(a.date) >= now);
+      const completed = all.filter(a => a.status === 'completed');
+
+      // Stats
+      document.getElementById('statUpcoming').textContent = upcoming.length;
+      document.getElementById('statDone').textContent     = completed.length;
+
+      // Sidebar badge
+      const apptBadge = document.getElementById('navApptBadge');
+      if (apptBadge && upcoming.length > 0) { apptBadge.textContent = upcoming.length; apptBadge.style.display = ''; }
+
+      // Overview card – show up to 3 most recent
+      const overviewList = document.getElementById('overviewApptList');
+      const preview = [...upcoming.slice(0, 2), ...completed.slice(0, 1)];
+      if (!preview.length) {
+        overviewList.innerHTML = `<div class="appt-item"><div style="width:100%;text-align:center;color:#aaa;padding:20px;font-size:13px">No appointments yet. <a href="appointment.html" style="color:var(--brand)">Book one →</a></div></div>`;
+      } else {
+        overviewList.innerHTML = preview.map(a => {
+          const d   = new Date(a.date);
+          const day = d.getDate();
+          const mon = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+          const st  = statusBadge(a.status);
+          const bg  = a.status === 'completed' ? 'background:linear-gradient(135deg,#aaa,#ccc)' : '';
+          return `<div class="appt-item">
+            <div class="appt-date-box" style="${bg}"><span class="day">${day}</span><span class="mon">${mon}</span></div>
+            <div class="appt-info">
+              <div class="appt-name">${a.service || 'Appointment'}</div>
+              <div class="appt-meta"><i class="fas fa-clock" style="font-size:11px"></i> ${a.time || ''} ${a.duration ? '· ' + a.duration : ''}</div>
             </div>
+            ${st}
           </div>`;
+        }).join('');
+      }
+
+      // Full appointments table
+      const tbody = document.getElementById('apptTableBody');
+      if (!all.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:40px;font-size:13px">No appointments found. <a href="appointment.html" style="color:var(--brand)">Book your first →</a></td></tr>`;
+      } else {
+        tbody.innerHTML = all.map(a => {
+          const d   = new Date(a.date);
+          const fmt = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+          const st  = statusBadge(a.status);
+          const price = a.price ? `$${a.price}` : '—';
+          const acts = (a.status === 'completed')
+            ? `<button class="btn-sm btn-outline" onclick="rebookAppt('${a.service}')">Rebook</button>`
+            : `<button class="btn-sm btn-outline" onclick="showToast('Please contact the studio to reschedule.')">Reschedule</button>
+               <button class="btn-sm btn-danger" onclick="cancelAppt('${a.id}', this)">Cancel</button>`;
+          return `<tr>
+            <td><strong>${a.service || '—'}</strong></td>
+            <td>${fmt} · ${a.time || '—'}</td>
+            <td>${a.duration || '—'}</td>
+            <td>${price}</td>
+            <td>${st}</td>
+            <td><div class="action-btns">${acts}</div></td>
+          </tr>`;
+        }).join('');
+      }
+    } catch(e) {
+      console.error('appointments load:', e);
+      document.getElementById('apptTableBody').innerHTML =
+        `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:32px">Unable to load appointments.</td></tr>`;
+    }
+  }
+
+  function statusBadge(status) {
+    const map = {
+      confirmed: ['status-confirmed','Confirmed'],
+      pending:   ['status-pending','Pending'],
+      completed: ['status-completed','Completed'],
+      cancelled: ['status-cancelled','Cancelled'],
+    };
+    const [cls, label] = map[status] || ['status-pending', status || 'Unknown'];
+    return `<span class="appt-status ${cls}">${label}</span>`;
+  }
+
+  window.cancelAppt = async (id, btn) => {
+    if (!confirm('Cancel this appointment?')) return;
+    try {
+      await updateDoc(doc(db, 'appointments', id), { status: 'cancelled' });
+      btn.closest('tr').querySelector('td:nth-child(5)').innerHTML = statusBadge('cancelled');
+      btn.closest('.action-btns').innerHTML = '';
+      showToast('Appointment cancelled.');
+    } catch(e) { showToast('Could not cancel. Please contact the studio.'); }
+  };
+
+  window.rebookAppt = (service) => {
+    window.location.href = `appointment.html?service=${encodeURIComponent(service || '')}`;
+  };
+
+  /* ─────────────────────────────────────────
+     LOYALTY POINTS  (users/{uid}/loyalty doc or users/{uid} doc)
+  ───────────────────────────────────────── */
+  async function loadLoyalty(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      const data = snap.exists() ? snap.data() : {};
+      const pts  = data.loyaltyPoints || 0;
+      const goal = data.loyaltyGoal   || 500;
+
+      document.getElementById('statPoints').textContent   = pts;
+      document.getElementById('statPointsSub').textContent = pts >= goal
+        ? '🎉 Free add-on unlocked!'
+        : `Earn ${goal - pts} more for a free add-on`;
+
+      document.getElementById('loyaltyPoints').innerHTML =
+        `${pts} <span style="font-size:14px;color:var(--mid);font-weight:400">pts</span>`;
+      document.getElementById('loyaltyBar').style.width    = Math.min(100, Math.round((pts/goal)*100)) + '%';
+      document.getElementById('loyaltyToNext').textContent = pts >= goal ? 'Reward ready!' : `${goal - pts} pts to next reward`;
+      document.getElementById('loyaltyGoal').textContent   = `${goal} pts = Free add-on`;
+      if (data.loyaltyTier) document.getElementById('loyaltyTier').textContent = `✦ ${data.loyaltyTier}`;
+    } catch(e) {
+      console.error('loyalty load:', e);
+      ['statPoints','loyaltyPoints'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
+      });
+    }
+  }
+
+  /* ─────────────────────────────────────────
+     WISHLIST  (users/{uid}/wishlist collection)
+  ───────────────────────────────────────── */
+  async function loadWishlist(uid) {
+    const grid = document.getElementById('wishlistGrid');
+    try {
+      const snap  = await getDocs(collection(db, 'users', uid, 'wishlist'));
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      document.getElementById('statWishlist').textContent = items.length;
+
+      // Sidebar badge
+      const wlBadge = document.getElementById('navWishlistBadge');
+      if (wlBadge && items.length > 0) { wlBadge.textContent = items.length; wlBadge.style.display = ''; }
+
+      if (!items.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:60px 20px">
+          <i class="fas fa-heart" style="font-size:40px;opacity:0.2;display:block;margin-bottom:12px"></i>
+          No saved styles yet. <a href="dashboard-service.html" style="color:var(--brand)">Browse services →</a>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = items.map(item => {
+        const img = item.imageUrl
+          ? `<img src="${item.imageUrl}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+          : `<div style="height:140px;background:linear-gradient(135deg,var(--brand),var(--brand-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;padding:12px;text-align:center;">${item.name || 'Style'}</div>`;
+        return `<div class="wishlist-card" id="wl-${item.id}">
+          <div style="height:140px;overflow:hidden;">${img}</div>
+          <button class="wishlist-remove" onclick="removeWishlistItem('${item.id}', '${uid}')"><i class="fas fa-times"></i></button>
+          <div style="padding:16px 18px">
+            <div style="font-size:15px;font-weight:600">${item.name || '—'}</div>
+            <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">
+              ${item.price ? 'From $' + item.price : ''} ${item.duration ? '· ' + item.duration : ''}
+            </div>
+            <button class="btn-primary" style="width:100%;padding:10px" onclick="window.location.href='appointment.html'">Book This Style</button>
+          </div>
+        </div>`;
       }).join('');
     } catch(e) {
-      console.error('Services load error:', e);
-      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;padding:40px">Unable to load services.</p>';
+      console.error('wishlist load:', e);
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px">Unable to load saved styles.</div>';
     }
   }
 
-  async function loadDashPortfolio() {
-    const grid = document.getElementById('dashPortfolioGrid');
-    if (!grid) return;
+  window.removeWishlistItem = async (itemId, uid) => {
     try {
-      const snap = await getDoc(doc(db, 'settings', 'services'));
-      const list = snap.exists() ? (snap.data().list || []) : DASH_SEED_SERVICES;
-      // Collect all imageUrls from all services
-      const items = [];
-      list.forEach(s => {
-        const urls = Array.isArray(s.imageUrls) ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []);
-        urls.forEach(url => items.push({ name: s.name, url }));
-      });
-      if (!items.length) { grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;padding:40px">No portfolio images yet.</p>'; return; }
-      grid.innerHTML = items.map(item => `
-        <div class="port-item" onclick="window.location.href='dashboard-portfolio.html'">
-          <img src="${item.url}" alt="${item.name}" loading="lazy"
-            style="width:100%;height:100%;object-fit:cover;display:block;"
-            onerror="this.parentElement.style.background='linear-gradient(135deg,#9B1FBE,#E8447A)';this.remove()">
-          <div class="port-overlay"><span>${item.name}</span></div>
-        </div>`).join('');
+      await deleteDoc(doc(db, 'users', uid, 'wishlist', itemId));
+      const card = document.getElementById('wl-' + itemId);
+      if (card) { card.style.opacity='0'; card.style.transform='scale(0.9)'; card.style.transition='all 0.3s'; setTimeout(()=>card.remove(),300); }
+      showToast('Style removed from saved list.');
+      const cur = parseInt(document.getElementById('statWishlist').textContent) || 0;
+      document.getElementById('statWishlist').textContent = Math.max(0, cur - 1);
+    } catch(e) { showToast('Could not remove style.'); }
+  };
+
+  /* keep old removeWishlist signature as no-op fallback */
+  window.removeWishlist = () => {};
+
+  /* ─────────────────────────────────────────
+     REVIEWS  (reviews collection)
+  ───────────────────────────────────────── */
+  async function loadReviews() {
+    const wrap = document.getElementById('reviewsContent');
+    try {
+      const q    = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      const revs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      if (!revs.length) {
+        wrap.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><h3>No reviews yet</h3><p>Be the first to leave a review!</p></div>`;
+        return;
+      }
+
+      // Compute summary
+      const total = revs.length;
+      const avg   = (revs.reduce((s, r) => s + (r.rating || 5), 0) / total).toFixed(1);
+      const counts = [5,4,3,2,1].map(n => ({ n, c: revs.filter(r => (r.rating||5) === n).length }));
+
+      wrap.innerHTML = `
+        <div class="reviews-header-row">
+          <div class="rating-summary">
+            <div class="big-rating">${avg}</div>
+            <div class="stars-row">${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</div>
+            <div class="rating-count">Based on ${total} review${total!==1?'s':''}</div>
+          </div>
+          <div class="rating-bars">
+            ${counts.map(({n,c}) => `
+              <div class="rbar-row">
+                <span class="rbar-label">${n} ★</span>
+                <div class="rbar-track"><div class="rbar-fill" style="width:${total?Math.round((c/total)*100):0}%"></div></div>
+                <span class="rbar-count">${c}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        ${revs.map(r => {
+          const initial = (r.reviewerName || r.userName || '?').charAt(0).toUpperCase();
+          const date    = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : (r.date || '');
+          const stars   = '★'.repeat(r.rating||5);
+          return `<div class="review-card">
+            <div class="review-top">
+              <div class="reviewer">
+                <div class="reviewer-avatar">${initial}</div>
+                <div><div class="reviewer-name">${r.reviewerName || r.userName || 'Anonymous'}</div><div class="reviewer-date">${date}</div></div>
+              </div>
+              <div class="review-stars">${stars}</div>
+            </div>
+            ${r.service ? `<div class="review-service">${r.service}</div>` : ''}
+            <div class="review-text">${r.text || r.message || ''}</div>
+          </div>`;
+        }).join('')}`;
     } catch(e) {
-      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;padding:40px">Unable to load portfolio.</p>';
+      console.error('reviews load:', e);
+      if (wrap) wrap.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px">Unable to load reviews.</div>';
     }
+  }
+
+  /* ─────────────────────────────────────────
+     CONTACT INFO  (settings/siteConfig)
+  ───────────────────────────────────────── */
+  async function loadContactInfo() {
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'siteConfig'));
+      if (!snap.exists()) return;
+      const c = snap.data();
+
+      if (c.email)   { const el = document.getElementById('contactEmail');   if (el) el.textContent = c.email; }
+      if (c.phone)   { const el = document.getElementById('contactPhone');   if (el) el.textContent = c.phone; }
+      if (c.responseTime) { const el = document.getElementById('contactResponse'); if (el) el.textContent = c.responseTime; }
+      if (c.bookingNote)  { const el = document.getElementById('contactBookings'); if (el) el.textContent = c.bookingNote; }
+
+      // Social links
+      const socialsWrap = document.getElementById('contactSocials');
+      if (socialsWrap) {
+        const links = [];
+        if (c.instagram) links.push({ href: c.instagram, icon: 'fab fa-instagram' });
+        if (c.tiktok)    links.push({ href: c.tiktok,    icon: 'fab fa-tiktok' });
+        if (c.facebook)  links.push({ href: c.facebook,  icon: 'fab fa-facebook' });
+        if (c.twitter)   links.push({ href: c.twitter,   icon: 'fab fa-twitter' });
+        socialsWrap.innerHTML = links.map(l =>
+          `<a href="${l.href}" target="_blank" style="width:40px;height:40px;border-radius:10px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:18px;text-decoration:none"><i class="${l.icon}"></i></a>`
+        ).join('');
+      }
+    } catch(e) { console.error('contactInfo load:', e); }
   }
 </script>
 

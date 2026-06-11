@@ -622,8 +622,8 @@
       <div class="footer-col">
         <h4>Stay Updated</h4>
         <div class="newsletter-form">
-          <input type="email" placeholder="Your email address">
-          <button type="button">Subscribe</button>
+          <input type="email" id="newsletterEmail" placeholder="Your email address">
+          <button type="button" onclick="subscribeNewsletter(this)">Subscribe</button>
         </div>
       </div>
     </div>
@@ -737,6 +737,30 @@
 
     loadSiteConfig();
     loadApprovedReviews();
+
+    window.subscribeNewsletter = async function(btn) {
+      const input = document.getElementById('newsletterEmail');
+      const email = input ? input.value.trim() : '';
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid email address.'); return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Subscribing…';
+      try {
+        await addDoc(collection(db, 'newsletter'), {
+          email,
+          subscribedAt: serverTimestamp(),
+          source: window.location.pathname,
+        });
+        btn.textContent = '✓ Subscribed!';
+        btn.style.background = '#2e7d32';
+        if (input) input.value = '';
+      } catch(err) {
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+        alert('Subscription failed — please try again.');
+      }
+    };
   </script>
 </body>
 </html>

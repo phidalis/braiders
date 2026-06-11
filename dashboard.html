@@ -590,7 +590,7 @@
       <button class="nav-item active" onclick="showPanel('overview')">
         <i class="fas fa-home"></i> Overview
       </button>
-      <button class="nav-item" onclick="showPanel('appointments')">
+      <button class="nav-item" onclick="window.location.href='dashboard-appointment.html'">
         <i class="fas fa-calendar-check"></i> My Appointments
         <span class="nav-badge" id="navApptBadge" style="display:none">0</span>
       </button>
@@ -678,7 +678,7 @@
             <div class="card">
               <div class="card-header">
                 <h3>Upcoming Appointments</h3>
-                <span class="card-link" onclick="showPanel('appointments')">View all →</span>
+                <span class="card-link" onclick="window.location.href='dashboard-appointment.html'">View all →</span>
               </div>
               <div id="overviewApptList">
                 <div class="appt-item"><div style="width:100%;text-align:center;color:#aaa;padding:20px;font-size:13px">Loading…</div></div>
@@ -688,7 +688,7 @@
             <div class="card" style="margin-top:20px">
               <div class="card-header"><h3>Quick Actions</h3></div>
               <div class="quick-grid">
-                <button class="quick-btn" onclick="window.location.href='appointment.html'">
+                <button class="quick-btn" onclick="window.location.href='dashboard-appointment.html'">
                   <i class="fas fa-calendar-plus"></i> Book Appointment
                 </button>
                 <button class="quick-btn" onclick="window.location.href='dashboard-portfolio.html'">
@@ -732,7 +732,7 @@
       <div class="panel" id="panel-appointments">
         <div class="section-header">
           <h2>My Appointments</h2>
-          <a href="appointment.html" class="btn-primary"><i class="fas fa-plus" style="margin-right:6px"></i>Book New</a>
+          <a href="dashboard-appointment.html" class="btn-primary"><i class="fas fa-plus" style="margin-right:6px"></i>Book New</a>
         </div>
         <div class="filter-row">
           <button class="filter-chip active" onclick="filterAppt(this,'all')">All</button>
@@ -763,7 +763,7 @@
       <div class="panel" id="panel-services">
         <div class="section-header">
           <h2>Our Services</h2>
-          <a href="appointment.html" class="btn-primary">Book Now</a>
+          <a href="dashboard-appointment.html" class="btn-primary">Book Now</a>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">
           <i class="fas fa-magic" style="font-size:52px;color:rgba(155,31,190,0.2);margin-bottom:20px"></i>
@@ -1064,11 +1064,11 @@
             <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;${i < rows.length-1 ? 'border-bottom:1px solid rgba(0,0,0,0.05)' : ''}">
               <span>${r.label}</span><span style="font-weight:600">${r.val}</span>
             </div>`).join('') +
-            `<a href="appointment.html" style="display:block;text-align:center;margin-top:16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s"
+            `<a href="dashboard-appointment.html" style="display:block;text-align:center;margin-top:16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s"
               onmouseover="this.style.background='#ede6f5'" onmouseout="this.style.background='var(--light-bg)'">Book a Slot →</a>`;
         } else {
           hoursWrap.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:16px">Hours not available yet.</p>
-            <a href="appointment.html" style="display:block;text-align:center;margin:0 0 16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none">Book a Slot →</a>`;
+            <a href="dashboard-appointment.html" style="display:block;text-align:center;margin:0 0 16px;padding:12px;background:var(--light-bg);border-radius:10px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:none">Book a Slot →</a>`;
         }
       }
     } catch(e) { console.error('siteConfig load:', e); }
@@ -1099,7 +1099,7 @@
       const overviewList = document.getElementById('overviewApptList');
       const preview = [...upcoming.slice(0, 2), ...completed.slice(0, 1)];
       if (!preview.length) {
-        overviewList.innerHTML = `<div class="appt-item"><div style="width:100%;text-align:center;color:#aaa;padding:20px;font-size:13px">No appointments yet. <a href="appointment.html" style="color:var(--brand)">Book one →</a></div></div>`;
+        overviewList.innerHTML = `<div class="appt-item"><div style="width:100%;text-align:center;color:#aaa;padding:20px;font-size:13px">No appointments yet. <a href="dashboard-appointment.html" style="color:var(--brand)">Book one →</a></div></div>`;
       } else {
         overviewList.innerHTML = preview.map(a => {
           const d   = new Date(a.date);
@@ -1121,7 +1121,7 @@
       // Full appointments table
       const tbody = document.getElementById('apptTableBody');
       if (!all.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:40px;font-size:13px">No appointments found. <a href="appointment.html" style="color:var(--brand)">Book your first →</a></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:40px;font-size:13px">No appointments found. <a href="dashboard-appointment.html" style="color:var(--brand)">Book your first →</a></td></tr>`;
       } else {
         tbody.innerHTML = all.map(a => {
           const d   = new Date(a.date);
@@ -1171,7 +1171,7 @@
   };
 
   window.rebookAppt = (service) => {
-    window.location.href = `appointment.html?service=${encodeURIComponent(service || '')}`;
+    window.location.href = `dashboard-appointment.html?service=${encodeURIComponent(service || '')}`;
   };
 
   /* ─────────────────────────────────────────
@@ -1238,7 +1238,7 @@
             <div style="font-size:13px;color:var(--mid);margin:4px 0 14px">
               ${item.price ? 'From $' + item.price : ''} ${item.duration ? '· ' + item.duration : ''}
             </div>
-            <button class="btn-primary" style="width:100%;padding:10px" onclick="window.location.href='appointment.html'">Book This Style</button>
+            <button class="btn-primary" style="width:100%;padding:10px" onclick="window.location.href='dashboard-appointment.html'">Book This Style</button>
           </div>
         </div>`;
       }).join('');

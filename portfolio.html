@@ -488,6 +488,199 @@
     .newsletter-form button:hover { opacity: 0.85; }
     .footer-bottom { text-align: center; padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(255,255,255,0.3); }
     @media (max-width: 768px) { .footer-body { grid-template-columns: 1fr 1fr; gap: 30px; } }
+
+    /* ── FULLSCREEN STYLE MODAL ── */
+    .style-modal {
+      position: fixed; inset: 0; z-index: 2000;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.32s cubic-bezier(0.4,0,0.2,1), visibility 0.32s;
+    }
+    .style-modal.open { opacity: 1; visibility: visible; }
+    .style-modal.open .modal-content { transform: translateY(0); }
+
+    /* dark backdrop on desktop */
+    .modal-overlay {
+      display: block; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72); z-index: 0;
+    }
+
+    /* ── MOBILE: full-height sheet sliding up from bottom ── */
+    .modal-content {
+      position: relative; z-index: 1;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      background: #0d0010;
+      transform: translateY(60px);
+      transition: transform 0.36s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;
+    }
+    .modal-topbar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%);
+    }
+    .modal-topbar-title {
+      font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+      color: #fff; letter-spacing: 0.04em; opacity: 0.92;
+    }
+    .modal-close-btn {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.14); backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255,255,255,0.22); border-radius: 50%;
+      font-size: 1rem; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; cursor: pointer;
+    }
+    .modal-close-btn:hover { background: rgba(232,68,122,0.7); border-color: #e8447a; transform: rotate(90deg); }
+
+    /* scrollable body: image + details stack and scroll together */
+    .modal-body {
+      display: flex; flex-direction: column;
+      flex: 1 1 auto; overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Gallery — 75% of viewport height on mobile */
+    .modal-gallery {
+      position: relative; flex: 0 0 75vh; width: 100%;
+      height: 75vh;
+      background: #1a0a2e; overflow: hidden;
+    }
+    .modal-gallery-track { display: flex; transition: transform 0.42s cubic-bezier(0.4,0,0.2,1); height: 100%; }
+    .modal-gallery-slide { flex: 0 0 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .modal-gallery-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-gallery-emoji { font-size: 5rem; opacity: 0.3; }
+
+    /* ── DESKTOP: full screen, image shows fully (contain) ── */
+    @media (min-width: 768px) {
+      .style-modal { align-items: flex-end; }
+      .modal-content {
+        width: 100%; height: 100%;
+        border-radius: 0;
+        transform: translateY(40px);
+      }
+      .style-modal.open .modal-content { transform: translateY(0); }
+      .modal-gallery {
+        flex: 0 0 75vh;
+        width: 42%;
+        height: 75vh;
+        background: #0d0010;
+        margin: 0 auto;
+      }
+      .modal-gallery-track { height: 100%; }
+      .modal-gallery-slide {
+        display: flex; align-items: center; justify-content: center;
+        height: 100%;
+      }
+      .modal-gallery-slide img {
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    }
+
+    .modal-gallery-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255,255,255,0.2); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; z-index: 5; font-size: 0.85rem;
+    }
+    .modal-gallery-arrow.prev { left: 14px; }
+    .modal-gallery-arrow.next { right: 14px; }
+    .modal-gallery-arrow:hover { background: rgba(155,31,190,0.7); }
+    .modal-gallery-arrow.hidden { display: none; }
+
+    .modal-gallery-dots {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 5;
+    }
+    .modal-gallery-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s;
+    }
+    .modal-gallery-dot.active { background: #fff; transform: scale(1.25); }
+    .modal-img-count {
+      position: absolute; top: 60px; right: 14px;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+      color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 600;
+      padding: 3px 9px; border-radius: 20px; z-index: 5;
+    }
+
+    /* Details */
+    .modal-details {
+      padding: 28px 24px 40px; background: #fff;
+      flex: 0 0 auto;
+    }
+    @media (min-width: 768px) {
+      .modal-details { padding: 36px 48px 56px; }
+    }
+    .modal-details h2 {
+      font-family: var(--font-heading); font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700; color: #1a0028; margin-bottom: 8px; line-height: 1.1;
+    }
+    .modal-price {
+      font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700;
+      color: var(--brand); margin-bottom: 14px;
+    }
+    .modal-price .original { text-decoration: line-through; color: #aaa; font-size: 1rem; margin-left: 8px; }
+    .modal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .modal-tag {
+      padding: 3px 12px; border-radius: 20px;
+      background: rgba(155,31,190,0.09); color: var(--brand);
+      font-size: 0.72rem; font-weight: 600; text-transform: capitalize; letter-spacing: 0.04em;
+    }
+    .modal-desc { font-size: 0.92rem; line-height: 1.75; color: #4a4a4a; margin-bottom: 20px; }
+    .modal-info-grid {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 24px;
+    }
+    .modal-info-item {
+      background: #faf5ff; border-radius: 10px; padding: 12px 14px;
+      border: 1px solid rgba(155,31,190,0.1);
+    }
+    .modal-info-item label { display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #9b9b9b; margin-bottom: 4px; }
+    .modal-info-item span { font-size: 0.88rem; font-weight: 600; color: #2a2a2a; }
+
+    .btn-modal-book {
+      width: 100%; padding: 16px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, var(--brand), var(--pink));
+      color: #fff; font-family: var(--font-body); font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer; transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      text-decoration: none; margin-top: 8px;
+    }
+    .btn-modal-book:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(155,31,190,0.4); }
+
+    .modal-related { margin-top: 28px; }
+    .modal-related-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 12px; }
+    .modal-related-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+    .modal-related-card {
+      background: #fdf9fb; border: 1px solid #f4b8c8; border-radius: 10px;
+      padding: 10px 14px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .modal-related-card:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+
+    .modal-continue-bar {
+      flex: 0 0 auto; padding: 12px 20px;
+      background: rgba(255,255,255,0.96); backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0,0,0,0.07);
+      display: flex; align-items: center; justify-content: flex-start;
+    }
+    .btn-continue-browsing {
+      display: flex; align-items: center; gap: 8px;
+      background: none; border: 1.5px solid rgba(155,31,190,0.25);
+      color: var(--brand); font-family: var(--font-body); font-size: 0.83rem;
+      font-weight: 600; padding: 8px 18px; border-radius: 20px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-continue-browsing:hover { background: rgba(155,31,190,0.07); border-color: var(--brand); }
   </style>
 </head>
 <body>
@@ -552,6 +745,23 @@
     <div class="portfolio-loading">
       <i class="fas fa-spinner fa-spin"></i>
       <p>Loading styles…</p>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN STYLE MODAL -->
+  <div class="style-modal" id="styleModal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content" id="modalContent">
+      <div class="modal-topbar">
+        <span class="modal-topbar-title" id="modalTopbarTitle">Style Details</span>
+        <button class="modal-close-btn" id="modalClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-continue-bar">
+        <button class="btn-continue-browsing" id="btnContinueBrowsing">
+          <i class="fas fa-arrow-left"></i> Continue Browsing
+        </button>
+      </div>
     </div>
   </div>
 
@@ -659,7 +869,7 @@
       ? `<div class="card-duration-pill"><i class="fas fa-clock"></i>${s.duration}</div>` : '';
     const rating = s.rating || 5.0;
     return `
-      <div class="style-card" onclick="window.location.href='appointment.html'">
+      <div class="style-card" onclick="openPortfolioModal(${JSON.stringify(s.id || s.name)})">
         <div class="card-img-wrap">
           ${imgHTML}
           ${badgePill}
@@ -677,9 +887,9 @@
             <span class="card-bookings">${s.bookings || 0} booked</span>
           </div>
           <div class="card-price">${fmtPrice(s)}</div>
-          <a href="appointment.html" class="btn-card-book" onclick="event.stopPropagation();">
+          <button class="btn-card-book" onclick="event.stopPropagation(); openPortfolioModal(${JSON.stringify(s.id || s.name)})">
             <i class="fas fa-calendar-check"></i> Book Now
-          </a>
+          </button>
         </div>
       </div>`;
   }
@@ -790,6 +1000,125 @@
 
   /* Kick off render if Firebase already resolved before DOM was ready */
   if (window._portfolioServices !== undefined) renderPortfolio();
+
+  /* ─── FULLSCREEN MODAL ─── */
+  function openPortfolioModal(idOrName) {
+    const services = window._portfolioServices || [];
+    const s = services.find(x => x.id === idOrName || x.id === String(idOrName) || x.name === idOrName);
+    if (!s) return;
+
+    const modal    = document.getElementById('styleModal');
+    const body     = document.getElementById('modalBody');
+    const topTitle = document.getElementById('modalTopbarTitle');
+    if (!modal || !body) return;
+
+    topTitle.textContent = s.name;
+
+    const imageUrls = Array.isArray(s.imageUrls) && s.imageUrls.length
+      ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []);
+
+    let galleryHTML = '';
+    if (imageUrls.length) {
+      imageUrls.forEach(url => {
+        galleryHTML += `<div class="modal-gallery-slide"><img src="${url}" alt="${s.name}" loading="lazy"></div>`;
+      });
+    } else {
+      galleryHTML = `<div class="modal-gallery-slide"><div class="modal-gallery-emoji">${s.emoji || '💇'}</div></div>`;
+    }
+
+    const showNav  = imageUrls.length > 1;
+    const fmtP = n => '$' + Number(n).toLocaleString();
+    let priceHTML = '';
+    if (s.priceMode === 'range' && s.priceMax) priceHTML = `${fmtP(s.price)}–${fmtP(s.priceMax)}`;
+    else if (s.priceMode === 'promo' && s.originalPrice) priceHTML = `${fmtP(s.price)} <span class="original">${fmtP(s.originalPrice)}</span>`;
+    else priceHTML = fmtP(s.price || 0);
+
+    const cats = Array.isArray(s.category) ? s.category : [];
+    const related = services
+      .filter(r => r.name !== s.name && Array.isArray(r.category) && r.category.some(c => cats.includes(c)))
+      .slice(0, 4);
+
+    body.innerHTML = `
+      <div class="modal-gallery" id="pmGallery">
+        <div class="modal-gallery-track" id="pmTrack">${galleryHTML}</div>
+        ${showNav ? `
+          <button class="modal-gallery-arrow prev hidden" id="pmPrev"><i class="fas fa-chevron-left"></i></button>
+          <button class="modal-gallery-arrow next" id="pmNext"><i class="fas fa-chevron-right"></i></button>
+          <div class="modal-gallery-dots" id="pmDots">
+            ${imageUrls.map((_,i) => `<div class="modal-gallery-dot ${i===0?'active':''}" data-idx="${i}"></div>`).join('')}
+          </div>
+          <div class="modal-img-count" id="pmCount">1 / ${imageUrls.length}</div>
+        ` : ''}
+      </div>
+      <div class="modal-details">
+        <h2>${s.name}</h2>
+        <div class="modal-price">${priceHTML}</div>
+        ${cats.length ? `<div class="modal-tags">${cats.map(c=>`<span class="modal-tag">${c}</span>`).join('')}</div>` : ''}
+        ${s.description ? `<p class="modal-desc">${s.description}</p>` : ''}
+        <div class="modal-info-grid">
+          ${s.duration   ? `<div class="modal-info-item"><label>Duration</label><span>${s.duration}</span></div>` : ''}
+          ${s.hairType   ? `<div class="modal-info-item"><label>Hair Type</label><span>${s.hairType}</span></div>` : ''}
+          ${s.hairLength ? `<div class="modal-info-item"><label>Length</label><span>${s.hairLength}</span></div>` : ''}
+          ${s.bookings   ? `<div class="modal-info-item"><label>Bookings</label><span>🔥 ${s.bookings} booked</span></div>` : ''}
+        </div>
+        <a href="appointment.html" class="btn-modal-book">
+          <i class="fas fa-calendar-check"></i> Book This Style
+        </a>
+        ${related.length ? `
+          <div class="modal-related">
+            <div class="modal-related-label">You May Also Like</div>
+            <div class="modal-related-cards">
+              ${related.map(r=>`<div class="modal-related-card" onclick="openPortfolioModal(${JSON.stringify(r.id||r.name)})">${r.emoji||''} ${r.name}</div>`).join('')}
+            </div>
+          </div>` : ''}
+      </div>`;
+
+    // Carousel logic
+    if (showNav) {
+      let cur = 0;
+      const track  = document.getElementById('pmTrack');
+      const prev   = document.getElementById('pmPrev');
+      const next   = document.getElementById('pmNext');
+      const dots   = document.querySelectorAll('#pmDots .modal-gallery-dot');
+      const count  = document.getElementById('pmCount');
+      const total  = imageUrls.length;
+
+      function goTo(idx) {
+        if (idx < 0 || idx >= total) return;
+        cur = idx;
+        track.style.transform = `translateX(-${cur * 100}%)`;
+        dots.forEach((d,i) => d.classList.toggle('active', i === cur));
+        if (count) count.textContent = `${cur+1} / ${total}`;
+        prev.classList.toggle('hidden', cur === 0);
+        next.classList.toggle('hidden', cur === total - 1);
+      }
+      prev.addEventListener('click', () => goTo(cur - 1));
+      next.addEventListener('click', () => goTo(cur + 1));
+      dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.idx)));
+
+      // Touch swipe
+      let tx = 0;
+      const gallery = document.getElementById('pmGallery');
+      gallery.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+      gallery.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - tx;
+        if (Math.abs(dx) > 40) goTo(dx < 0 ? cur + 1 : cur - 1);
+      });
+    }
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePortfolioModal() {
+    document.getElementById('styleModal')?.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('modalClose')?.addEventListener('click', closePortfolioModal);
+  document.getElementById('modalOverlay')?.addEventListener('click', closePortfolioModal);
+  document.getElementById('btnContinueBrowsing')?.addEventListener('click', closePortfolioModal);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePortfolioModal(); });
   </script>
 </body>
 </html>

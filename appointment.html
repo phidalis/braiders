@@ -194,6 +194,43 @@
     .variant-duration { font-size: 11px; color: #aaa; }
     .variant-arrow { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9B1FBE, #E8447A); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; flex-shrink: 0; margin-left: 6px; }
 
+    /* MOBILE: variant card stacks — icon+name on top row, price+arrow below */
+    @media (max-width: 520px) {
+      .variant-card {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px 14px;
+      }
+      .variant-icon {
+        flex-shrink: 0;
+      }
+      .variant-info {
+        /* Take all remaining space on the first row */
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .variant-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+      }
+      /* Price + arrow pushed to their own row below icon */
+      .variant-price-wrap {
+        /* Push to second row, after the icon column */
+        margin-left: calc(40px + 14px); /* icon width + gap */
+        flex-basis: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+        margin-top: -6px;
+      }
+      .variant-arrow {
+        margin-left: auto;
+      }
+    }
+
     /* BOOKING STEPS MODAL */
     .booking-steps-modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: stretch; justify-content: stretch; }
     .booking-steps-modal.open { display: flex; }

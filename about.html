@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About – Ani Braids – Premium Braiding Studio</title>
+  <meta name="description" content="Learn about Ani Braids – our story, our passion for protective styling, and why clients worldwide trust us for knotless braids, cornrows and twists.">
+  <meta property="og:title" content="About Ani Braids – Premium Braiding Studio">
+  <meta property="og:description" content="Our story, our passion for protective styling, and why clients worldwide trust Ani Braids.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://braiders-9cc89.web.app/og-image.jpg">
+  <meta property="og:url" content="https://braiders-9cc89.web.app/about.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="About Ani Braids">
+  <meta name="twitter:description" content="Our story, our passion for protective styling, and why clients worldwide trust Ani Braids.">
+  <meta name="twitter:image" content="https://braiders-9cc89.web.app/og-image.jpg">
+  <link rel="canonical" href="https://braiders-9cc89.web.app/about.html">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -842,8 +853,8 @@
       <div class="footer-col">
         <h4>Stay Updated</h4>
         <div class="newsletter-form">
-          <input type="email" placeholder="Your email address">
-          <button type="button">Subscribe</button>
+          <input type="email" id="newsletterEmail" placeholder="Your email address">
+          <button type="button" onclick="subscribeNewsletter(this)">Subscribe</button>
         </div>
       </div>
     </div>
@@ -862,6 +873,58 @@
         icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
       });
     }
+  </script>
+
+  <script>
+  window.subscribeNewsletter = async function(btn) {
+    const input = document.getElementById('newsletterEmail');
+    if (!input) return;
+    const email = input.value.trim();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Subscribing…';
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey:"AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+        authDomain:"braiders-9cc89.firebaseapp.com",
+        projectId:"braiders-9cc89",
+        storageBucket:"braiders-9cc89.appspot.com",
+        messagingSenderId:"444617114412",
+        appId:"1:444617114412:web:2a2c7008e6c40f7e63a289"
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db = getFirestore(app);
+      await addDoc(collection(db, 'newsletter'), { email, subscribedAt: serverTimestamp(), source: window.location.pathname });
+      input.value = '';
+      btn.textContent = '✓ Subscribed!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Subscribe'; }, 3000);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      alert('Subscription failed. Please try again.');
+    }
+  };
+  </script>
+
+  <script>
+  // Header search — coming soon placeholder
+  document.querySelectorAll('.header-search').forEach(function(form) {
+    var btn = form.querySelector('button');
+    var inp = form.querySelector('input');
+    function doSearch() {
+      var q = inp ? inp.value.trim() : '';
+      if (!q) return;
+      // Future: wire to a real search index. For now, inform the user.
+      alert('Search for "' + q + '" — full site search coming soon!');
+    }
+    if (btn) btn.addEventListener('click', doSearch);
+    if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+  });
   </script>
 </body>
 </html>

@@ -167,7 +167,7 @@
 
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px; margin-bottom: 28px;
     }
     .stat-card {
@@ -249,6 +249,7 @@
     .status-confirmed { background: rgba(34,197,94,0.1); color: #16a34a; }
     .status-pending { background: rgba(212,168,67,0.15); color: #a07c10; }
     .status-completed { background: rgba(155,31,190,0.1); color: var(--brand); }
+    .status-cancelled { background: rgba(239,68,68,0.1); color: #dc2626; }
 
     /* Quick actions */
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
@@ -261,12 +262,6 @@
     }
     .quick-btn:hover { border-color: var(--brand); background: #ede6f5; transform: translateY(-2px); }
     .quick-btn i { font-size: 22px; color: var(--brand); }
-
-    /* Points loyalty */
-    .loyalty-card { padding: 20px 24px; }
-    .points-bar-wrap { background: rgba(155,31,190,0.08); border-radius: 8px; height: 8px; margin: 12px 0 6px; }
-    .points-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--brand), var(--brand-light)); }
-    .points-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--mid); }
 
     /* ── APPOINTMENTS PANEL ── */
     .section-header {
@@ -590,7 +585,7 @@
       <button class="nav-item active" onclick="showPanel('overview')">
         <i class="fas fa-home"></i> Overview
       </button>
-      <button class="nav-item" onclick="window.location.href='dashboard-appointment.html'">
+      <button class="nav-item" onclick="showPanel('appointments')">
         <i class="fas fa-calendar-check"></i> My Appointments
         <span class="nav-badge" id="navApptBadge" style="display:none">0</span>
       </button>
@@ -659,12 +654,6 @@
             <div class="stat-val" id="statDone">–</div>
             <div class="stat-sub">Styles completed</div>
           </div>
-          <div class="stat-card c3">
-            <div class="stat-icon"><i class="fas fa-star"></i></div>
-            <div class="stat-label">Loyalty Points</div>
-            <div class="stat-val" id="statPoints">–</div>
-            <div class="stat-sub" id="statPointsSub">Loading…</div>
-          </div>
           <div class="stat-card c4">
             <div class="stat-icon"><i class="fas fa-heart"></i></div>
             <div class="stat-label">Saved Styles</div>
@@ -694,7 +683,7 @@
                 <button class="quick-btn" onclick="window.location.href='dashboard-portfolio.html'">
                   <i class="fas fa-images"></i> Browse Portfolio
                 </button>
-                <button class="quick-btn" onclick="window.location.href='dashboard-service.html'">
+                <button class="quick-btn" onclick="window.location.href='dashboard-services.html'">
                   <i class="fas fa-magic"></i> View Services
                 </button>
                 <button class="quick-btn" onclick="showPanel('contact')">
@@ -705,20 +694,7 @@
           </div>
 
           <div style="display:flex;flex-direction:column;gap:20px">
-            <div class="card">
-              <div class="card-header"><h3>Loyalty Rewards</h3></div>
-              <div class="loyalty-card" id="loyaltyCard">
-                <div style="display:flex;justify-content:space-between;align-items:baseline">
-                  <span style="font-size:28px;font-weight:700;color:var(--brand)" id="loyaltyPoints">– <span style="font-size:14px;color:var(--mid);font-weight:400">pts</span></span>
-                  <span style="font-size:12px;color:var(--gold)" id="loyaltyTier">✦ Loyal Client</span>
-                </div>
-                <div class="points-bar-wrap"><div class="points-bar" id="loyaltyBar" style="width:0%"></div></div>
-                <div class="points-meta"><span id="loyaltyToNext">Loading…</span><span id="loyaltyGoal">500 pts = Free add-on</span></div>
-                <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.06);font-size:13px;color:var(--mid)">+10 pts per session · +5 pts per referral</div>
-              </div>
-            </div>
-
-            <div class="card">
+          <div class="card">
               <div class="card-header"><h3>Studio Hours</h3></div>
               <div id="studioHoursCard" style="padding:16px 24px">
                 <div style="text-align:center;color:#aaa;padding:20px;font-size:13px">Loading…</div>
@@ -769,7 +745,7 @@
           <i class="fas fa-magic" style="font-size:52px;color:rgba(155,31,190,0.2);margin-bottom:20px"></i>
           <h3 style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:8px">Explore All Services</h3>
           <p style="font-size:14px;color:var(--mid);max-width:380px;line-height:1.6;margin-bottom:28px">Browse our full menu of braiding styles, pricing, and availability — all managed live from our studio.</p>
-          <a href="dashboard-service.html" class="btn-primary" style="padding:14px 36px;font-size:15px;display:inline-flex;align-items:center;gap:10px;">
+          <a href="dashboard-services.html" class="btn-primary" style="padding:14px 36px;font-size:15px;display:inline-flex;align-items:center;gap:10px;">
             <i class="fas fa-arrow-right"></i> View Services
           </a>
         </div>
@@ -795,7 +771,7 @@
       <div class="panel" id="panel-wishlist">
         <div class="section-header">
           <h2>Saved Styles</h2>
-          <button class="btn-primary" onclick="window.location.href='dashboard-service.html'"><i class="fas fa-plus" style="margin-right:6px"></i>Browse Services</button>
+          <button class="btn-primary" onclick="window.location.href='dashboard-services.html'"><i class="fas fa-plus" style="margin-right:6px"></i>Browse Services</button>
         </div>
         <div class="wishlist-grid" id="wishlistGrid">
           <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px;font-size:13px">Loading saved styles…</div>
@@ -890,7 +866,8 @@
               <div class="avatar-upload">
                 <div class="avatar-big" id="settingsAvatar">A</div>
                 <div>
-                  <button class="upload-btn">Change Photo</button>
+                  <input type="file" id="avatarFileInput" accept="image/jpeg,image/png" style="display:none">
+                  <button class="upload-btn" onclick="document.getElementById('avatarFileInput').click()">Change Photo</button>
                   <p style="font-size:12px;color:var(--mid);margin-top:6px">JPG or PNG · Max 2MB</p>
                 </div>
               </div>
@@ -910,19 +887,19 @@
               <div class="settings-section-sub">Choose how and when you hear from us.</div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>Appointment Reminders</h4><p>24-hour reminder before your session</p></div>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle on" data-pref="apptReminders" onclick="this.classList.toggle('on')"></button>
               </div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>Booking Confirmations</h4><p>Email when a booking is confirmed</p></div>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle on" data-pref="bookingConfirm" onclick="this.classList.toggle('on')"></button>
               </div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>Promotional Offers</h4><p>Special deals and seasonal promotions</p></div>
-                <button class="toggle" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle" data-pref="promoOffers" onclick="this.classList.toggle('on')"></button>
               </div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>New Portfolio Drops</h4><p>Notify me when new styles are added</p></div>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle on" data-pref="portfolioDrops" onclick="this.classList.toggle('on')"></button>
               </div>
             </div>
 
@@ -933,7 +910,7 @@
               <div class="form-group"><label>Current Password</label><input type="password" placeholder="••••••••"></div>
               <div class="form-group"><label>New Password</label><input type="password" placeholder="Min. 8 characters"></div>
               <div class="form-group"><label>Confirm New Password</label><input type="password" placeholder="Repeat new password"></div>
-              <button class="btn-primary" onclick="showToast('Password updated successfully ✓')">Update Password</button>
+              <button class="btn-primary" onclick="doUpdatePassword ? doUpdatePassword() : showToast('Loading…')">Update Password</button>
             </div>
 
             <!-- Privacy -->
@@ -942,11 +919,11 @@
               <div class="settings-section-sub">Manage how your data is used.</div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>Profile Visible to Studio</h4><p>Allow studio to view your hair history</p></div>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle on" data-pref="profileVisible" onclick="this.classList.toggle('on')"></button>
               </div>
               <div class="toggle-row">
                 <div class="toggle-label"><h4>Anonymous Analytics</h4><p>Help improve services via anonymous data</p></div>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <button class="toggle on" data-pref="analytics" onclick="this.classList.toggle('on')"></button>
               </div>
               <div style="margin-top:28px;padding:20px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:12px">
                 <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#dc2626">Delete Account</div>
@@ -971,11 +948,11 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getAuth, onAuthStateChanged, signOut
+    getAuth, onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, collection, query, where,
-    orderBy, getDocs, updateDoc, deleteDoc
+    getFirestore, doc, getDoc, setDoc, collection, query, where,
+    orderBy, getDocs, updateDoc, deleteDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const app = initializeApp({
@@ -1021,15 +998,126 @@
     document.getElementById('setFirstName').value = parts[0] || '';
     document.getElementById('setLastName').value  = parts.slice(1).join(' ') || '';
 
+    // Load saved avatar if present
+    try {
+      const usnap = await getDoc(doc(db, 'users', user.uid));
+      if (usnap.exists() && usnap.data().avatarDataUrl) {
+        const url = usnap.data().avatarDataUrl;
+        const imgHtml = `<img src="${url}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        document.getElementById('sidebarAvatar').innerHTML  = imgHtml;
+        document.getElementById('topBarAvatar').innerHTML   = imgHtml;
+        document.getElementById('settingsAvatar').innerHTML = imgHtml;
+      }
+    } catch(e) { /* non-critical */ }
+
     // Run all Firestore loads in parallel
     await Promise.all([
       loadSiteConfig(),
       loadAppointments(user.uid),
-      loadLoyalty(user.uid),
       loadWishlist(user.uid),
       loadReviews(),
       loadContactInfo(),
     ]);
+
+    // Real saveProfile — writes displayName fields to Firestore users/{uid}
+    window.saveProfile = async () => {
+      const first = document.getElementById('setFirstName').value.trim();
+      const last  = document.getElementById('setLastName').value.trim();
+      const phone = document.querySelector('#stab-profile input[type="tel"]').value.trim();
+      const notes = document.querySelector('#stab-profile textarea').value.trim();
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          firstName: first, lastName: last,
+          displayName: [first, last].filter(Boolean).join(' '),
+          phone, hairNotes: notes, updatedAt: serverTimestamp()
+        }, { merge: true });
+        showToast('Profile saved successfully ✓');
+      } catch(e) { console.error('saveProfile:', e); showToast('Could not save profile. Try again.'); }
+    };
+
+    // Real sendMessage — saves to Firestore contacts collection
+    window.sendMessage = async () => {
+      const name    = document.getElementById('ctName').value.trim();
+      const email   = document.getElementById('ctEmail').value.trim();
+      const msg     = document.getElementById('ctMessage').value.trim();
+      const subject = document.getElementById('ctSubject').value.trim();
+      if (!name || !email || !msg) { showToast('Please fill in all required fields.'); return; }
+      try {
+        await setDoc(doc(collection(db, 'contacts')), {
+          name, email, subject, message: msg,
+          userId: user.uid, createdAt: serverTimestamp(), status: 'unread'
+        });
+        showToast('Message sent! We\'ll reply within 24 hours ✓');
+        document.getElementById('ctName').value = '';
+        document.getElementById('ctEmail').value = '';
+        document.getElementById('ctMessage').value = '';
+        document.getElementById('ctSubject').value = '';
+      } catch(e) { console.error('sendMessage:', e); showToast('Could not send message. Please try again.'); }
+    };
+
+    // Persist notification/privacy toggles to Firestore
+    async function loadToggles() {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        const prefs = snap.exists() ? (snap.data().prefs || {}) : {};
+        document.querySelectorAll('.toggle[data-pref]').forEach(btn => {
+          const key = btn.dataset.pref;
+          if (key in prefs) { prefs[key] ? btn.classList.add('on') : btn.classList.remove('on'); }
+        });
+      } catch(e) { /* non-critical */ }
+    }
+    loadToggles();
+
+    document.querySelectorAll('.toggle[data-pref]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        btn.classList.toggle('on');
+        const allPrefs = {};
+        document.querySelectorAll('.toggle[data-pref]').forEach(b => { allPrefs[b.dataset.pref] = b.classList.contains('on'); });
+        try { await setDoc(doc(db, 'users', user.uid), { prefs: allPrefs }, { merge: true }); } catch(e) { /* silent */ }
+      });
+    });
+
+    // Avatar photo upload (reads file as data URL, stores in Firestore as base64 — no Storage bucket needed)
+    const avatarInput = document.getElementById('avatarFileInput');
+    if (avatarInput) {
+      avatarInput.addEventListener('change', async () => {
+        const file = avatarInput.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB.'); return; }
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const dataUrl = ev.target.result;
+          // Update UI avatars
+          const avatarBig = document.getElementById('settingsAvatar');
+          avatarBig.innerHTML = `<img src="${dataUrl}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+          document.getElementById('sidebarAvatar').innerHTML  = `<img src="${dataUrl}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+          document.getElementById('topBarAvatar').innerHTML   = `<img src="${dataUrl}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+          try {
+            await setDoc(doc(db, 'users', user.uid), { avatarDataUrl: dataUrl, updatedAt: serverTimestamp() }, { merge: true });
+            showToast('Profile photo updated ✓');
+          } catch(e) { console.error('avatar save:', e); showToast('Photo saved locally but could not sync to server.'); }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    window.doUpdatePassword = async () => {
+      const cur  = document.querySelector('#stab-security input[placeholder="••••••••"]').value;
+      const np   = document.querySelector('#stab-security input[placeholder="Min. 8 characters"]').value;
+      const conf = document.querySelector('#stab-security input[placeholder="Repeat new password"]').value;
+      if (!cur || !np) { showToast('Please fill in current and new password.'); return; }
+      if (np !== conf) { showToast('New passwords do not match.'); return; }
+      if (np.length < 8) { showToast('Password must be at least 8 characters.'); return; }
+      try {
+        const cred = EmailAuthProvider.credential(user.email, cur);
+        await reauthenticateWithCredential(user, cred);
+        await updatePassword(user, np);
+        showToast('Password updated successfully ✓');
+        document.querySelectorAll('#stab-security input').forEach(i => i.value = '');
+      } catch(e) {
+        console.error('updatePassword:', e);
+        showToast(e.code === 'auth/wrong-password' ? 'Current password is incorrect.' : 'Could not update password.');
+      }
+    };
   }
 
   /* ─────────────────────────────────────────
@@ -1079,7 +1167,7 @@
   ───────────────────────────────────────── */
   async function loadAppointments(uid) {
     try {
-      const q    = query(collection(db, 'appointments'), where('userId', '==', uid), orderBy('date', 'desc'));
+      const q    = query(collection(db, 'bookings'), where('userId', '==', uid), orderBy('date', 'desc'));
       const snap = await getDocs(q);
       const all  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -1163,7 +1251,7 @@
   window.cancelAppt = async (id, btn) => {
     if (!confirm('Cancel this appointment?')) return;
     try {
-      await updateDoc(doc(db, 'appointments', id), { status: 'cancelled' });
+      await updateDoc(doc(db, 'bookings', id), { status: 'cancelled' });
       btn.closest('tr').querySelector('td:nth-child(5)').innerHTML = statusBadge('cancelled');
       btn.closest('.action-btns').innerHTML = '';
       showToast('Appointment cancelled.');
@@ -1173,36 +1261,6 @@
   window.rebookAppt = (service) => {
     window.location.href = `dashboard-appointment.html?service=${encodeURIComponent(service || '')}`;
   };
-
-  /* ─────────────────────────────────────────
-     LOYALTY POINTS  (users/{uid}/loyalty doc or users/{uid} doc)
-  ───────────────────────────────────────── */
-  async function loadLoyalty(uid) {
-    try {
-      const snap = await getDoc(doc(db, 'users', uid));
-      const data = snap.exists() ? snap.data() : {};
-      const pts  = data.loyaltyPoints || 0;
-      const goal = data.loyaltyGoal   || 500;
-
-      document.getElementById('statPoints').textContent   = pts;
-      document.getElementById('statPointsSub').textContent = pts >= goal
-        ? '🎉 Free add-on unlocked!'
-        : `Earn ${goal - pts} more for a free add-on`;
-
-      document.getElementById('loyaltyPoints').innerHTML =
-        `${pts} <span style="font-size:14px;color:var(--mid);font-weight:400">pts</span>`;
-      document.getElementById('loyaltyBar').style.width    = Math.min(100, Math.round((pts/goal)*100)) + '%';
-      document.getElementById('loyaltyToNext').textContent = pts >= goal ? 'Reward ready!' : `${goal - pts} pts to next reward`;
-      document.getElementById('loyaltyGoal').textContent   = `${goal} pts = Free add-on`;
-      if (data.loyaltyTier) document.getElementById('loyaltyTier').textContent = `✦ ${data.loyaltyTier}`;
-    } catch(e) {
-      console.error('loyalty load:', e);
-      ['statPoints','loyaltyPoints'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '—';
-      });
-    }
-  }
 
   /* ─────────────────────────────────────────
      WISHLIST  (users/{uid}/wishlist collection)
@@ -1222,7 +1280,7 @@
       if (!items.length) {
         grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:60px 20px">
           <i class="fas fa-heart" style="font-size:40px;opacity:0.2;display:block;margin-bottom:12px"></i>
-          No saved styles yet. <a href="dashboard-service.html" style="color:var(--brand)">Browse services →</a>
+          No saved styles yet. <a href="dashboard-services.html" style="color:var(--brand)">Browse services →</a>
         </div>`;
         return;
       }
@@ -1385,6 +1443,18 @@
   function filterAppt(el, type) {
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
+    const rows = document.querySelectorAll('#apptTableBody tr');
+    rows.forEach(row => {
+      if (type === 'all') { row.style.display = ''; return; }
+      const statusCell = row.querySelector('.appt-status');
+      if (!statusCell) { row.style.display = ''; return; }
+      const text = statusCell.textContent.toLowerCase();
+      const match =
+        (type === 'upcoming'  && (text === 'confirmed' || text === 'pending')) ||
+        (type === 'completed' && text === 'completed') ||
+        (type === 'cancelled' && text === 'cancelled');
+      row.style.display = match ? '' : 'none';
+    });
   }
 
   function settingsTab(el, tab) {
@@ -1407,18 +1477,17 @@
   function saveProfile() {
     showToast('Profile saved successfully ✓');
   }
+  // Real Firestore saveProfile — wired up after auth
+  window._saveProfileReal = null;
 
   function sendMessage() {
-    const name = document.getElementById('ctName').value.trim();
-    const email = document.getElementById('ctEmail').value.trim();
-    const msg = document.getElementById('ctMessage').value.trim();
-    if (!name || !email || !msg) { showToast('Please fill in all required fields.'); return; }
     showToast('Message sent! We\'ll reply within 24 hours ✓');
     document.getElementById('ctName').value = '';
     document.getElementById('ctEmail').value = '';
     document.getElementById('ctMessage').value = '';
     document.getElementById('ctSubject').value = '';
   }
+  // Real sendMessage wired after auth
 
   function showToast(msg) {
     const t = document.getElementById('toast');

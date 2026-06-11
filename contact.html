@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact Us – Ani Braids – Premium Braiding Studio</title>
+  <meta name="description" content="Get in touch with Ani Braids. Send us a message, ask about bookings, pricing or hair care advice. We reply within 24 hours.">
+  <meta property="og:title" content="Contact – Ani Braids">
+  <meta property="og:description" content="Send us a message about bookings, pricing or hair care. We reply within 24 hours.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://braiders-9cc89.web.app/og-image.jpg">
+  <meta property="og:url" content="https://braiders-9cc89.web.app/contact.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Contact – Ani Braids">
+  <meta name="twitter:description" content="Send us a message about bookings, pricing or hair care. We reply within 24 hours.">
+  <meta name="twitter:image" content="https://braiders-9cc89.web.app/og-image.jpg">
+  <link rel="canonical" href="https://braiders-9cc89.web.app/contact.html">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -480,7 +491,7 @@
         </button>
       </div>
       <div class="secondary-nav-inner" id="secondaryNavLinks">
-        <a href="home.html">Home</a>
+        <a href="index.html">Home</a>
         <a href="about.html">About</a>
         <a href="appointment.html">Appointment</a>
         <a href="services.html">Services</a>
@@ -560,7 +571,7 @@
   <!-- FOOTER -->
   <footer>
     <div class="footer-brand">
-      <a href="home.html" class="logo">Ani <span>Braids</span></a>
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
       <p class="footer-tagline">Premium Protective Styling Studio — Worldwide</p>
     </div>
     <div class="footer-body">
@@ -572,7 +583,7 @@
       </div>
       <div class="footer-col">
         <h4>Quick Links</h4>
-        <a href="home.html">Home</a>
+        <a href="index.html">Home</a>
         <a href="services.html">Services</a>
         <a href="privacy.html">Policies</a>
         <a href="appointment.html">Book Now</a>
@@ -591,8 +602,8 @@
       <div class="footer-col">
         <h4>Stay Updated</h4>
         <div class="newsletter-form">
-          <input type="email" placeholder="Your email address">
-          <button type="button">Subscribe</button>
+          <input type="email" id="newsletterEmail" placeholder="Your email address">
+          <button type="button" onclick="subscribeNewsletter(this)">Subscribe</button>
         </div>
       </div>
     </div>
@@ -687,6 +698,58 @@
     };
 
     loadSiteConfig();
+  </script>
+
+  <script>
+  window.subscribeNewsletter = async function(btn) {
+    const input = document.getElementById('newsletterEmail');
+    if (!input) return;
+    const email = input.value.trim();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Subscribing…';
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey:"AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+        authDomain:"braiders-9cc89.firebaseapp.com",
+        projectId:"braiders-9cc89",
+        storageBucket:"braiders-9cc89.appspot.com",
+        messagingSenderId:"444617114412",
+        appId:"1:444617114412:web:2a2c7008e6c40f7e63a289"
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db = getFirestore(app);
+      await addDoc(collection(db, 'newsletter'), { email, subscribedAt: serverTimestamp(), source: window.location.pathname });
+      input.value = '';
+      btn.textContent = '✓ Subscribed!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Subscribe'; }, 3000);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      alert('Subscription failed. Please try again.');
+    }
+  };
+  </script>
+
+  <script>
+  // Header search — coming soon placeholder
+  document.querySelectorAll('.header-search').forEach(function(form) {
+    var btn = form.querySelector('button');
+    var inp = form.querySelector('input');
+    function doSearch() {
+      var q = inp ? inp.value.trim() : '';
+      if (!q) return;
+      // Future: wire to a real search index. For now, inform the user.
+      alert('Search for "' + q + '" — full site search coming soon!');
+    }
+    if (btn) btn.addEventListener('click', doSearch);
+    if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+  });
   </script>
 </body>
 </html>

@@ -120,11 +120,35 @@
       animate();
     })();
 
-    // Review form
-    function submitReview(e) {
+    // Review form — saves to Firestore (pending admin approval)
+    window.submitReview = async function(e) {
       e.preventDefault();
-      document.getElementById('formSuccess').style.display = 'block';
-      e.target.reset();
-      setTimeout(() => document.getElementById('formSuccess').style.display = 'none', 5000);
-    }
+      const form   = e.target;
+      const btn    = form.querySelector('button[type=submit]');
+      const succ   = document.getElementById('formSuccess');
+      const rating = parseInt(document.querySelector('input[name="rating"]:checked')?.value || 0);
+      if (!rating) { alert('Please select a star rating.'); return; }
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+      try {
+        const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const reviewDb = getFirestore(app);
+        await addDoc(collection(reviewDb, 'reviews'), {
+          rating,
+          title:    document.getElementById('rTitle').value.trim(),
+          review:   document.getElementById('rContent').value.trim(),
+          name:     document.getElementById('rName').value.trim(),
+          email:    document.getElementById('rEmail').value.trim(),
+          approved: false,
+          featured: false,
+          createdAt: serverTimestamp(),
+        });
+        form.style.display = 'none';
+        if (succ) succ.style.display = 'block';
+      } catch(err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit Review';
+        alert('Submission failed — please try again.');
+      }
+    };
   

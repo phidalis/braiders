@@ -481,8 +481,8 @@
       <div class="footer-col">
         <h4>Stay Updated</h4>
         <div class="newsletter-form">
-          <input type="email" placeholder="Your email address">
-          <button type="button">Subscribe</button>
+          <input type="email" id="newsletterEmail" placeholder="Your email address">
+          <button type="button" onclick="subscribeNewsletter(this)">Subscribe</button>
         </div>
       </div>
     </div>
@@ -579,7 +579,7 @@
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: name });
-        await setDoc(doc(db, 'clients', cred.user.uid), {
+        await setDoc(doc(db, 'users', cred.user.uid), {
           name, email, phone: phone || '',
           createdAt: new Date().toISOString(),
           uid: cred.user.uid,
@@ -637,5 +637,57 @@
     })();
   </script>
 
+
+  <script>
+  window.subscribeNewsletter = async function(btn) {
+    const input = document.getElementById('newsletterEmail');
+    if (!input) return;
+    const email = input.value.trim();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Subscribing…';
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey:"AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+        authDomain:"braiders-9cc89.firebaseapp.com",
+        projectId:"braiders-9cc89",
+        storageBucket:"braiders-9cc89.appspot.com",
+        messagingSenderId:"444617114412",
+        appId:"1:444617114412:web:2a2c7008e6c40f7e63a289"
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db = getFirestore(app);
+      await addDoc(collection(db, 'newsletter'), { email, subscribedAt: serverTimestamp(), source: window.location.pathname });
+      input.value = '';
+      btn.textContent = '✓ Subscribed!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Subscribe'; }, 3000);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      alert('Subscription failed. Please try again.');
+    }
+  };
+  </script>
+
+  <script>
+  // Header search — coming soon placeholder
+  document.querySelectorAll('.header-search').forEach(function(form) {
+    var btn = form.querySelector('button');
+    var inp = form.querySelector('input');
+    function doSearch() {
+      var q = inp ? inp.value.trim() : '';
+      if (!q) return;
+      // Future: wire to a real search index. For now, inform the user.
+      alert('Search for "' + q + '" — full site search coming soon!');
+    }
+    if (btn) btn.addEventListener('click', doSearch);
+    if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+  });
+  </script>
 </body>
 </html>

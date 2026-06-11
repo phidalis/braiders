@@ -13,7 +13,7 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, collection, addDoc,
-             getDocs, deleteDoc, updateDoc, serverTimestamp, query, orderBy }
+             getDocs, deleteDoc, updateDoc, serverTimestamp, query, orderBy, onSnapshot }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -33,7 +33,7 @@
     // Expose to global scope for inline handlers
     window._fb = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
                    doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc,
-                   updateDoc, serverTimestamp, query, orderBy };
+                   updateDoc, serverTimestamp, query, orderBy, onSnapshot };
 
     onAuthStateChanged(auth, user => {
       if (user) {
@@ -257,6 +257,46 @@
     .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
     .checkbox-item { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; }
     .checkbox-item input[type=checkbox] { accent-color: var(--brand); width: 15px; height: 15px; cursor: pointer; }
+    .pm-card.active { border-color: rgba(155,31,190,.5) !important; background: rgba(155,31,190,.1) !important; }
+    .pm-card.active .pm-check { background: var(--brand); border-color: var(--brand) !important; }
+    .pm-card.active .pm-check::after { content: '✓'; font-size:10px; color:#fff; }
+    .pm-card:hover:not(.active) { border-color: rgba(255,255,255,.18) !important; background: rgba(255,255,255,.06) !important; }
+    .cat-pill {
+      padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text-muted); cursor: pointer; transition: all .18s; font-family: inherit;
+    }
+    .cat-pill:hover { border-color: rgba(155,31,190,.4); color: var(--text); }
+    .cat-pill.active { background: rgba(155,31,190,.18); border-color: rgba(155,31,190,.5); color: var(--brand); font-weight: 600; }
+    .pm-type-card {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px 6px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+      cursor: pointer; transition: all .18s; user-select: none;
+    }
+    .pm-type-card:hover { border-color: rgba(155,31,190,.4); background: rgba(155,31,190,.06); }
+    .pm-type-card.active { border-color: var(--brand); background: rgba(155,31,190,.15); box-shadow: 0 0 0 1px var(--brand); }
+    .pm-type-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .pm-type-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-align: center; line-height: 1.2; }
+    .pm-type-card.active .pm-type-label { color: var(--brand); }
+    .pm-method-row {
+      display: flex; align-items: center; gap: 14px; padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .pm-method-row:last-child { border-bottom: none; }
+    .pm-method-icon {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .pm-method-info { flex: 1; min-width: 0; }
+    .pm-method-name { font-size: 14px; font-weight: 600; }
+    .pm-method-handle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .pm-method-note { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-style: italic; }
 
     /* ─── IMAGE UPLOAD ZONE ──────────────────────── */
     .upload-zone {
@@ -519,6 +559,8 @@
       <div class="nav-item" data-panel="services"><i class="fas fa-cut"></i> Portfolio</div>
       <div class="nav-item" data-panel="portfolio"><i class="fas fa-images"></i> Services</div>
 
+      <div class="nav-item" data-panel="bookingstyles"><i class="fas fa-scissors"></i> Booking Styles</div>
+
       <div class="nav-group-label">Website</div>
       <div class="nav-item" data-panel="announcements"><i class="fas fa-bullhorn"></i> Announcements</div>
       <div class="nav-item" data-panel="bookings"><i class="fas fa-calendar-alt"></i> Bookings</div>
@@ -684,6 +726,21 @@
         </div>
       </div>
 
+
+      <!-- ── BOOKING STYLES ── -->
+      <div class="panel" id="panel-bookingstyles">
+        <div class="section-head">
+          <div>
+            <h2>Booking Styles</h2>
+            <p>Manage the styles and options clients see when booking an appointment.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openStyleModal()"><i class="fas fa-plus"></i> Add Style</button>
+        </div>
+        <div id="bookingStylesList">
+          <div class="empty-state"><i class="fas fa-scissors"></i><p>Loading styles…</p></div>
+        </div>
+      </div>
+
       <!-- ── ANNOUNCEMENTS ── -->
       <div class="panel" id="panel-announcements">
         <div class="section-head">
@@ -767,6 +824,14 @@
               <label>WhatsApp Number (with country code, digits only)</label>
               <input type="text" id="cfg-whatsapp" placeholder="12345678900">
             </div>
+            <div class="field">
+              <label>Zelle Email / Phone (for payments)</label>
+              <input type="text" id="cfg-zelleEmail" placeholder="payments@anibraids.com">
+            </div>
+            <div class="field">
+              <label>Cash App $Cashtag (for payments)</label>
+              <input type="text" id="cfg-cashappTag" placeholder="$AniBraids">
+            </div>
             <div class="field span2">
               <label>Physical Address</label>
               <input type="text" id="cfg-address" placeholder="4500 Forbes Blvd, Lanham, Maryland 20706">
@@ -830,18 +895,23 @@
 
         <!-- Payment Methods -->
         <div class="card-box" style="margin-bottom:20px;">
-          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Accepted Payment Methods</div>
-          <div style="padding:0 20px 20px;">
-            <div class="checkbox-group" id="cfg-paymentMethods">
-              <label class="checkbox-item"><input type="checkbox" value="Cash"> Cash</label>
-              <label class="checkbox-item"><input type="checkbox" value="Zelle"> Zelle</label>
-              <label class="checkbox-item"><input type="checkbox" value="Venmo"> Venmo</label>
-              <label class="checkbox-item"><input type="checkbox" value="CashApp"> CashApp</label>
-              <label class="checkbox-item"><input type="checkbox" value="PayPal"> PayPal</label>
-              <label class="checkbox-item"><input type="checkbox" value="Apple Pay"> Apple Pay</label>
-              <label class="checkbox-item"><input type="checkbox" value="Credit Card"> Credit/Debit Card</label>
-              <label class="checkbox-item"><input type="checkbox" value="Stripe"> Stripe</label>
+          <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Payment Methods</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">Manage the payment options clients see at checkout. Saved to Firestore instantly.</div>
             </div>
+            <button class="btn btn-primary btn-sm" onclick="openPaymentMethodModal()"><i class="fas fa-plus"></i> Add Method</button>
+          </div>
+          <div id="paymentMethodsList" style="padding:20px;">
+            <div class="empty-state"><i class="fas fa-credit-card"></i><p>No payment methods yet. Add your first one.</p></div>
+          </div>
+        </div>
+
+        <!-- Newsletter Subscribers -->
+        <div class="card-box" style="margin-top:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Newsletter Subscribers <span style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">(from footer signup forms)</span></div>
+          <div id="newsletterSubscribersList" style="padding:0 20px 20px;">
+            <div class="empty-state"><i class="fas fa-envelope"></i><p>Loading subscribers…</p></div>
           </div>
         </div>
 
@@ -973,18 +1043,18 @@
     <!-- Tab: Category -->
     <div class="tab-panel" id="tab-category">
       <div class="field" style="margin-bottom:20px;">
-        <label>Assign to Categories (select all that apply)</label>
-        <div class="checkbox-group" style="margin-top:10px;">
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="trending"> 🔥 Trending</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="new"> ✨ New Arrivals</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="most-booked"> 👑 Most Booked</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="luxury"> 💎 Luxury</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="budget"> 💸 Budget Friendly</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="bridal"> 💍 Bridal & Events</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="kids"> 🎀 Kids Styles</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="mens"> ✂️ Men's Braids</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="quick"> ⚡ Quick Styles</label>
-          <label class="checkbox-item"><input type="checkbox" name="svc-cat" value="transformations"> 🪄 Transformations</label>
+        <label style="margin-bottom:10px;display:block;">Assign to Categories (tap to select)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;" id="svc-cat-pills">
+          <button type="button" class="cat-pill" data-value="trending" onclick="toggleCatPill(this)">🔥 Trending</button>
+          <button type="button" class="cat-pill" data-value="new" onclick="toggleCatPill(this)">✨ New Arrivals</button>
+          <button type="button" class="cat-pill" data-value="most-booked" onclick="toggleCatPill(this)">👑 Most Booked</button>
+          <button type="button" class="cat-pill" data-value="luxury" onclick="toggleCatPill(this)">💎 Luxury</button>
+          <button type="button" class="cat-pill" data-value="budget" onclick="toggleCatPill(this)">💸 Budget Friendly</button>
+          <button type="button" class="cat-pill" data-value="bridal" onclick="toggleCatPill(this)">💍 Bridal & Events</button>
+          <button type="button" class="cat-pill" data-value="kids" onclick="toggleCatPill(this)">🎀 Kids Styles</button>
+          <button type="button" class="cat-pill" data-value="mens" onclick="toggleCatPill(this)">✂️ Men's Braids</button>
+          <button type="button" class="cat-pill" data-value="quick" onclick="toggleCatPill(this)">⚡ Quick Styles</button>
+          <button type="button" class="cat-pill" data-value="transformations" onclick="toggleCatPill(this)">🪄 Transformations</button>
         </div>
       </div>
       <div class="field">
@@ -1179,7 +1249,7 @@ async function doLogout() {
 const PANEL_TITLES = {
   dashboard:'Dashboard', hero:'Hero Images', carousel:'Carousel Images', services:'Portfolio',
   portfolio:'Services', announcements:'Announcements',
-  bookings:'Bookings', reviews:'Reviews', settings:'Site Settings'
+  bookingstyles:'Booking Styles', bookings:'Bookings', reviews:'Reviews', settings:'Site Settings'
 };
 
 function navTo(panelId) {
@@ -1213,13 +1283,37 @@ function switchTab(btn, tabId) {
    ADMIN READY — load all data
 ═══════════════════════════════════════════════════════ */
 window._adminReady = async function() {
+  // ── REAL-TIME NEW BOOKING NOTIFICATIONS ──
+  (function setupBookingListener() {
+    const { db, collection, query, orderBy, onSnapshot } = window._fb;
+    if (!onSnapshot) return;
+    let initialized = false;
+    const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
+    onSnapshot(q, (snap) => {
+      if (!initialized) { initialized = true; return; } // skip initial load
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const b = change.doc.data();
+          toast(`🔔 New booking: ${b.name || 'Client'} — ${b.style || b.service || 'Style'} on ${b.date || b.appointmentDate || '?'}`, 'success');
+          // Reload bookings panel if visible
+          if (document.getElementById('panel-bookings')?.classList.contains('active')) loadBookings();
+          // Update stats counter
+          loadStats();
+        }
+      });
+    });
+  })();
+
   initHeroSlots();
   initServicesHeroSlots();
   await Promise.all([loadServices(), loadPortfolio(), loadAnnouncement(), loadStats(), loadCarousel()]);
   loadBookings();
   loadReviews();
   loadSettings();
+  loadBookingStyles();
   loadContactMessages();
+  loadNewsletterSubscribers();
+  loadPaymentMethods();
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -1694,8 +1788,8 @@ function openServiceModal(index) {
     document.getElementById('svc-originalPrice').value = s.originalPrice || '';
     document.getElementById('svc-showPortfolio').value = s.showPortfolio !== false ? 'yes' : 'no';
     // categories
-    document.querySelectorAll('[name="svc-cat"]').forEach(cb => {
-      cb.checked = Array.isArray(s.category) && s.category.includes(cb.value);
+    document.querySelectorAll('#svc-cat-pills .cat-pill').forEach(btn => {
+      btn.classList.toggle('active', Array.isArray(s.category) && s.category.includes(btn.dataset.value));
     });
     // existing images
     const urls = Array.isArray(s.imageUrls) ? s.imageUrls : (s.imageUrl ? [s.imageUrl] : []);
@@ -1712,7 +1806,7 @@ function openServiceModal(index) {
     document.getElementById('svc-bookings').value = '0';
     document.getElementById('svc-priceMode').value = 'fixed';
     document.getElementById('svc-showPortfolio').value = 'yes';
-    document.querySelectorAll('[name="svc-cat"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#svc-cat-pills .cat-pill').forEach(btn => btn.classList.remove('active'));
     pendingSvcImages = [];
     renderSvcImgPreview();
     updatePriceFields();
@@ -1775,7 +1869,7 @@ async function saveService() {
   const name = document.getElementById('svc-name').value.trim();
   if (!name) { toast('Service name is required.', 'error'); return; }
 
-  const cats = [...document.querySelectorAll('[name="svc-cat"]:checked')].map(cb => cb.value);
+  const cats = [...document.querySelectorAll('#svc-cat-pills .cat-pill.active')].map(b => b.dataset.value);
 
   const svc = {
     name,
@@ -2074,6 +2168,153 @@ async function deleteReview(id) {
 }
 
 /* ─── SITE SETTINGS ─── */
+/* ─── PAYMENT METHODS CRUD ─── */
+const PM_META = {
+  zelle:    { label: 'Zelle',              icon: 'Z',   bg: '#6D1ED4', handleLabel: 'Zelle Email or Phone',   handleHint: 'e.g. payments@anibraids.com or +1 234 567 8900',  placeholder: 'payments@anibraids.com' },
+  cashapp:  { label: 'Cash App',           icon: '$',   bg: '#00C244', handleLabel: '$Cashtag',                handleHint: 'Your Cash App $cashtag',                          placeholder: '$AniBraids' },
+  venmo:    { label: 'Venmo',              icon: 'V',   bg: '#008CFF', handleLabel: '@Username',               handleHint: 'Your Venmo @username',                            placeholder: '@AniBraids' },
+  paypal:   { label: 'PayPal',             icon: 'P',   bg: '#003087', handleLabel: 'PayPal Email or Link',    handleHint: 'e.g. paypal.me/anibraids or payments@anibraids.com', placeholder: 'paypal.me/anibraids' },
+  applepay: { label: 'Apple Pay',          icon: '',   bg: '#111111', handleLabel: 'Phone Number / Apple ID', handleHint: 'The phone number linked to Apple Pay',             placeholder: '+1 (234) 567-890' },
+  cash:     { label: 'Cash (In-Person)',   icon: '💵',  bg: '#1e7e34', handleLabel: 'Location or Instruction', handleHint: 'e.g. Pay at the studio on the day',               placeholder: 'Pay at the studio' },
+  card:     { label: 'Credit / Debit Card',icon: '💳',  bg: '#1a3a6e', handleLabel: 'Processor or Link',       handleHint: 'e.g. Stripe link or "card accepted in person"',   placeholder: 'Accepted in person' },
+  other:    { label: 'Other',              icon: '···', bg: '#444444', handleLabel: 'Payment Detail',          handleHint: 'Any handle, link, or instruction',                placeholder: 'e.g. Bank transfer details' },
+};
+
+let paymentMethodsData = [];
+let editingPmId = null;
+let selectedPmType = null;
+
+function selectPmType(card) {
+  document.querySelectorAll('#pm-type-picker .pm-type-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  selectedPmType = card.dataset.type;
+  const meta = PM_META[selectedPmType];
+  document.getElementById('pm-handle-label').textContent = meta.handleLabel + ' *';
+  document.getElementById('pm-handle-hint').textContent  = meta.handleHint;
+  document.getElementById('pm-handle').placeholder       = meta.placeholder;
+  document.getElementById('pm-handle').value             = '';
+  document.getElementById('pm-intro').value              = '';
+  document.getElementById('pm-note').value               = '';
+  document.getElementById('pm-fields').style.display     = 'block';
+  // update preview icon
+  const iconEl = document.getElementById('pm-preview-icon');
+  iconEl.style.background = meta.bg;
+  const isEmoji = /\p{Emoji_Presentation}/u.test(meta.icon) || meta.icon === '···';
+  iconEl.style.fontSize = isEmoji ? '18px' : '16px';
+  iconEl.textContent = meta.icon;
+  document.getElementById('pm-preview-name').textContent = meta.label;
+  document.getElementById('pm-preview-handle').textContent = '';
+}
+
+function updatePmPreview() {
+  if (!selectedPmType) return;
+  const intro  = document.getElementById('pm-intro').value.trim();
+  const handle = document.getElementById('pm-handle').value.trim();
+  const note   = document.getElementById('pm-note').value.trim();
+  document.getElementById('pm-preview-handle').textContent =
+    [intro, handle, note ? ('· ' + note) : ''].filter(Boolean).join(' ');
+}
+
+function openPaymentMethodModal(id) {
+  editingPmId = id || null;
+  const pm = id ? paymentMethodsData.find(x => x.id === id) : null;
+  document.getElementById('pmModalTitle').textContent  = pm ? 'Edit Payment Method' : 'Add Payment Method';
+  document.getElementById('pmSaveBtnText').textContent = pm ? 'Update Method'       : 'Save Method';
+
+  // reset picker
+  document.querySelectorAll('#pm-type-picker .pm-type-card').forEach(c => c.classList.remove('active'));
+  selectedPmType = null;
+  document.getElementById('pm-fields').style.display = 'none';
+
+  if (pm) {
+    selectedPmType = pm.type;
+    const card = document.querySelector(`#pm-type-picker .pm-type-card[data-type="${pm.type}"]`);
+    if (card) selectPmType(card);
+    document.getElementById('pm-intro').value  = pm.intro  || '';
+    document.getElementById('pm-handle').value = pm.handle || '';
+    document.getElementById('pm-note').value   = pm.note   || '';
+    updatePmPreview();
+  }
+  document.getElementById('paymentMethodModal').classList.add('open');
+}
+
+function closePaymentMethodModal() {
+  document.getElementById('paymentMethodModal').classList.remove('open');
+  editingPmId = null; selectedPmType = null;
+}
+
+async function savePaymentMethod() {
+  if (!selectedPmType) { toast('Please select a payment type.', 'error'); return; }
+  const meta   = PM_META[selectedPmType];
+  const intro  = document.getElementById('pm-intro').value.trim();
+  const handle = document.getElementById('pm-handle').value.trim();
+  const note   = document.getElementById('pm-note').value.trim();
+  if (!handle) { toast(`Please enter the ${meta.handleLabel}.`, 'error'); return; }
+
+  const { db, collection, doc, addDoc, updateDoc, serverTimestamp } = window._fb;
+  const payload = { type: selectedPmType, intro, handle, note, label: meta.label, updatedAt: serverTimestamp() };
+
+  try {
+    if (editingPmId) {
+      await updateDoc(doc(db, 'paymentMethods', editingPmId), payload);
+      toast('Payment method updated!');
+    } else {
+      payload.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'paymentMethods'), payload);
+      toast('Payment method added!');
+    }
+    closePaymentMethodModal();
+    await loadPaymentMethods();
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function deletePaymentMethod(id) {
+  if (!confirm('Remove this payment method?')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'paymentMethods', id));
+    toast('Payment method removed.', 'error');
+    await loadPaymentMethods();
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+async function loadPaymentMethods() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const el = document.getElementById('paymentMethodsList');
+  if (!el) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'paymentMethods'), orderBy('createdAt', 'asc')));
+    paymentMethodsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!paymentMethodsData.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-credit-card"></i><p>No payment methods yet. Click <strong>Add Method</strong> to get started.</p></div>`;
+      return;
+    }
+    el.innerHTML = paymentMethodsData.map(pm => {
+      const meta = PM_META[pm.type] || { label: pm.type, icon: '•', bg: '#444' };
+      const isEmoji = /\p{Emoji_Presentation}/u.test(meta.icon) || meta.icon === '···';
+      const iconStyle = `background:${meta.bg};${isEmoji ? 'font-size:18px;' : ''}`;
+      return `
+        <div class="pm-method-row">
+          <div class="pm-method-icon" style="${iconStyle}">${meta.icon}</div>
+          <div class="pm-method-info">
+            <div class="pm-method-name">${meta.label}</div>
+            <div class="pm-method-handle">
+              ${pm.intro  ? `<span style="color:var(--text-muted);">${pm.intro}</span> ` : ''}
+              <strong>${pm.handle}</strong>
+            </div>
+            ${pm.note ? `<div class="pm-method-note"><i class="fas fa-info-circle" style="opacity:.4;margin-right:3px;font-size:10px;"></i>${pm.note}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn btn-outline btn-sm" onclick="openPaymentMethodModal('${pm.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deletePaymentMethod('${pm.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<p style="color:var(--danger);font-size:13px;padding:20px;">Could not load payment methods: ${e.message}</p>`;
+  }
+}
+
 async function loadSettings() {
   const { db, doc, getDoc } = window._fb;
   try {
@@ -2086,6 +2327,8 @@ async function loadSettings() {
     set('cfg-email', c.email);
     set('cfg-phone', c.phone);
     set('cfg-whatsapp', c.whatsapp);
+    set('cfg-zelleEmail', c.zelleEmail);
+    set('cfg-cashappTag', c.cashappTag);
     set('cfg-address', c.address);
     set('cfg-hours', c.hours);
     set('cfg-topbarText', c.topbarText);
@@ -2097,26 +2340,29 @@ async function loadSettings() {
     set('cfg-pinterest', c.social?.pinterest);
     set('cfg-youtube', c.social?.youtube);
     set('cfg-twitter', c.social?.twitter);
-    // payment checkboxes
-    if (c.paymentMethods) {
-      document.querySelectorAll('#cfg-paymentMethods input[type=checkbox]').forEach(cb => {
-        cb.checked = c.paymentMethods.includes(cb.value);
-      });
-    }
+    // payment methods now managed separately via loadPaymentMethods()
   } catch(e) { toast('Could not load settings: ' + e.message, 'error'); }
+}
+
+function togglePaymentCard(card) {
+  card.classList.toggle('active');
+}
+
+function toggleCatPill(btn) {
+  btn.classList.toggle('active');
 }
 
 async function saveSettings() {
   const { db, doc, setDoc } = window._fb;
   const val = id => document.getElementById(id)?.value.trim() || '';
-  const paymentMethods = [...document.querySelectorAll('#cfg-paymentMethods input[type=checkbox]')]
-    .filter(cb => cb.checked).map(cb => cb.value);
   const config = {
     businessName: val('cfg-businessName'),
     tagline: val('cfg-tagline'),
     email: val('cfg-email'),
     phone: val('cfg-phone'),
     whatsapp: val('cfg-whatsapp'),
+    zelleEmail: val('cfg-zelleEmail'),
+    cashappTag: val('cfg-cashappTag'),
     address: val('cfg-address'),
     hours: val('cfg-hours'),
     topbarText: val('cfg-topbarText'),
@@ -2130,13 +2376,39 @@ async function saveSettings() {
       youtube: val('cfg-youtube'),
       twitter: val('cfg-twitter'),
     },
-    paymentMethods,
     updatedAt: window._fb.serverTimestamp(),
   };
+  // Note: paymentMethods are saved separately via savePaymentMethod() / deletePaymentMethod()
   try {
     await setDoc(doc(db,'settings','siteConfig'), config, { merge: true });
     toast('Site settings saved successfully');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function loadNewsletterSubscribers() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const el = document.getElementById('newsletterSubscribersList');
+  if (!el) return;
+  try {
+    const snap = await getDocs(query(collection(db,'newsletter'), orderBy('subscribedAt','desc')));
+    if (snap.empty) { el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No subscribers yet.</p>`; return; }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="border-bottom:1px solid var(--border);color:var(--text-muted);">
+        <th style="padding:8px 12px;text-align:left;font-weight:500;">Email</th>
+        <th style="padding:8px 12px;text-align:left;font-weight:500;">Date</th>
+        <th style="padding:8px 12px;text-align:left;font-weight:500;">Source Page</th>
+      </tr></thead><tbody>
+      ${snap.docs.map(d => {
+        const m = d.data();
+        const ts = m.subscribedAt?.toDate ? m.subscribedAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+        return `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;"><a href="mailto:${m.email}" style="color:var(--brand);text-decoration:none;">${m.email||'—'}</a></td>
+          <td style="padding:8px 12px;color:var(--text-muted);">${ts}</td>
+          <td style="padding:8px 12px;color:var(--text-muted);">${m.source||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<p style="color:var(--danger);font-size:13px;">Could not load: ${e.message}</p>`; }
 }
 
 async function loadContactMessages() {
@@ -2170,6 +2442,190 @@ async function deleteContactMsg(id) {
   toast('Message deleted','error'); loadContactMessages();
 }
 
+
+/* ═══════════════════════════════════════════════════════
+   BOOKING STYLES
+   Firestore collection: bookingStyles
+   Each doc: { name, category, desc, hairNote, order, variants: [{name, size, price, duration}] }
+═══════════════════════════════════════════════════════ */
+let bookingStylesData = [];
+let editingStyleId = null;        // Firestore doc id or null
+let editingStyleVariants = [];    // working copy of variants
+
+async function loadBookingStyles() {
+  const { db, collection, getDocs, query, orderBy } = window._fb;
+  const el = document.getElementById('bookingStylesList');
+  if (!el) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'bookingStyles'), orderBy('order', 'asc')));
+    bookingStylesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderBookingStylesList();
+  } catch(e) {
+    el.innerHTML = `<p style="color:var(--danger);padding:20px;font-size:13px;">Could not load styles: ${e.message}</p>`;
+  }
+}
+
+function renderBookingStylesList() {
+  const el = document.getElementById('bookingStylesList');
+  if (!el) return;
+  if (!bookingStylesData.length) {
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-scissors"></i><p>No booking styles yet. Add your first style!</p></div>`;
+    return;
+  }
+  // Group by category
+  const cats = [...new Set(bookingStylesData.map(s => s.category || 'Uncategorized'))];
+  el.innerHTML = cats.map(cat => {
+    const styles = bookingStylesData.filter(s => (s.category || 'Uncategorized') === cat);
+    return `
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--brand);margin-bottom:12px;padding:8px 14px;background:rgba(155,31,190,0.08);border:1px solid rgba(155,31,190,0.2);border-radius:8px;display:inline-block;">${cat}</div>
+        <div class="svc-list">
+          ${styles.map(s => `
+            <div class="svc-item">
+              <div class="svc-item-img-placeholder" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,rgba(155,31,190,0.15),rgba(232,68,122,0.15));flex-shrink:0;">
+                <i class="fas fa-scissors" style="font-size:20px;color:var(--brand);opacity:0.6;"></i>
+              </div>
+              <div class="svc-item-body">
+                <div class="svc-item-name">${s.name}</div>
+                <div class="svc-item-meta">${(s.variants||[]).length} option${(s.variants||[]).length !== 1 ? 's' : ''}${s.hairNote ? ' · ' + s.hairNote.substring(0,40) + '…' : ''}</div>
+                <div class="svc-item-actions">
+                  <button class="btn btn-outline btn-sm" onclick="openStyleModal('${s.id}')"><i class="fas fa-edit"></i> Edit</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteBookingStyle('${s.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openStyleModal(id) {
+  editingStyleId = id || null;
+  const s = id ? bookingStylesData.find(x => x.id === id) : null;
+  document.getElementById('styleModalTitle').textContent = s ? 'Edit Style' : 'Add Style';
+  document.getElementById('styleSaveBtnText').textContent = s ? 'Update Style' : 'Save Style';
+
+  document.getElementById('bs-name').value     = s?.name     || '';
+  document.getElementById('bs-category').value = s?.category || '';
+  document.getElementById('bs-desc').value     = s?.desc     || '';
+  document.getElementById('bs-hairnote').value = s?.hairNote || '';
+  document.getElementById('bs-order').value    = s?.order    ?? bookingStylesData.length;
+
+  editingStyleVariants = s ? JSON.parse(JSON.stringify(s.variants || [])) : [];
+  renderVariantsEditor();
+  document.getElementById('styleModal').classList.add('open');
+}
+
+function closeStyleModal() {
+  document.getElementById('styleModal').classList.remove('open');
+  editingStyleId = null;
+  editingStyleVariants = [];
+}
+
+function renderVariantsEditor() {
+  const el = document.getElementById('variantsEditor');
+  if (!editingStyleVariants.length) {
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">No options yet. Click "Add Option" below.</div>`;
+    return;
+  }
+  el.innerHTML = editingStyleVariants.map((v, i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px 90px 36px;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div class="field">
+        ${i === 0 ? '<label>Option Name</label>' : ''}
+        <input type="text" value="${escHtml(v.name||'')}" oninput="updateVariantField(${i},'name',this.value)" placeholder="e.g. Medium">
+      </div>
+      <div class="field">
+        ${i === 0 ? '<label>Size / Label</label>' : ''}
+        <input type="text" value="${escHtml(v.size||'')}" oninput="updateVariantField(${i},'size',this.value)" placeholder="e.g. Medium">
+      </div>
+      <div class="field">
+        ${i === 0 ? '<label>Price ($)</label>' : ''}
+        <input type="number" value="${v.price||''}" oninput="updateVariantField(${i},'price',this.value?parseFloat(this.value):null)" placeholder="120" min="0">
+      </div>
+      <div class="field">
+        ${i === 0 ? '<label>Duration</label>' : ''}
+        <input type="text" value="${escHtml(v.duration||'')}" oninput="updateVariantField(${i},'duration',this.value)" placeholder="3–4 hrs">
+      </div>
+      <div style="${i === 0 ? 'padding-top:22px;' : ''}">
+        <button class="btn btn-danger btn-sm" onclick="removeVariant(${i})" style="padding:8px;"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateVariantField(i, field, val) {
+  editingStyleVariants[i][field] = val;
+}
+
+function addVariantRow() {
+  editingStyleVariants.push({ name: '', size: '', price: null, duration: '' });
+  renderVariantsEditor();
+  // Focus the new name input
+  const rows = document.querySelectorAll('#variantsEditor > div');
+  const last = rows[rows.length - 1];
+  if (last) last.querySelector('input')?.focus();
+}
+
+function removeVariant(i) {
+  editingStyleVariants.splice(i, 1);
+  renderVariantsEditor();
+}
+
+async function saveBookingStyle() {
+  const name     = document.getElementById('bs-name').value.trim();
+  const category = document.getElementById('bs-category').value.trim();
+  if (!name)     { toast('Style name is required.', 'error'); return; }
+  if (!category) { toast('Category is required.', 'error'); return; }
+
+  // Validate variants
+  const variants = editingStyleVariants.filter(v => v.name?.trim());
+  if (!variants.length) { toast('Add at least one option.', 'error'); return; }
+
+  const { db, collection, doc, addDoc, updateDoc, serverTimestamp } = window._fb;
+  const payload = {
+    name,
+    category,
+    desc:     document.getElementById('bs-desc').value.trim(),
+    hairNote: document.getElementById('bs-hairnote').value.trim(),
+    order:    parseInt(document.getElementById('bs-order').value) || 0,
+    variants: variants.map(v => ({
+      name:     v.name.trim(),
+      size:     v.size?.trim() || v.name.trim(),
+      price:    v.price ? parseFloat(v.price) : null,
+      duration: v.duration?.trim() || '',
+    })),
+    updatedAt: serverTimestamp(),
+  };
+
+  try {
+    if (editingStyleId) {
+      await updateDoc(doc(db, 'bookingStyles', editingStyleId), payload);
+      toast('Style updated!');
+    } else {
+      payload.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'bookingStyles'), payload);
+      toast('Style added!');
+    }
+    closeStyleModal();
+    await loadBookingStyles();
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function deleteBookingStyle(id) {
+  if (!confirm('Delete this booking style? Clients will no longer see it.')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'bookingStyles', id));
+    toast('Style deleted.', 'error');
+    await loadBookingStyles();
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
 /* ─── drag-over visual on upload zones ─── */
 document.querySelectorAll('.upload-zone').forEach(zone => {
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
@@ -2177,5 +2633,159 @@ document.querySelectorAll('.upload-zone').forEach(zone => {
   zone.addEventListener('drop', () => zone.classList.remove('drag-over'));
 });
 </script>
+<!-- ═══════════════════════ PAYMENT METHOD MODAL ══════════════════════════ -->
+<div class="modal-overlay" id="paymentMethodModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="pmModalTitle">Add Payment Method</h3>
+      <button class="modal-close" onclick="closePaymentMethodModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Step 1: Icon picker -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:10px;">Select Payment Type *</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="pm-type-picker">
+
+        <div class="pm-type-card" data-type="zelle" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#6D1ED4;">Z</div>
+          <div class="pm-type-label">Zelle</div>
+        </div>
+
+        <div class="pm-type-card" data-type="cashapp" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#00C244;">$</div>
+          <div class="pm-type-label">Cash App</div>
+        </div>
+
+        <div class="pm-type-card" data-type="venmo" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#008CFF;">V</div>
+          <div class="pm-type-label">Venmo</div>
+        </div>
+
+        <div class="pm-type-card" data-type="paypal" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#003087;color:#00B2FF;">P</div>
+          <div class="pm-type-label">PayPal</div>
+        </div>
+
+        <div class="pm-type-card" data-type="applepay" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#111111;font-size:18px;"></div>
+          <div class="pm-type-label">Apple Pay</div>
+        </div>
+
+        <div class="pm-type-card" data-type="cash" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#1e7e34;font-size:18px;">💵</div>
+          <div class="pm-type-label">Cash</div>
+        </div>
+
+        <div class="pm-type-card" data-type="card" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#1a3a6e;font-size:18px;">💳</div>
+          <div class="pm-type-label">Card</div>
+        </div>
+
+        <div class="pm-type-card" data-type="other" onclick="selectPmType(this)">
+          <div class="pm-type-icon" style="background:#444444;font-size:18px;">•••</div>
+          <div class="pm-type-label">Other</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="pm-fields" style="display:none;">
+      <!-- Live preview strip -->
+      <div id="pm-preview-strip" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:18px;">
+        <div id="pm-preview-icon" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div id="pm-preview-name" style="font-size:13px;font-weight:700;"></div>
+          <div id="pm-preview-handle" style="font-size:11px;color:var(--text-muted);margin-top:1px;"></div>
+        </div>
+      </div>
+
+      <!-- Field 1: Intro instruction -->
+      <div class="field" style="margin-bottom:14px;">
+        <label>Intro Line <span style="font-weight:400;color:var(--text-muted);">— what clients see first</span></label>
+        <input type="text" id="pm-intro" placeholder="e.g. Send payment to" oninput="updatePmPreview()">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Short instruction before the payment detail, e.g. "Send to" or "Pay via"</div>
+      </div>
+
+      <!-- Field 2: Payment detail (handle / email / tag) -->
+      <div class="field" style="margin-bottom:14px;">
+        <label id="pm-handle-label">Payment Handle / Detail *</label>
+        <input type="text" id="pm-handle" placeholder="" oninput="updatePmPreview()">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="pm-handle-hint"></div>
+      </div>
+
+      <!-- Field 3: Closing instruction -->
+      <div class="field" style="margin-bottom:4px;">
+        <label>Closing Instruction <span style="font-weight:400;color:var(--text-muted);">— booking requirement</span></label>
+        <input type="text" id="pm-note" placeholder="e.g. Send 20% of total to secure your booking" oninput="updatePmPreview()">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Deposit requirement, timing, or any extra instruction for clients</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closePaymentMethodModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePaymentMethod()">
+        <i class="fas fa-save"></i> <span id="pmSaveBtnText">Save Method</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BOOKING STYLE MODAL ══════════════════════════ -->
+<div class="modal-overlay" id="styleModal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h3 id="styleModalTitle">Add Style</h3>
+      <button class="modal-close" onclick="closeStyleModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Basic info -->
+    <div class="form-grid" style="margin-bottom:20px;">
+      <div class="field span2">
+        <label>Style Name *</label>
+        <input type="text" id="bs-name" placeholder="e.g. Knotless Braids">
+      </div>
+      <div class="field">
+        <label>Category *</label>
+        <input type="text" id="bs-category" placeholder="e.g. Box Braids" list="bs-cat-list">
+        <datalist id="bs-cat-list">
+          <option value="Box Braids">
+          <option value="Boho & Goddess">
+          <option value="Locs & Twists">
+          <option value="Specialty">
+        </datalist>
+      </div>
+      <div class="field">
+        <label>Sort Order</label>
+        <input type="number" id="bs-order" min="0" placeholder="0">
+      </div>
+      <div class="field span2">
+        <label>Description</label>
+        <textarea id="bs-desc" placeholder="Short description of this style…" style="min-height:60px;"></textarea>
+      </div>
+      <div class="field span2">
+        <label>Hair Note (shown to clients at booking)</label>
+        <textarea id="bs-hairnote" placeholder="e.g. Hair included · Human hair upgrade available for $40" style="min-height:60px;"></textarea>
+      </div>
+    </div>
+
+    <!-- Options / Variants -->
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Options &amp; Pricing</div>
+        <button class="btn btn-outline btn-sm" onclick="addVariantRow()"><i class="fas fa-plus"></i> Add Option</button>
+      </div>
+      <div id="variantsEditor"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeStyleModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBookingStyle()">
+        <i class="fas fa-save"></i> <span id="styleSaveBtnText">Save Style</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>

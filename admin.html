@@ -35,8 +35,18 @@
                    doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc,
                    updateDoc, serverTimestamp, query, orderBy, onSnapshot };
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
+        // Verify this user exists in the admins collection
+        const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+        if (!adminSnap.exists()) {
+          // Not an admin — sign them out immediately and show error
+          await signOut(auth);
+          document.getElementById('loginScreen').style.display  = 'flex';
+          document.getElementById('adminShell').style.display   = 'none';
+          document.getElementById('loginError').textContent     = 'Access denied. This account is not authorised for the admin dashboard.';
+          return;
+        }
         document.getElementById('loginScreen').style.display  = 'none';
         document.getElementById('adminShell').style.display   = 'flex';
         document.getElementById('adminEmail').textContent     = user.email;

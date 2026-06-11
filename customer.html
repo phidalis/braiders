@@ -690,5 +690,156 @@
     if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
   });
   </script>
+
+  <!-- ── FLOATING SOCIAL BUTTON ── -->
+  <style>
+    .fab-social-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 22px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .fab-social-item {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+      opacity: 0;
+      transform: translateY(16px) scale(0.7);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.18s ease;
+      will-change: opacity, transform;
+    }
+    .fab-social-item:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.38);
+      transform: translateY(0) scale(1.08) !important;
+    }
+    .fab-social-item.fab-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .fab-tiktok    { background: #010101; }
+    .fab-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+    .fab-facebook  { background: #1877f2; }
+    .fab-twitter   { background: #1da1f2; }
+    .fab-pinterest { background: #e60023; }
+    .fab-youtube   { background: #ff0000; }
+    .fab-social-main {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #9B1FBE, #E8447A);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 4px 18px rgba(155,31,190,0.5);
+      transition: transform 0.22s ease, box-shadow 0.18s ease;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .fab-social-main:hover {
+      box-shadow: 0 6px 24px rgba(155,31,190,0.65);
+      transform: scale(1.07);
+    }
+    .fab-social-main i {
+      transition: transform 0.28s ease, opacity 0.2s ease;
+      position: absolute;
+    }
+    .fab-social-main .fab-icon-msg   { opacity: 1; transform: scale(1) rotate(0deg); }
+    .fab-social-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
+    .fab-social-wrap.open .fab-icon-msg   { opacity: 0; transform: scale(0.5) rotate(90deg); }
+    .fab-social-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
+  </style>
+
+  <div class="fab-social-wrap" id="fabSocialWrap">
+    <button class="fab-social-main" id="fabSocialBtn" aria-label="Social links">
+      <i class="fas fa-comment-dots fab-icon-msg"></i>
+      <i class="fas fa-times fab-icon-close"></i>
+    </button>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const FAB_CONFIG = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289"
+    };
+
+    // Reuse existing Firebase app if already initialised on this page
+    const fabApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FAB_CONFIG, 'fab-social');
+    const fabDb  = getFirestore(fabApp);
+
+    const PLATFORMS = [
+      { key: 'tiktok',    icon: 'fab fa-tiktok',      cls: 'fab-tiktok',    label: 'TikTok'    },
+      { key: 'instagram', icon: 'fab fa-instagram',   cls: 'fab-instagram', label: 'Instagram' },
+      { key: 'facebook',  icon: 'fab fa-facebook-f',  cls: 'fab-facebook',  label: 'Facebook'  },
+      { key: 'twitter',   icon: 'fab fa-twitter',     cls: 'fab-twitter',   label: 'Twitter'   },
+      { key: 'pinterest', icon: 'fab fa-pinterest-p', cls: 'fab-pinterest', label: 'Pinterest' },
+      { key: 'youtube',   icon: 'fab fa-youtube',     cls: 'fab-youtube',   label: 'YouTube'   },
+    ];
+
+    const wrap = document.getElementById('fabSocialWrap');
+    const btn  = document.getElementById('fabSocialBtn');
+    let items  = [];
+
+    function buildItems(social) {
+      wrap.querySelectorAll('.fab-social-item').forEach(el => el.remove());
+      items = [];
+      const active = PLATFORMS.filter(p => social[p.key]);
+      [...active].reverse().forEach(p => {
+        const a = document.createElement('a');
+        a.href      = social[p.key];
+        a.target    = '_blank';
+        a.rel       = 'noopener noreferrer';
+        a.className = `fab-social-item ${p.cls}`;
+        a.setAttribute('aria-label', p.label);
+        a.innerHTML = `<i class="${p.icon}"></i>`;
+        wrap.insertBefore(a, btn);
+        items.push(a);
+      });
+    }
+
+    function openMenu() {
+      wrap.classList.add('open');
+      items.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
+    }
+
+    function closeMenu() {
+      wrap.classList.remove('open');
+      [...items].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
+    }
+
+    btn.addEventListener('click', () => {
+      wrap.classList.contains('open') ? closeMenu() : openMenu();
+    });
+
+    try {
+      const snap = await getDoc(doc(fabDb, 'settings', 'siteConfig'));
+      if (snap.exists()) buildItems(snap.data().social || {});
+    } catch(e) {}
+  </script>
+  <!-- ── END FLOATING SOCIAL BUTTON ── -->
+
 </body>
 </html>

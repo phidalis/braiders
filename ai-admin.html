@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ani Braids — AI Chat Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="module">
+    import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, getDocs, addDoc, deleteDoc,
+             collection, serverTimestamp, query, orderBy, limit }
+                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // expose for inline handlers
+    window._fb = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+                   doc, getDoc, setDoc, getDocs, addDoc, deleteDoc,
+                   collection, serverTimestamp, query, orderBy, limit };
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) { showLogin(); return; }
+      const snap = await getDoc(doc(db, 'admins', user.uid));
+      if (!snap.exists()) { await signOut(auth); showLogin('Access denied.'); return; }
+      document.getElementById('adminEmail').textContent = user.email;
+      showApp();
+      loadAll();
+    });
+  </script>
+  <style>
+    :root {
+      --brand:#9B1FBE; --brand-dark:#6B0E85; --pink:#E8447A;
+      --gold:#D4A843; --dark2:#1A1A1A; --dark3:#222;
+      --text:#2A2A2A; --text-muted:#888; --light:#F8F4FB;
+      --white:#fff; --sidebar-w:230px;
+      --radius:10px; --shadow:0 2px 12px rgba(0,0,0,0.10);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:#F0EBF5;color:var(--text);min-height:100vh;}
+
+    /* ── LOGIN ── */
+    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1A0028,#6B0E85);}
+    .login-card{background:#fff;border-radius:18px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;}
+    .login-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--brand);margin-bottom:4px;}
+    .login-logo span{color:var(--pink);}
+    .login-sub{font-size:12px;color:var(--text-muted);margin-bottom:28px;letter-spacing:1px;text-transform:uppercase;}
+    .login-card input{width:100%;border:1.5px solid #e0d0f0;border-radius:8px;padding:11px 14px;font-size:14px;font-family:inherit;margin-bottom:12px;outline:none;transition:border-color .2s;}
+    .login-card input:focus{border-color:var(--brand);}
+    .login-btn{width:100%;background:linear-gradient(135deg,var(--brand),var(--pink));color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s;}
+    .login-btn:hover{opacity:.9;}
+    #loginError{color:#e53;font-size:13px;margin-top:8px;min-height:18px;}
+
+    /* ── APP SHELL ── */
+    #app-screen{display:none;}
+    .shell{display:flex;min-height:100vh;}
+    .sidebar{width:var(--sidebar-w);background:var(--dark2);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+    .sidebar-logo{padding:22px 18px 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
+    .sidebar-logo a{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--brand);text-decoration:none;}
+    .sidebar-logo a span{color:var(--pink);}
+    .sidebar-logo p{font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:10px 0;}
+    .nav-label{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;padding:12px 18px 5px;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:13.5px;transition:background .15s,color .15s;border-radius:0;}
+    .nav-item:hover{background:rgba(255,255,255,0.05);color:#fff;}
+    .nav-item.active{background:linear-gradient(90deg,rgba(155,31,190,0.3),transparent);color:#fff;border-left:3px solid var(--brand);}
+    .nav-item i{width:16px;text-align:center;font-size:13px;}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;}
+    .sidebar-user{font-size:11px;color:var(--text-muted);}
+    .sidebar-user strong{display:block;color:rgba(255,255,255,0.7);font-size:12px;}
+    .btn-logout{background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;transition:all .15s;}
+    .btn-logout:hover{background:rgba(255,0,0,0.12);color:#ff7;border-color:rgba(255,100,100,0.3);}
+
+    /* ── MAIN ── */
+    .main-wrap{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+    .topbar-admin{background:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ece4f5;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+    .topbar-admin h1{font-size:17px;font-weight:600;color:var(--text);}
+    .content-area{padding:28px;flex:1;}
+
+    /* ── PANELS ── */
+    .panel{display:none;}
+    .panel.active{display:block;}
+
+    /* ── CARDS ── */
+    .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+    .card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+    .card-title i{color:var(--brand);}
+
+    /* ── FORM ELEMENTS ── */
+    .field{margin-bottom:16px;}
+    .field label{display:block;font-size:12.5px;font-weight:500;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+    .field input,.field textarea,.field select{width:100%;border:1.5px solid #e0d0f0;border-radius:8px;padding:10px 13px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .2s;background:#fdf9ff;color:var(--text);}
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--brand);}
+    .field textarea{resize:vertical;min-height:80px;}
+    .field .hint{font-size:11px;color:var(--text-muted);margin-top:4px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+    .toggle-label{font-size:13.5px;font-weight:500;}
+    .toggle{position:relative;width:44px;height:24px;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .slider-tog{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:.3s;}
+    .slider-tog:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+    input:checked + .slider-tog{background:var(--brand);}
+    input:checked + .slider-tog:before{transform:translateX(20px);}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s,transform .15s;}
+    .btn:hover{opacity:.9;}
+    .btn:active{transform:scale(.98);}
+    .btn-primary{background:linear-gradient(135deg,var(--brand),var(--pink));color:#fff;}
+    .btn-danger{background:#fee;color:#c00;border:1px solid #fcc;}
+    .btn-danger:hover{background:#fdd;}
+    .btn-outline{background:#fff;color:var(--brand);border:1.5px solid var(--brand);}
+    .btn-sm{padding:6px 12px;font-size:12px;}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+    /* ── KB TABLE ── */
+    .kb-table{width:100%;border-collapse:collapse;}
+    .kb-table th{text-align:left;font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:2px solid #ece4f5;}
+    .kb-table td{padding:10px 10px;border-bottom:1px solid #f5f0fa;font-size:13px;vertical-align:top;}
+    .kb-table tr:last-child td{border-bottom:none;}
+    .kb-table tr:hover td{background:#fdf9ff;}
+    .kw-pill{display:inline-block;background:#f0e6fa;color:var(--brand);border-radius:50px;padding:2px 9px;font-size:11px;margin:2px;}
+    .answer-preview{color:var(--text-muted);font-size:12px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    /* ── STATS GRID ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:22px;}
+    .stat-card{background:#fff;border-radius:var(--radius);padding:18px 16px;box-shadow:var(--shadow);border-left:4px solid var(--brand);}
+    .stat-card.pink{border-color:var(--pink);}
+    .stat-card.gold{border-color:var(--gold);}
+    .stat-card.green{border-color:#28a745;}
+    .stat-card .label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;}
+    .stat-card .sub{font-size:11px;color:var(--text-muted);margin-top:3px;}
+
+    /* ── CHAT LOG ── */
+    .log-item{border:1px solid #ece4f5;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fdf9ff;}
+    .log-meta{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:10px;align-items:center;}
+    .log-source-badge{background:#f0e6fa;color:var(--brand);border-radius:50px;padding:1px 8px;font-size:11px;}
+    .log-source-badge.ai{background:#fff3e0;color:#D4A843;}
+    .log-q{font-size:13px;font-weight:500;margin-bottom:4px;}
+    .log-a{font-size:12px;color:var(--text-muted);}
+
+    /* ── MODAL ── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:#fff;border-radius:14px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+    .modal-header{padding:18px 22px;border-bottom:1px solid #ece4f5;display:flex;align-items:center;justify-content:space-between;}
+    .modal-header h3{font-size:15px;font-weight:600;}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);}
+    .modal-body{padding:22px;}
+    .modal-footer{padding:14px 22px;border-top:1px solid #ece4f5;display:flex;gap:10px;justify-content:flex-end;}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:#222;color:#fff;padding:10px 22px;border-radius:50px;font-size:13px;z-index:99999;opacity:0;transition:all .3s;pointer-events:none;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* ── EMPTY ── */
+    .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+    .empty-state i{font-size:36px;margin-bottom:10px;opacity:.4;}
+    .empty-state p{font-size:14px;}
+
+    /* ── KEY DISPLAY ── */
+    .key-display{font-family:monospace;background:#f5f0fa;border:1px solid #e0d0f0;border-radius:6px;padding:8px 12px;font-size:13px;word-break:break-all;margin-top:6px;}
+
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);transition:transform .3s;}
+      .sidebar.open{transform:translateX(0);}
+      .main-wrap{margin-left:0;}
+      .stats-grid{grid-template-columns:1fr 1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Ani <span>Braids</span></div>
+    <div class="login-sub">AI Chat Admin</div>
+    <input type="email" id="loginEmail" placeholder="Admin email">
+    <input type="password" id="loginPass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ═══════ APP ═══════ -->
+<div id="app-screen">
+  <div class="shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html" target="_blank">Ani <span>Braids</span></a>
+        <p>AI Chat Admin</p>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active" data-panel="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</div>
+
+        <div class="nav-label">AI Config</div>
+        <div class="nav-item" data-panel="settings"><i class="fas fa-cog"></i> API Settings</div>
+        <div class="nav-item" data-panel="prompt"><i class="fas fa-robot"></i> AI Personality</div>
+
+        <div class="nav-label">Knowledge Base</div>
+        <div class="nav-item" data-panel="kb"><i class="fas fa-book"></i> KB Entries</div>
+        <div class="nav-item" data-panel="logs"><i class="fas fa-comments"></i> Chat Logs</div>
+
+        <div class="nav-label">Links</div>
+        <div class="nav-item" onclick="window.open('admin.html')"><i class="fas fa-arrow-left"></i> Main Admin</div>
+        <div class="nav-item" onclick="window.open('index.html')"><i class="fas fa-external-link-alt"></i> View Site</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <span>Signed in as</span>
+          <strong id="adminEmail"></strong>
+        </div>
+        <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-wrap">
+      <div class="topbar-admin">
+        <h1 id="panelTitle">Dashboard</h1>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div id="chat-status-pill" style="font-size:12px;padding:4px 12px;border-radius:50px;background:#e8f5e9;color:#2e7d32;font-weight:500;">
+            <i class="fas fa-circle" style="font-size:8px;margin-right:4px;"></i>Chat Online
+          </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="panel active" id="panel-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="label">KB Entries</div>
+              <div class="value" id="stat-kb">—</div>
+              <div class="sub">Knowledge items</div>
+            </div>
+            <div class="stat-card pink">
+              <div class="label">Chat Logs</div>
+              <div class="value" id="stat-logs">—</div>
+              <div class="sub">Conversations logged</div>
+            </div>
+            <div class="stat-card gold">
+              <div class="label">AI Model</div>
+              <div class="value" id="stat-model" style="font-size:15px;margin-top:4px;">—</div>
+              <div class="sub">Gemini model</div>
+            </div>
+            <div class="stat-card green">
+              <div class="label">Status</div>
+              <div class="value" id="stat-status" style="font-size:15px;margin-top:4px;">—</div>
+              <div class="sub">Chat widget</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="showPanel('kb')"><i class="fas fa-plus"></i> Add KB Entry</button>
+              <button class="btn btn-outline" onclick="showPanel('settings')"><i class="fas fa-key"></i> Update API Key</button>
+              <button class="btn btn-outline" onclick="showPanel('logs')"><i class="fas fa-comments"></i> View Chat Logs</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i class="fas fa-info-circle"></i> Integration Guide</div>
+            <p style="font-size:13.5px;line-height:1.8;color:var(--text-muted);">
+              Add the chat widget to every page by pasting this line before <code>&lt;/body&gt;</code>:
+            </p>
+            <div class="key-display" style="margin-top:10px;">&lt;script src="ani-chat.js"&gt;&lt;/script&gt;</div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
+              The widget auto-loads your Gemini API key and knowledge base from Firestore on every page load.
+              Changes made here are live immediately — no redeployment needed.
+            </p>
+          </div>
+        </div>
+
+        <!-- ── API SETTINGS ── -->
+        <div class="panel" id="panel-settings">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-key"></i> Gemini API Key</div>
+            <div class="field">
+              <label>API Key</label>
+              <input type="password" id="cfg-apikey" placeholder="AIzaSy…">
+              <div class="hint">Get your key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--brand);">aistudio.google.com</a>. Stored securely in Firestore.</div>
+            </div>
+            <div class="field">
+              <label>Gemini Model</label>
+              <select id="cfg-model">
+                <option value="gemini-2.0-flash">gemini-2.0-flash (Recommended — fast & cheap)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro (Most capable)</option>
+                <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (Fastest)</option>
+              </select>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Chat Widget Enabled</span>
+              <label class="toggle"><input type="checkbox" id="cfg-enabled" checked><span class="slider-tog"></span></label>
+            </div>
+            <div style="margin-top:18px;">
+              <button class="btn btn-primary" onclick="saveApiSettings()"><i class="fas fa-save"></i> Save Settings</button>
+              <button class="btn btn-outline" style="margin-left:10px;" onclick="testApiKey()"><i class="fas fa-vial"></i> Test Key</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── AI PERSONALITY ── -->
+        <div class="panel" id="panel-prompt">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-robot"></i> AI Personality & System Prompt</div>
+            <div class="field">
+              <label>Bot Name</label>
+              <input type="text" id="cfg-botname" placeholder="Zara" value="Zara">
+              <div class="hint">The name the AI introduces itself as (update in ani-chat.js greeting too).</div>
+            </div>
+            <div class="field">
+              <label>System Prompt</label>
+              <textarea id="cfg-systemprompt" style="min-height:180px;" placeholder="You are Zara, the friendly AI assistant for Ani Braids…"></textarea>
+              <div class="hint">This is the core instruction Gemini follows. Be specific about tone, what to answer, and what to avoid.</div>
+            </div>
+            <div class="field">
+              <label>KB Match Threshold <span id="thresh-display">0.35</span></label>
+              <input type="range" id="cfg-threshold" min="0.1" max="0.9" step="0.05" value="0.35"
+                     oninput="document.getElementById('thresh-display').textContent=this.value">
+              <div class="hint">Higher = stricter KB matching before falling back to Gemini. 0.35 is a good default.</div>
+            </div>
+            <button class="btn btn-primary" onclick="savePromptSettings()"><i class="fas fa-save"></i> Save Personality</button>
+          </div>
+        </div>
+
+        <!-- ── KNOWLEDGE BASE ── -->
+        <div class="panel" id="panel-kb">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div>
+              <h2 style="font-size:16px;font-weight:600;">Knowledge Base</h2>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Custom entries that override the built-in KB. Searched first before Gemini.</p>
+            </div>
+            <button class="btn btn-primary" onclick="openKbModal()"><i class="fas fa-plus"></i> Add Entry</button>
+          </div>
+
+          <div class="card" style="padding:0;overflow:hidden;">
+            <table class="kb-table">
+              <thead>
+                <tr>
+                  <th>Keywords</th>
+                  <th>Answer Preview</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="kb-tbody">
+                <tr><td colspan="3"><div class="empty-state"><i class="fas fa-book"></i><p>Loading…</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── CHAT LOGS ── -->
+        <div class="panel" id="panel-logs">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div>
+              <h2 style="font-size:16px;font-weight:600;">Chat Logs</h2>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Recent questions from visitors. Useful for improving the KB.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="loadLogs()"><i class="fas fa-refresh"></i> Refresh</button>
+          </div>
+          <div id="logs-list"><div class="empty-state"><i class="fas fa-comments"></i><p>Loading logs…</p></div></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
+            💡 <strong>Tip:</strong> Questions answered by Gemini (AI badge) that come up often should be added to the Knowledge Base to reduce API costs.
+          </p>
+        </div>
+
+      </div><!-- /content-area -->
+    </div><!-- /main-wrap -->
+  </div><!-- /shell -->
+</div><!-- /app-screen -->
+
+<!-- ── KB MODAL ── -->
+<div class="modal-overlay" id="kbModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="kbModalTitle">Add Knowledge Base Entry</h3>
+      <button class="modal-close" onclick="closeKbModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="kb-edit-id">
+      <div class="field">
+        <label>Keywords (comma separated)</label>
+        <input type="text" id="kb-keywords" placeholder="book, booking, appointment, schedule">
+        <div class="hint">Words/phrases that trigger this answer. The more, the better.</div>
+      </div>
+      <div class="field">
+        <label>Answer</label>
+        <textarea id="kb-answer" style="min-height:140px;" placeholder="📅 To book an appointment, visit our Appointment page…&#10;&#10;Use **bold** for emphasis and [link text](url) for links."></textarea>
+        <div class="hint">Supports **bold**, *italic*, [links](url), and line breaks.</div>
+      </div>
+      <div class="field">
+        <label>Category <span style="font-weight:400;color:var(--text-muted);">(optional, for organisation)</span></label>
+        <input type="text" id="kb-category" placeholder="e.g. Booking, Pricing, Services">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeKbModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveKbEntry()"><i class="fas fa-save"></i> Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  /* ── HELPERS ── */
+  function showLogin(msg) {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app-screen').style.display='none';
+    if(msg) document.getElementById('loginError').textContent=msg;
+  }
+  function showApp() {
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+  }
+  function toast(msg, ok=true) {
+    const el=document.getElementById('toast');
+    el.textContent=msg;
+    el.style.background=ok?'#333':'#c00';
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),2800);
+  }
+  async function doLogin() {
+    const { auth, signInWithEmailAndPassword } = window._fb;
+    const email=document.getElementById('loginEmail').value.trim();
+    const pass=document.getElementById('loginPass').value;
+    document.getElementById('loginError').textContent='';
+    try { await signInWithEmailAndPassword(auth, email, pass); }
+    catch(e){ document.getElementById('loginError').textContent='Login failed: '+e.message; }
+  }
+  async function doLogout() {
+    await window._fb.signOut(window._fb.auth);
+    showLogin();
+  }
+
+  /* ── PANELS ── */
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('panel-'+name).classList.add('active');
+    document.querySelector(`.nav-item[data-panel="${name}"]`)?.classList.add('active');
+    const titles={dashboard:'Dashboard',settings:'API Settings',prompt:'AI Personality',kb:'Knowledge Base',logs:'Chat Logs'};
+    document.getElementById('panelTitle').textContent=titles[name]||name;
+  }
+  document.querySelectorAll('.nav-item[data-panel]').forEach(el=>{
+    el.addEventListener('click',()=>showPanel(el.dataset.panel));
+  });
+
+  /* ── LOAD ALL ── */
+  async function loadAll() {
+    loadDashboard();
+    loadApiSettings();
+    loadPromptSettings();
+    loadKb();
+    loadLogs();
+  }
+
+  /* ── DASHBOARD ── */
+  async function loadDashboard() {
+    const {db,getDocs,getDoc,collection,doc}=window._fb;
+    const [kbSnap,logSnap,cfg]=await Promise.all([
+      getDocs(collection(db,'aiKnowledge')),
+      getDocs(collection(db,'aiChatLogs')),
+      getDoc(doc(db,'settings','aiChat'))
+    ]);
+    document.getElementById('stat-kb').textContent=kbSnap.size;
+    document.getElementById('stat-logs').textContent=logSnap.size;
+    const d=cfg.exists()?cfg.data():{};
+    document.getElementById('stat-model').textContent=d.geminiModel||'gemini-2.0-flash';
+    const enabled=typeof d.enabled==='boolean'?d.enabled:true;
+    const statusEl=document.getElementById('stat-status');
+    statusEl.textContent=enabled?'Enabled':'Disabled';
+    statusEl.style.color=enabled?'#28a745':'#dc3545';
+    const pill=document.getElementById('chat-status-pill');
+    pill.style.background=enabled?'#e8f5e9':'#fce4e4';
+    pill.style.color=enabled?'#2e7d32':'#c00';
+    pill.innerHTML=`<i class="fas fa-circle" style="font-size:8px;margin-right:4px;"></i>Chat ${enabled?'Online':'Offline'}`;
+  }
+
+  /* ── API SETTINGS ── */
+  async function loadApiSettings() {
+    const {db,getDoc,doc}=window._fb;
+    const snap=await getDoc(doc(db,'settings','aiChat'));
+    if(!snap.exists()) return;
+    const d=snap.data();
+    if(d.geminiKey) document.getElementById('cfg-apikey').value=d.geminiKey;
+    if(d.geminiModel) document.getElementById('cfg-model').value=d.geminiModel;
+    if(typeof d.enabled==='boolean') document.getElementById('cfg-enabled').checked=d.enabled;
+  }
+  async function saveApiSettings() {
+    const {db,doc,setDoc}=window._fb;
+    const key=document.getElementById('cfg-apikey').value.trim();
+    const model=document.getElementById('cfg-model').value;
+    const enabled=document.getElementById('cfg-enabled').checked;
+    if(!key){toast('Please enter an API key','error');return;}
+    await setDoc(doc(db,'settings','aiChat'),{geminiKey:key,geminiModel:model,enabled},{merge:true});
+    toast('✅ API settings saved!');
+    loadDashboard();
+  }
+  async function testApiKey() {
+    const key=document.getElementById('cfg-apikey').value.trim();
+    const model=document.getElementById('cfg-model').value||'gemini-2.0-flash';
+    if(!key){toast('Enter an API key first','error');return;}
+    toast('Testing key…');
+    try {
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'Say OK'}]}]})
+      });
+      const d=await r.json();
+      if(d.candidates) toast('✅ Key works! Response: '+d.candidates[0].content.parts[0].text);
+      else toast('❌ Key error: '+(d.error?.message||'Unknown'),'error');
+    } catch(e){ toast('❌ Network error: '+e.message,'error'); }
+  }
+
+  /* ── PROMPT SETTINGS ── */
+  async function loadPromptSettings() {
+    const {db,getDoc,doc}=window._fb;
+    const snap=await getDoc(doc(db,'settings','aiChat'));
+    if(!snap.exists()) return;
+    const d=snap.data();
+    if(d.systemPrompt) document.getElementById('cfg-systemprompt').value=d.systemPrompt;
+    if(d.botName) document.getElementById('cfg-botname').value=d.botName;
+    if(d.kbThreshold){
+      document.getElementById('cfg-threshold').value=d.kbThreshold;
+      document.getElementById('thresh-display').textContent=d.kbThreshold;
+    }
+  }
+  async function savePromptSettings() {
+    const {db,doc,setDoc}=window._fb;
+    const systemPrompt=document.getElementById('cfg-systemprompt').value.trim();
+    const botName=document.getElementById('cfg-botname').value.trim();
+    const kbThreshold=parseFloat(document.getElementById('cfg-threshold').value);
+    if(!systemPrompt){toast('System prompt cannot be empty','error');return;}
+    await setDoc(doc(db,'settings','aiChat'),{systemPrompt,botName,kbThreshold},{merge:true});
+    toast('✅ AI personality saved!');
+  }
+
+  /* ── KNOWLEDGE BASE ── */
+  async function loadKb() {
+    const {db,getDocs,collection}=window._fb;
+    const snap=await getDocs(collection(db,'aiKnowledge'));
+    const tbody=document.getElementById('kb-tbody');
+    if(snap.empty){
+      tbody.innerHTML='<tr><td colspan="3"><div class="empty-state"><i class="fas fa-book"></i><p>No custom entries yet. Add some above!</p></div></td></tr>';
+      return;
+    }
+    let html='';
+    snap.forEach(d=>{
+      const e=d.data();
+      const kws=(e.keywords||[]).map(k=>`<span class="kw-pill">${k}</span>`).join('');
+      const preview=(e.answer||'').replace(/\*\*/g,'').replace(/\n/g,' ').substring(0,80)+'…';
+      html+=`<tr>
+        <td>${kws}</td>
+        <td><div class="answer-preview">${preview}</div></td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="editKbEntry('${d.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="deleteKbEntry('${d.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    tbody.innerHTML=html;
+    document.getElementById('stat-kb').textContent=snap.size;
+  }
+
+  function openKbModal(id) {
+    document.getElementById('kb-edit-id').value='';
+    document.getElementById('kb-keywords').value='';
+    document.getElementById('kb-answer').value='';
+    document.getElementById('kb-category').value='';
+    document.getElementById('kbModalTitle').textContent='Add Knowledge Base Entry';
+    document.getElementById('kbModal').classList.add('open');
+  }
+  function closeKbModal(){ document.getElementById('kbModal').classList.remove('open'); }
+
+  async function editKbEntry(id) {
+    const {db,getDoc,doc}=window._fb;
+    const snap=await getDoc(doc(db,'aiKnowledge',id));
+    if(!snap.exists()) return;
+    const d=snap.data();
+    document.getElementById('kb-edit-id').value=id;
+    document.getElementById('kb-keywords').value=(d.keywords||[]).join(', ');
+    document.getElementById('kb-answer').value=d.answer||'';
+    document.getElementById('kb-category').value=d.category||'';
+    document.getElementById('kbModalTitle').textContent='Edit KB Entry';
+    document.getElementById('kbModal').classList.add('open');
+  }
+
+  async function saveKbEntry() {
+    const {db,doc,addDoc,setDoc,collection,serverTimestamp}=window._fb;
+    const id=document.getElementById('kb-edit-id').value;
+    const keywords=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+    const answer=document.getElementById('kb-answer').value.trim();
+    const category=document.getElementById('kb-category').value.trim();
+    if(!keywords.length||!answer){toast('Fill in keywords and answer','error');return;}
+    const data={keywords,answer,category,updatedAt:serverTimestamp()};
+    if(id) await setDoc(doc(db,'aiKnowledge',id),data,{merge:true});
+    else   await addDoc(collection(db,'aiKnowledge'),{...data,createdAt:serverTimestamp()});
+    toast('✅ KB entry saved!');
+    closeKbModal();
+    loadKb();
+  }
+
+  async function deleteKbEntry(id) {
+    if(!confirm('Delete this knowledge base entry?')) return;
+    const {db,doc,deleteDoc}=window._fb;
+    await deleteDoc(doc(db,'aiKnowledge',id));
+    toast('Deleted.');
+    loadKb();
+  }
+
+  /* ── CHAT LOGS ── */
+  async function loadLogs() {
+    const {db,getDocs,collection,query,orderBy,limit}=window._fb;
+    const snap=await getDocs(query(collection(db,'aiChatLogs'),orderBy('createdAt','desc'),limit(50)));
+    const container=document.getElementById('logs-list');
+    if(snap.empty){
+      container.innerHTML='<div class="empty-state"><i class="fas fa-comments"></i><p>No chat logs yet. Logs appear here once visitors use the chat widget.</p><p style="font-size:12px;margin-top:8px;">Note: Make sure you call <code>logChat()</code> in ani-chat.js to enable logging.</p></div>';
+      return;
+    }
+    let html='';
+    snap.forEach(d=>{
+      const e=d.data();
+      const date=e.createdAt?.toDate?new Date(e.createdAt.toDate()).toLocaleString():'—';
+      const sourceBadge=e.source==='kb'
+        ?'<span class="log-source-badge">📚 Knowledge Base</span>'
+        :'<span class="log-source-badge ai">✨ Gemini AI</span>';
+      html+=`<div class="log-item">
+        <div class="log-meta"><span>${date}</span>${sourceBadge}</div>
+        <div class="log-q">Q: ${e.question||'—'}</div>
+        <div class="log-a">A: ${(e.answer||'').substring(0,150)}…</div>
+      </div>`;
+    });
+    container.innerHTML=html;
+  }
+</script>
+</body>
+</html>

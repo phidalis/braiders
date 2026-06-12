@@ -4,6 +4,12 @@
   <link rel="icon" type="image/png" href="anibraidsfavicon.jpeg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <title>Portfolio – Ani Braids – Premium Braiding Studio</title>
   <meta name="description" content="Browse the Ani Braids style gallery – real photos of knotless box braids, cornrows, twists and more. Get inspired before your next appointment.">
   <meta property="og:title" content="Style Portfolio – Ani Braids">
@@ -137,7 +143,33 @@
     .sticky-header-wrap { position: sticky; top: 0; z-index: 1000; }
     .header-inner {
       max-width: 1200px; margin: 0 auto; padding: 0 24px;
-      height: 72px; display: flex; align-items: center; justify-content: space-between;
+      height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    /* Hamburger menu button */
+    .header-menu-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--brand); font-size: 22px; padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; transition: background 0.18s, color 0.18s;
+      flex-shrink: 0;
+    }
+    .header-menu-btn:hover { background: rgba(155,31,190,0.08); color: var(--pink); }
+    /* Header right side icons */
+    .header-right {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .header-icon-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--brand); font-size: 19px; padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; transition: background 0.18s, color 0.18s;
+      position: relative;
+    }
+    .header-icon-btn:hover { background: rgba(155,31,190,0.08); color: var(--pink); }
+    .header-icon-btn .notif-badge {
+      position: absolute; top: 4px; right: 4px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--pink); border: 2px solid var(--white);
     }
     .logo {
       font-family: var(--font-heading); font-size: 28px; font-weight: 700;
@@ -147,14 +179,22 @@
     .header-search {
       display: flex; align-items: center; background: var(--light);
       border: 1.5px solid rgba(155,31,190,0.2); border-radius: 50px; padding: 6px 16px; gap: 8px;
+      flex: 1; max-width: 240px;
     }
     .header-search input {
       border: none; background: transparent; outline: none;
-      font-family: var(--font-body); font-size: 14px; color: var(--text); width: 180px;
+      font-family: var(--font-body); font-size: 14px; color: var(--text); width: 100%;
     }
     .header-search input::placeholder { color: #aaa; }
-    .header-search button { background: none; border: none; cursor: pointer; color: var(--brand); font-size: 15px; }
+    .header-search button { background: none; border: none; cursor: pointer; color: var(--brand); font-size: 15px; flex-shrink: 0; }
     .header-search button:hover { color: var(--pink); }
+    @media (max-width: 768px) {
+      .header-search { max-width: 160px; }
+      .logo { font-size: 22px; }
+    }
+    @media (max-width: 480px) {
+      .header-search { display: none; }
+    }
 
     /* ── SECONDARY NAV ── */
     .secondary-nav { background: #111111; border-top: 1px solid rgba(255,255,255,0.06); }
@@ -191,8 +231,10 @@
         border-radius: 0; font-size: 14px; white-space: normal;
       }
       .secondary-nav-inner a:last-child { border-bottom: none; }
-      .header-search input { width: 130px; }
+      .header-search { max-width: 130px; }
     }
+
+    .secondary-nav-inner.desktop-hidden { display: none !important; }
 
     /* ── PAGE HERO ── */
     .page-hero {
@@ -733,10 +775,29 @@
   <div class="sticky-header-wrap">
     <header>
       <div class="header-inner">
+        <!-- Hamburger menu (three bars) on the LEFT -->
+        <button class="header-menu-btn" id="headerMenuBtn" aria-label="Open navigation menu">
+          <i class="fas fa-bars"></i>
+        </button>
+        <!-- Logo -->
         <a href="index.html" class="logo">Ani <span>Braids</span></a>
+        <!-- Search bar -->
         <div class="header-search">
-          <input type="text" placeholder="Search...">
+          <input type="text" placeholder="Search styles...">
           <button aria-label="Search"><i class="fas fa-search"></i></button>
+        </div>
+        <!-- Right-side icons: Message, Heart, Profile -->
+        <div class="header-right">
+          <button class="header-icon-btn" aria-label="Messages" onclick="typeof window.aniChatOpen==='function'?window.aniChatOpen():window.dispatchEvent(new Event('ani:openChat'))">
+            <i class="fas fa-comment-dots"></i>
+            <span class="notif-badge"></span>
+          </button>
+          <button class="header-icon-btn" aria-label="Saved styles">
+            <i class="fas fa-heart"></i>
+          </button>
+          <a href="customer.html" class="header-icon-btn" aria-label="My Account" style="text-decoration:none;">
+            <i class="fas fa-user-circle"></i>
+          </a>
         </div>
       </div>
     </header>
@@ -749,16 +810,16 @@
         </button>
       </div>
       <div class="secondary-nav-inner" id="secondaryNavLinks">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="appointment.html">Appointment</a>
-        <a href="services.html">Services</a>
-        <a href="portfolio.html" class="active">Portfolio</a>
-        <a href="customer.html">Customer Cabinet</a>
-        <a href="contact.html">Contact us</a>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="refund.html">Refund &amp; Returns</a>
-        <a href="reviews.html">Reviews</a>
+        <a href="index.html"><i class="fas fa-home" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Home</a>
+        <a href="about.html"><i class="fas fa-star" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>About</a>
+        <a href="appointment.html"><i class="fas fa-calendar-check" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Appointment</a>
+        <a href="services.html"><i class="fas fa-scissors" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Services</a>
+        <a href="portfolio.html" class="active"><i class="fas fa-images" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Portfolio</a>
+        <a href="customer.html"><i class="fas fa-user-circle" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Customer Cabinet</a>
+        <a href="contact.html"><i class="fas fa-envelope" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Contact us</a>
+        <a href="privacy.html"><i class="fas fa-shield-alt" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Privacy Policy</a>
+        <a href="refund.html"><i class="fas fa-undo-alt" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Refund &amp; Returns</a>
+        <a href="reviews.html"><i class="fas fa-comment-dots" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Reviews</a>
       </div>
     </nav>
   </div>
@@ -1036,6 +1097,20 @@
     const icon  = document.getElementById('navToggleIcon');
     links.classList.toggle('open');
     icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+  });
+
+  // Header hamburger (three-bars) toggles the secondary nav on all screen sizes
+  document.getElementById('headerMenuBtn')?.addEventListener('click', () => {
+    const links = document.getElementById('secondaryNavLinks');
+    const icon  = document.getElementById('navToggleIcon');
+    if (!links) return;
+    // On desktop the nav is always shown; toggle a "hidden" class to collapse it
+    if (window.innerWidth > 768) {
+      links.classList.toggle('desktop-hidden');
+    } else {
+      links.classList.toggle('open');
+      if (icon) icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+    }
   });
 
   /* Kick off render if Firebase already resolved before DOM was ready */

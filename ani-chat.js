@@ -152,16 +152,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
   ───────────────────────────────────────────────*/
   const css = `
     #ani-chat-btn {
-      position: fixed; bottom: 28px; right: 28px; z-index: 99999;
       display: none !important; /* Hidden — opened by the combined speed-dial FAB */
-      height: 56px; border-radius: 50px;
-      background: linear-gradient(135deg, #9B1FBE, #E8447A);
-      border: none; cursor: pointer;
-      box-shadow: 0 4px 22px rgba(155,31,190,0.50), 0 2px 8px rgba(0,0,0,0.18);
-      display: flex; align-items: center; gap: 0;
-      padding: 0;
-      transition: transform 0.2s, box-shadow 0.2s;
-      overflow: hidden;
     }
     #ani-chat-btn:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 8px 32px rgba(155,31,190,0.60); }
     #ani-chat-btn-logo {
@@ -184,7 +175,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
       display: none;
     }
     #ani-chat-window {
-      position: fixed; bottom: 110px; right: 22px; z-index: 99998;
+      position: fixed; bottom: 110px; right: 22px; z-index: 100001;
       width: 360px; max-width: calc(100vw - 40px);
       background: #fff; border-radius: 20px;
       box-shadow: 0 12px 48px rgba(0,0,0,0.18);
@@ -874,7 +865,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
   function openChat() {
     isOpen = true;
     chatWindow.classList.add('open');
-    notifDot.style.display = 'none';
+    if (notifDot) notifDot.style.display = 'none';
     chatInput.focus();
 
     if (!hasGreeted) {
@@ -894,8 +885,8 @@ Never make up specific prices — say "prices vary by style, use our price estim
     chatWindow.classList.remove('open');
   }
 
-  chatBtn.addEventListener('click', () => isOpen ? closeChat() : openChat());
-  closeBtn.addEventListener('click', closeChat);
+  if (chatBtn) chatBtn.addEventListener('click', () => isOpen ? closeChat() : openChat());
+  if (closeBtn) closeBtn.addEventListener('click', closeChat);
 
   // Expose globally so the combined speed-dial FAB can trigger the chat
   window.aniChatOpen  = openChat;
@@ -916,7 +907,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
      INIT
   ───────────────────────────────────────────────*/
   setTimeout(() => {
-    if (!isOpen) notifDot.style.display = 'block';
+    if (!isOpen && notifDot) notifDot.style.display = 'block';
   }, 4000);
 
   // Load Firestore config — handleSend awaits this before calling AI

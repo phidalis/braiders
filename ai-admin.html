@@ -27,7 +27,6 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // expose for inline handlers
     window._fb = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
                    doc, getDoc, setDoc, getDocs, addDoc, deleteDoc,
                    collection, serverTimestamp, query, orderBy, limit };
@@ -53,7 +52,7 @@
     body{font-family:'DM Sans',sans-serif;background:#F0EBF5;color:var(--text);min-height:100vh;}
 
     /* ── LOGIN ── */
-    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1A0028,#6B0E85);}
+    #login-screen{display:flex;align-items:center;justify-content:min-height;min-height:100vh;background:linear-gradient(135deg,#1A0028,#6B0E85);display:flex;align-items:center;justify-content:center;}
     .login-card{background:#fff;border-radius:18px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;}
     .login-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--brand);margin-bottom:4px;}
     .login-logo span{color:var(--pink);}
@@ -115,6 +114,18 @@
     input:checked + .slider-tog{background:var(--brand);}
     input:checked + .slider-tog:before{transform:translateX(20px);}
 
+    /* ── PROVIDER TABS ── */
+    .provider-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+    .provider-tab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:2px solid #e0d0f0;background:#fff;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500;color:var(--text-muted);}
+    .provider-tab:hover{border-color:var(--brand);color:var(--brand);}
+    .provider-tab.active{border-color:var(--brand);background:linear-gradient(135deg,#f5eaff,#fff0f5);color:var(--brand);}
+    .provider-tab .prov-icon{font-size:18px;}
+    .provider-tab .prov-name{font-weight:600;}
+    .provider-tab .prov-badge{font-size:10px;background:#e0d0f0;color:var(--text-muted);border-radius:50px;padding:2px 7px;}
+    .provider-tab.active .prov-badge{background:var(--brand);color:#fff;}
+    .provider-section{display:none;}
+    .provider-section.active{display:block;}
+
     /* ── BUTTONS ── */
     .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s,transform .15s;}
     .btn:hover{opacity:.9;}
@@ -133,7 +144,11 @@
     .kb-table tr:last-child td{border-bottom:none;}
     .kb-table tr:hover td{background:#fdf9ff;}
     .kw-pill{display:inline-block;background:#f0e6fa;color:var(--brand);border-radius:50px;padding:2px 9px;font-size:11px;margin:2px;}
+    .kw-pill.preset{background:#fff3e0;color:#D4A843;}
     .answer-preview{color:var(--text-muted);font-size:12px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .source-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:50px;font-weight:500;margin-left:6px;}
+    .source-badge.custom{background:#f0e6fa;color:var(--brand);}
+    .source-badge.preset{background:#fff3e0;color:#c8860a;}
 
     /* ── STATS GRID ── */
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:22px;}
@@ -175,11 +190,16 @@
     /* ── KEY DISPLAY ── */
     .key-display{font-family:monospace;background:#f5f0fa;border:1px solid #e0d0f0;border-radius:6px;padding:8px 12px;font-size:13px;word-break:break-all;margin-top:6px;}
 
+    /* ── ACTIVE PROVIDER INDICATOR ── */
+    .active-provider-pill{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(155,31,190,0.12),rgba(232,68,122,0.08));border:1px solid rgba(155,31,190,0.25);border-radius:50px;padding:4px 12px;font-size:12px;color:var(--brand);font-weight:500;}
+
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);transition:transform .3s;}
       .sidebar.open{transform:translateX(0);}
       .main-wrap{margin-left:0;}
       .stats-grid{grid-template-columns:1fr 1fr;}
+      .provider-tabs{gap:6px;}
+      .provider-tab{padding:8px 12px;font-size:12px;}
     }
   </style>
 </head>
@@ -212,8 +232,8 @@
         <div class="nav-item active" data-panel="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</div>
 
         <div class="nav-label">AI Config</div>
-        <div class="nav-item" data-panel="settings"><i class="fas fa-cog"></i> API Settings</div>
-        <div class="nav-item" data-panel="prompt"><i class="fas fa-robot"></i> AI Personality</div>
+        <div class="nav-item" data-panel="settings"><i class="fas fa-comments"></i> AI Provider & API</div>
+        <div class="nav-item" data-panel="prompt"><i class="fas fa-comment-dots"></i> AI Personality</div>
 
         <div class="nav-label">Knowledge Base</div>
         <div class="nav-item" data-panel="kb"><i class="fas fa-book"></i> KB Entries</div>
@@ -237,6 +257,10 @@
       <div class="topbar-admin">
         <h1 id="panelTitle">Dashboard</h1>
         <div style="display:flex;gap:10px;align-items:center;">
+          <div id="active-provider-display" class="active-provider-pill" style="display:none;">
+            <i class="fas fa-circle" style="font-size:7px;"></i>
+            <span id="active-provider-name">—</span>
+          </div>
           <div id="chat-status-pill" style="font-size:12px;padding:4px 12px;border-radius:50px;background:#e8f5e9;color:#2e7d32;font-weight:500;">
             <i class="fas fa-circle" style="font-size:8px;margin-right:4px;"></i>Chat Online
           </div>
@@ -251,7 +275,7 @@
             <div class="stat-card">
               <div class="label">KB Entries</div>
               <div class="value" id="stat-kb">—</div>
-              <div class="sub">Knowledge items</div>
+              <div class="sub">Custom + preset items</div>
             </div>
             <div class="stat-card pink">
               <div class="label">Chat Logs</div>
@@ -259,9 +283,9 @@
               <div class="sub">Conversations logged</div>
             </div>
             <div class="stat-card gold">
-              <div class="label">AI Model</div>
-              <div class="value" id="stat-model" style="font-size:15px;margin-top:4px;">—</div>
-              <div class="sub">Gemini model</div>
+              <div class="label">AI Provider</div>
+              <div class="value" id="stat-model" style="font-size:14px;margin-top:4px;">—</div>
+              <div class="sub" id="stat-model-sub">Active provider</div>
             </div>
             <div class="stat-card green">
               <div class="label">Status</div>
@@ -286,7 +310,7 @@
             </p>
             <div class="key-display" style="margin-top:10px;">&lt;script src="ani-chat.js"&gt;&lt;/script&gt;</div>
             <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
-              The widget auto-loads your Gemini API key and knowledge base from Firestore on every page load.
+              The widget auto-loads your API key, provider choice, and knowledge base from Firestore on every page load.
               Changes made here are live immediately — no redeployment needed.
             </p>
           </div>
@@ -294,29 +318,134 @@
 
         <!-- ── API SETTINGS ── -->
         <div class="panel" id="panel-settings">
+
           <div class="card">
-            <div class="card-title"><i class="fas fa-key"></i> Gemini API Key</div>
-            <div class="field">
-              <label>API Key</label>
-              <input type="password" id="cfg-apikey" placeholder="AIzaSy…">
-              <div class="hint">Get your key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--brand);">aistudio.google.com</a>. Stored securely in Firestore.</div>
+            <div class="card-title"><i class="fas fa-plug"></i> Choose AI Provider</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Select which AI service powers the chat widget. You can switch at any time — only the active provider's key is used.</p>
+
+            <div class="provider-tabs">
+              <div class="provider-tab active" data-provider="gemini" onclick="switchProvider('gemini')">
+                <span class="prov-icon">✨</span>
+                <div>
+                  <div class="prov-name">Gemini</div>
+                  <div style="font-size:10px;opacity:.7;">Google AI</div>
+                </div>
+                <span class="prov-badge">Free tier</span>
+              </div>
+              <div class="provider-tab" data-provider="openai" onclick="switchProvider('openai')">
+                <span class="prov-icon">🤖</span>
+                <div>
+                  <div class="prov-name">OpenAI</div>
+                  <div style="font-size:10px;opacity:.7;">GPT-4o / GPT-4</div>
+                </div>
+                <span class="prov-badge">Paid</span>
+              </div>
+              <div class="provider-tab" data-provider="claude" onclick="switchProvider('claude')">
+                <span class="prov-icon">🧠</span>
+                <div>
+                  <div class="prov-name">Claude</div>
+                  <div style="font-size:10px;opacity:.7;">Anthropic</div>
+                </div>
+                <span class="prov-badge">Paid</span>
+              </div>
+              <div class="provider-tab" data-provider="groq" onclick="switchProvider('groq')">
+                <span class="prov-icon">⚡</span>
+                <div>
+                  <div class="prov-name">Groq</div>
+                  <div style="font-size:10px;opacity:.7;">Llama 3 · Mixtral</div>
+                </div>
+                <span class="prov-badge">Free</span>
+              </div>
             </div>
-            <div class="field">
-              <label>Gemini Model</label>
-              <select id="cfg-model">
-                <option value="gemini-2.0-flash">gemini-2.0-flash (Recommended — fast & cheap)</option>
-                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (Most capable)</option>
-                <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (Fastest)</option>
-              </select>
+
+            <!-- GEMINI CONFIG -->
+            <div class="provider-section active" id="prov-gemini">
+              <div class="field">
+                <label>Gemini API Key</label>
+                <input type="password" id="cfg-gemini-key" placeholder="AIzaSy…">
+                <div class="hint">Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--brand);">aistudio.google.com</a>. Stored securely in Firestore.</div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="cfg-gemini-model">
+                  <option value="gemini-2.0-flash">gemini-2.0-flash (Recommended — fast & cheap)</option>
+                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                  <option value="gemini-1.5-pro">gemini-1.5-pro (Most capable)</option>
+                  <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (Fastest)</option>
+                </select>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="testApiKey('gemini')"><i class="fas fa-vial"></i> Test Gemini Key</button>
             </div>
-            <div class="toggle-row">
-              <span class="toggle-label">Chat Widget Enabled</span>
-              <label class="toggle"><input type="checkbox" id="cfg-enabled" checked><span class="slider-tog"></span></label>
+
+            <!-- OPENAI CONFIG -->
+            <div class="provider-section" id="prov-openai">
+              <div class="field">
+                <label>OpenAI API Key</label>
+                <input type="password" id="cfg-openai-key" placeholder="sk-…">
+                <div class="hint">Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--brand);">platform.openai.com</a>. Requires a paid account.</div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="cfg-openai-model">
+                  <option value="gpt-4o-mini">gpt-4o-mini (Recommended — fast & affordable)</option>
+                  <option value="gpt-4o">gpt-4o (Most capable)</option>
+                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Cheapest)</option>
+                </select>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="testApiKey('openai')"><i class="fas fa-vial"></i> Test OpenAI Key</button>
             </div>
-            <div style="margin-top:18px;">
-              <button class="btn btn-primary" onclick="saveApiSettings()"><i class="fas fa-save"></i> Save Settings</button>
-              <button class="btn btn-outline" style="margin-left:10px;" onclick="testApiKey()"><i class="fas fa-vial"></i> Test Key</button>
+
+            <!-- CLAUDE CONFIG -->
+            <div class="provider-section" id="prov-claude">
+              <div class="field">
+                <label>Anthropic API Key</label>
+                <input type="password" id="cfg-claude-key" placeholder="sk-ant-…">
+                <div class="hint">Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--brand);">console.anthropic.com</a>. Requires a paid account.</div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="cfg-claude-model">
+                  <option value="claude-haiku-4-5-20251001">claude-haiku (Recommended — fast & affordable)</option>
+                  <option value="claude-sonnet-4-6">claude-sonnet (Balanced)</option>
+                </select>
+              </div>
+              <p style="font-size:12px;color:#c8860a;background:#fff9e6;border:1px solid #ffe082;border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+                ⚠️ <strong>Note:</strong> Claude API requires a backend proxy for browser use (CORS restriction). If testing from a local page, use Gemini or OpenAI instead, or set up a proxy server.
+              </p>
+              <button class="btn btn-outline btn-sm" onclick="testApiKey('claude')"><i class="fas fa-vial"></i> Test Claude Key</button>
+            </div>
+
+            <!-- GROQ CONFIG -->
+            <div class="provider-section" id="prov-groq">
+              <div class="field">
+                <label>Groq API Key</label>
+                <input type="password" id="cfg-groq-key" placeholder="gsk_…">
+                <div class="hint">Get your free key at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--brand);">console.groq.com</a>. No credit card required.</div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="cfg-groq-model">
+                  <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended — smart & fast)</option>
+                  <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fastest)</option>
+                  <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (Large context)</option>
+                  <option value="gemma2-9b-it">gemma2-9b-it (Google Gemma 2)</option>
+                </select>
+              </div>
+              <p style="font-size:12px;color:#1a6e2e;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+                ✅ <strong>Groq is 100% free</strong> with generous rate limits — great for production use. API format is OpenAI-compatible so it works seamlessly.
+              </p>
+              <button class="btn btn-outline btn-sm" onclick="testApiKey('groq')"><i class="fas fa-vial"></i> Test Groq Key</button>
+            </div>
+
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ece4f5;display:flex;gap:10px;align-items:center;">
+              <div class="toggle-row" style="flex:1;">
+                <span class="toggle-label">Chat Widget Enabled</span>
+                <label class="toggle"><input type="checkbox" id="cfg-enabled" checked><span class="slider-tog"></span></label>
+              </div>
+            </div>
+
+            <div style="margin-top:16px;">
+              <button class="btn btn-primary" onclick="saveApiSettings()"><i class="fas fa-save"></i> Save & Activate Provider</button>
             </div>
           </div>
         </div>
@@ -324,22 +453,22 @@
         <!-- ── AI PERSONALITY ── -->
         <div class="panel" id="panel-prompt">
           <div class="card">
-            <div class="card-title"><i class="fas fa-robot"></i> AI Personality & System Prompt</div>
+            <div class="card-title"><i class="fas fa-comments"></i> AI Personality & System Prompt</div>
             <div class="field">
               <label>Bot Name</label>
               <input type="text" id="cfg-botname" placeholder="Zara" value="Zara">
-              <div class="hint">The name the AI introduces itself as (update in ani-chat.js greeting too).</div>
+              <div class="hint">The name the AI introduces itself as.</div>
             </div>
             <div class="field">
               <label>System Prompt</label>
               <textarea id="cfg-systemprompt" style="min-height:180px;" placeholder="You are Zara, the friendly AI assistant for Ani Braids…"></textarea>
-              <div class="hint">This is the core instruction Gemini follows. Be specific about tone, what to answer, and what to avoid.</div>
+              <div class="hint">This is the core instruction the AI follows. Be specific about tone, what to answer, and what to avoid.</div>
             </div>
             <div class="field">
               <label>KB Match Threshold <span id="thresh-display">0.35</span></label>
               <input type="range" id="cfg-threshold" min="0.1" max="0.9" step="0.05" value="0.35"
                      oninput="document.getElementById('thresh-display').textContent=this.value">
-              <div class="hint">Higher = stricter KB matching before falling back to Gemini. 0.35 is a good default.</div>
+              <div class="hint">Higher = stricter KB matching before falling back to AI. 0.35 is a good default.</div>
             </div>
             <button class="btn btn-primary" onclick="savePromptSettings()"><i class="fas fa-save"></i> Save Personality</button>
           </div>
@@ -350,9 +479,21 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <div>
               <h2 style="font-size:16px;font-weight:600;">Knowledge Base</h2>
-              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Custom entries that override the built-in KB. Searched first before Gemini.</p>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Custom entries override built-in presets. Searched first before the AI is called.</p>
             </div>
             <button class="btn btn-primary" onclick="openKbModal()"><i class="fas fa-plus"></i> Add Entry</button>
+          </div>
+
+          <!-- Preset KB info banner -->
+          <div id="preset-banner" style="background:linear-gradient(135deg,#fff9e6,#fff);border:1px solid #ffe082;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;">
+            <span style="font-size:20px;">📚</span>
+            <div>
+              <strong style="font-size:13px;color:#8a6200;">Built-in Preset Answers</strong>
+              <p style="font-size:12px;color:#8a6200;margin-top:2px;line-height:1.6;">
+                The chat widget has <strong id="preset-count">24</strong> built-in preset answers (hours, booking, pricing, services, etc.) baked into <code>ani-chat.js</code>.
+                Add <strong>Custom Entries</strong> below to override or extend them — custom entries are searched first.
+              </p>
+            </div>
           </div>
 
           <div class="card" style="padding:0;overflow:hidden;">
@@ -361,13 +502,32 @@
                 <tr>
                   <th>Keywords</th>
                   <th>Answer Preview</th>
-                  <th>Actions</th>
+                  <th style="width:100px;">Source</th>
+                  <th style="width:90px;">Actions</th>
                 </tr>
               </thead>
               <tbody id="kb-tbody">
-                <tr><td colspan="3"><div class="empty-state"><i class="fas fa-book"></i><p>Loading…</p></div></td></tr>
+                <tr><td colspan="4"><div class="empty-state"><i class="fas fa-book"></i><p>Loading…</p></div></td></tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Preset entries table (always visible) -->
+          <div style="margin-top:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+              <i class="fas fa-layer-group" style="color:var(--gold);"></i> Built-in Preset Answers (read-only — edit in ani-chat.js)
+            </div>
+            <div class="card" style="padding:0;overflow:hidden;">
+              <table class="kb-table">
+                <thead>
+                  <tr>
+                    <th>Keywords</th>
+                    <th>Answer Preview</th>
+                  </tr>
+                </thead>
+                <tbody id="preset-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -382,7 +542,7 @@
           </div>
           <div id="logs-list"><div class="empty-state"><i class="fas fa-comments"></i><p>Loading logs…</p></div></div>
           <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
-            💡 <strong>Tip:</strong> Questions answered by Gemini (AI badge) that come up often should be added to the Knowledge Base to reduce API costs.
+            💡 <strong>Tip:</strong> Questions answered by AI (AI badge) that come up often should be added to the Knowledge Base to reduce API costs.
           </p>
         </div>
 
@@ -411,7 +571,7 @@
         <div class="hint">Supports **bold**, *italic*, [links](url), and line breaks.</div>
       </div>
       <div class="field">
-        <label>Category <span style="font-weight:400;color:var(--text-muted);">(optional, for organisation)</span></label>
+        <label>Category <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
         <input type="text" id="kb-category" placeholder="e.g. Booking, Pricing, Services">
       </div>
     </div>
@@ -426,6 +586,28 @@
 <div id="toast"></div>
 
 <script>
+  /* ── PRESET KB (mirrors ani-chat.js built-ins) ── */
+  const PRESET_KB = [
+    { keywords: ['hours','open','close','time','schedule'], answer: '🕐 Ani Braids is open Monday – Saturday, 9 AM – 7 PM and Sunday 10 AM – 5 PM (Eastern Time).' },
+    { keywords: ['location','address','where','maryland'], answer: '📍 Based in Maryland, USA. Also offers worldwide virtual consultations.' },
+    { keywords: ['book','booking','appointment','schedule','reserve'], answer: '📅 Head to the Appointment page, choose your style, pick a date & time, pay the deposit.' },
+    { keywords: ['price','pricing','cost','how much','rate','fee'], answer: '💰 Pricing varies by style, hair length, and add-ons. Visit the Services page for the full list.' },
+    { keywords: ['knotless','box braids'], answer: '✨ Knotless Box Braids — no knot at the root, reducing tension. Small, medium, large sizes available.' },
+    { keywords: ['cornrow','cornrows','feed-in'], answer: '✨ Cornrows & Feed-in Braids in various patterns — straight back, curved, or custom designs.' },
+    { keywords: ['passion twist','passion twists'], answer: '🌸 Passion Twists — bohemian protective style using premium water wave hair.' },
+    { keywords: ['senegalese','rope twist'], answer: '💜 Senegalese Twists — sleek, elegant protective style in multiple length options.' },
+    { keywords: ['boho','goddess braids','bohemian'], answer: '🌺 Boho / Goddess Braids with curly ends or added hair.' },
+    { keywords: ['micro braids','tiny braids'], answer: '🔬 Micro Braids — delicate, intricate style. Contact for a custom quote.' },
+    { keywords: ['deposit','down payment','secure'], answer: '💳 Deposit required to secure booking via Zelle or Cash App.' },
+    { keywords: ['cancel','cancellation','refund','reschedule'], answer: '📋 Cancel/reschedule at least 48 hours before your appointment to retain your deposit.' },
+    { keywords: ['how long','duration','time take'], answer: '⏱ Cornrows: 1–3h. Knotless: 3–6h. Twists: 4–7h. Micro braids: 6–10h+.' },
+    { keywords: ['maintain','care','wash','oil','scalp'], answer: '🌿 Moisturise scalp every 2–3 days, wash every 2 weeks, wrap in satin at night.' },
+    { keywords: ['contact','email','phone','call','reach'], answer: '📞 Email: awaanita25@gmail.com · Phone: +1 (202) 424-4894' },
+    { keywords: ['portfolio','gallery','photos','work'], answer: '🖼 Visit the Portfolio page to see real photos of our work.' },
+    { keywords: ['hello','hi','hey'], answer: '👋 Hello! I\'m Zara, the Ani Braids AI assistant. How can I help you today?' },
+    { keywords: ['thank','thanks','thank you'], answer: '😊 You\'re so welcome! Have a gorgeous day! 💜✨' },
+  ];
+
   /* ── HELPERS ── */
   function showLogin(msg) {
     document.getElementById('login-screen').style.display='flex';
@@ -462,12 +644,20 @@
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.getElementById('panel-'+name).classList.add('active');
     document.querySelector(`.nav-item[data-panel="${name}"]`)?.classList.add('active');
-    const titles={dashboard:'Dashboard',settings:'API Settings',prompt:'AI Personality',kb:'Knowledge Base',logs:'Chat Logs'};
+    const titles={dashboard:'Dashboard',settings:'AI Provider & API',prompt:'AI Personality',kb:'Knowledge Base',logs:'Chat Logs'};
     document.getElementById('panelTitle').textContent=titles[name]||name;
   }
   document.querySelectorAll('.nav-item[data-panel]').forEach(el=>{
     el.addEventListener('click',()=>showPanel(el.dataset.panel));
   });
+
+  /* ── PROVIDER TABS ── */
+  let activeProvider = 'gemini';
+  function switchProvider(p) {
+    activeProvider = p;
+    document.querySelectorAll('.provider-tab').forEach(t=>t.classList.toggle('active', t.dataset.provider===p));
+    document.querySelectorAll('.provider-section').forEach(s=>s.classList.toggle('active', s.id==='prov-'+p));
+  }
 
   /* ── LOAD ALL ── */
   async function loadAll() {
@@ -475,6 +665,7 @@
     loadApiSettings();
     loadPromptSettings();
     loadKb();
+    loadPresetKb();
     loadLogs();
   }
 
@@ -486,18 +677,29 @@
       getDocs(collection(db,'aiChatLogs')),
       getDoc(doc(db,'settings','aiChat'))
     ]);
-    document.getElementById('stat-kb').textContent=kbSnap.size;
+    document.getElementById('stat-kb').textContent = kbSnap.size + ' custom + ' + PRESET_KB.length + ' preset';
     document.getElementById('stat-logs').textContent=logSnap.size;
     const d=cfg.exists()?cfg.data():{};
-    document.getElementById('stat-model').textContent=d.geminiModel||'gemini-2.0-flash';
+    const provider = d.aiProvider || 'gemini';
+    const providerLabels = { gemini: '✨ Gemini', openai: '🤖 OpenAI', claude: '🧠 Claude', groq: '⚡ Groq' };
+    const modelMap = { gemini: d.geminiModel, openai: d.openaiModel, claude: d.claudeModel, groq: d.groqModel };
+    const modelStr = modelMap[provider] || '—';
+    document.getElementById('stat-model').textContent = providerLabels[provider] || provider;
+    document.getElementById('stat-model-sub').textContent = modelStr;
+
+    // Update topbar pill
+    const pill = document.getElementById('active-provider-display');
+    pill.style.display = 'flex';
+    document.getElementById('active-provider-name').textContent = (providerLabels[provider] || provider) + ' · ' + modelStr;
+
     const enabled=typeof d.enabled==='boolean'?d.enabled:true;
     const statusEl=document.getElementById('stat-status');
     statusEl.textContent=enabled?'Enabled':'Disabled';
     statusEl.style.color=enabled?'#28a745':'#dc3545';
-    const pill=document.getElementById('chat-status-pill');
-    pill.style.background=enabled?'#e8f5e9':'#fce4e4';
-    pill.style.color=enabled?'#2e7d32':'#c00';
-    pill.innerHTML=`<i class="fas fa-circle" style="font-size:8px;margin-right:4px;"></i>Chat ${enabled?'Online':'Offline'}`;
+    const chatPill=document.getElementById('chat-status-pill');
+    chatPill.style.background=enabled?'#e8f5e9':'#fce4e4';
+    chatPill.style.color=enabled?'#2e7d32':'#c00';
+    chatPill.innerHTML=`<i class="fas fa-circle" style="font-size:8px;margin-right:4px;"></i>Chat ${enabled?'Online':'Offline'}`;
   }
 
   /* ── API SETTINGS ── */
@@ -506,34 +708,96 @@
     const snap=await getDoc(doc(db,'settings','aiChat'));
     if(!snap.exists()) return;
     const d=snap.data();
-    if(d.geminiKey) document.getElementById('cfg-apikey').value=d.geminiKey;
-    if(d.geminiModel) document.getElementById('cfg-model').value=d.geminiModel;
+    if(d.geminiKey)   document.getElementById('cfg-gemini-key').value=d.geminiKey;
+    if(d.geminiModel) document.getElementById('cfg-gemini-model').value=d.geminiModel;
+    if(d.openaiKey)   document.getElementById('cfg-openai-key').value=d.openaiKey;
+    if(d.openaiModel) document.getElementById('cfg-openai-model').value=d.openaiModel;
+    if(d.claudeKey)   document.getElementById('cfg-claude-key').value=d.claudeKey;
+    if(d.claudeModel) document.getElementById('cfg-claude-model').value=d.claudeModel;
+    if(d.groqKey)     document.getElementById('cfg-groq-key').value=d.groqKey;
+    if(d.groqModel)   document.getElementById('cfg-groq-model').value=d.groqModel;
     if(typeof d.enabled==='boolean') document.getElementById('cfg-enabled').checked=d.enabled;
+    if(d.aiProvider) { activeProvider=d.aiProvider; switchProvider(d.aiProvider); }
   }
+
   async function saveApiSettings() {
     const {db,doc,setDoc}=window._fb;
-    const key=document.getElementById('cfg-apikey').value.trim();
-    const model=document.getElementById('cfg-model').value;
     const enabled=document.getElementById('cfg-enabled').checked;
-    if(!key){toast('Please enter an API key','error');return;}
-    await setDoc(doc(db,'settings','aiChat'),{geminiKey:key,geminiModel:model,enabled},{merge:true});
-    toast('✅ API settings saved!');
+
+    const data = {
+      aiProvider: activeProvider,
+      enabled,
+      geminiKey:    document.getElementById('cfg-gemini-key').value.trim(),
+      geminiModel:  document.getElementById('cfg-gemini-model').value,
+      openaiKey:    document.getElementById('cfg-openai-key').value.trim(),
+      openaiModel:  document.getElementById('cfg-openai-model').value,
+      claudeKey:    document.getElementById('cfg-claude-key').value.trim(),
+      claudeModel:  document.getElementById('cfg-claude-model').value,
+      groqKey:      document.getElementById('cfg-groq-key').value.trim(),
+      groqModel:    document.getElementById('cfg-groq-model').value,
+    };
+
+    // Validate that the active provider has a key
+    const keyMap = { gemini: data.geminiKey, openai: data.openaiKey, claude: data.claudeKey, groq: data.groqKey };
+    if(!keyMap[activeProvider]){
+      toast(`Please enter an API key for ${activeProvider}`, false);
+      return;
+    }
+
+    await setDoc(doc(db,'settings','aiChat'), data, {merge:true});
+    toast('✅ Settings saved! Active provider: ' + activeProvider);
     loadDashboard();
   }
-  async function testApiKey() {
-    const key=document.getElementById('cfg-apikey').value.trim();
-    const model=document.getElementById('cfg-model').value||'gemini-2.0-flash';
-    if(!key){toast('Enter an API key first','error');return;}
-    toast('Testing key…');
+
+  async function testApiKey(provider) {
+    const providerActual = provider || activeProvider;
+    toast('Testing ' + providerActual + ' key…');
+
     try {
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:'Say OK'}]}]})
-      });
-      const d=await r.json();
-      if(d.candidates) toast('✅ Key works! Response: '+d.candidates[0].content.parts[0].text);
-      else toast('❌ Key error: '+(d.error?.message||'Unknown'),'error');
-    } catch(e){ toast('❌ Network error: '+e.message,'error'); }
+      if(providerActual === 'gemini') {
+        const key   = document.getElementById('cfg-gemini-key').value.trim();
+        const model = document.getElementById('cfg-gemini-model').value || 'gemini-2.0-flash';
+        if(!key){ toast('Enter a Gemini API key first', false); return; }
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({contents:[{role:'user',parts:[{text:'Say OK in one word'}]}]})
+        });
+        const d = await r.json();
+        if(d.candidates) toast('✅ Gemini works! Response: ' + d.candidates[0].content.parts[0].text);
+        else toast('❌ Gemini error: '+(d.error?.message||'Unknown'), false);
+
+      } else if(providerActual === 'openai') {
+        const key   = document.getElementById('cfg-openai-key').value.trim();
+        const model = document.getElementById('cfg-openai-model').value || 'gpt-4o-mini';
+        if(!key){ toast('Enter an OpenAI API key first', false); return; }
+        const r = await fetch('https://api.openai.com/v1/chat/completions',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+          body: JSON.stringify({model, messages:[{role:'user',content:'Say OK in one word'}], max_tokens:10})
+        });
+        const d = await r.json();
+        if(d.choices) toast('✅ OpenAI works! Response: ' + d.choices[0].message.content);
+        else toast('❌ OpenAI error: '+(d.error?.message||'Unknown'), false);
+
+      } else if(providerActual === 'claude') {
+        toast('⚠️ Claude requires a backend proxy for browser testing. Save the key and it will be used by the widget if you have a proxy set up.', false);
+
+      } else if(providerActual === 'groq') {
+        const key   = document.getElementById('cfg-groq-key').value.trim();
+        const model = document.getElementById('cfg-groq-model').value || 'llama-3.3-70b-versatile';
+        if(!key){ toast('Enter a Groq API key first', false); return; }
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+          body: JSON.stringify({model, messages:[{role:'user',content:'Say OK in one word'}], max_tokens:10})
+        });
+        const d = await r.json();
+        if(d.choices) toast('✅ Groq works! Response: ' + d.choices[0].message.content);
+        else toast('❌ Groq error: '+(d.error?.message||'Unknown'), false);
+      }
+    } catch(e) {
+      toast('❌ Network error: ' + e.message, false);
+    }
   }
 
   /* ── PROMPT SETTINGS ── */
@@ -554,7 +818,7 @@
     const systemPrompt=document.getElementById('cfg-systemprompt').value.trim();
     const botName=document.getElementById('cfg-botname').value.trim();
     const kbThreshold=parseFloat(document.getElementById('cfg-threshold').value);
-    if(!systemPrompt){toast('System prompt cannot be empty','error');return;}
+    if(!systemPrompt){toast('System prompt cannot be empty', false);return;}
     await setDoc(doc(db,'settings','aiChat'),{systemPrompt,botName,kbThreshold},{merge:true});
     toast('✅ AI personality saved!');
   }
@@ -565,7 +829,7 @@
     const snap=await getDocs(collection(db,'aiKnowledge'));
     const tbody=document.getElementById('kb-tbody');
     if(snap.empty){
-      tbody.innerHTML='<tr><td colspan="3"><div class="empty-state"><i class="fas fa-book"></i><p>No custom entries yet. Add some above!</p></div></td></tr>';
+      tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><i class="fas fa-plus-circle"></i><p>No custom entries yet.</p><p style="font-size:12px;margin-top:6px;">The built-in preset answers are shown below. Add custom entries to override them.</p></div></td></tr>`;
       return;
     }
     let html='';
@@ -576,6 +840,7 @@
       html+=`<tr>
         <td>${kws}</td>
         <td><div class="answer-preview">${preview}</div></td>
+        <td><span class="source-badge custom">Custom</span></td>
         <td>
           <button class="btn btn-outline btn-sm" onclick="editKbEntry('${d.id}')"><i class="fas fa-edit"></i></button>
           <button class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="deleteKbEntry('${d.id}')"><i class="fas fa-trash"></i></button>
@@ -583,10 +848,25 @@
       </tr>`;
     });
     tbody.innerHTML=html;
-    document.getElementById('stat-kb').textContent=snap.size;
+    document.getElementById('stat-kb').textContent = snap.size + ' custom + ' + PRESET_KB.length + ' preset';
   }
 
-  function openKbModal(id) {
+  function loadPresetKb() {
+    const tbody = document.getElementById('preset-tbody');
+    let html = '';
+    PRESET_KB.forEach(e => {
+      const kws = e.keywords.slice(0,4).map(k=>`<span class="kw-pill preset">${k}</span>`).join('');
+      const preview = e.answer.replace(/\*\*/g,'').replace(/\n/g,' ').substring(0,90)+'…';
+      html += `<tr>
+        <td>${kws}${e.keywords.length>4?`<span class="kw-pill preset">+${e.keywords.length-4}</span>`:''}</td>
+        <td><div class="answer-preview">${preview}</div></td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    document.getElementById('preset-count').textContent = PRESET_KB.length;
+  }
+
+  function openKbModal() {
     document.getElementById('kb-edit-id').value='';
     document.getElementById('kb-keywords').value='';
     document.getElementById('kb-answer').value='';
@@ -615,7 +895,7 @@
     const keywords=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
     const answer=document.getElementById('kb-answer').value.trim();
     const category=document.getElementById('kb-category').value.trim();
-    if(!keywords.length||!answer){toast('Fill in keywords and answer','error');return;}
+    if(!keywords.length||!answer){toast('Fill in keywords and answer', false);return;}
     const data={keywords,answer,category,updatedAt:serverTimestamp()};
     if(id) await setDoc(doc(db,'aiKnowledge',id),data,{merge:true});
     else   await addDoc(collection(db,'aiKnowledge'),{...data,createdAt:serverTimestamp()});
@@ -638,16 +918,17 @@
     const snap=await getDocs(query(collection(db,'aiChatLogs'),orderBy('createdAt','desc'),limit(50)));
     const container=document.getElementById('logs-list');
     if(snap.empty){
-      container.innerHTML='<div class="empty-state"><i class="fas fa-comments"></i><p>No chat logs yet. Logs appear here once visitors use the chat widget.</p><p style="font-size:12px;margin-top:8px;">Note: Make sure you call <code>logChat()</code> in ani-chat.js to enable logging.</p></div>';
+      container.innerHTML='<div class="empty-state"><i class="fas fa-comments"></i><p>No chat logs yet. Logs appear here once visitors use the chat widget.</p></div>';
       return;
     }
     let html='';
     snap.forEach(d=>{
       const e=d.data();
       const date=e.createdAt?.toDate?new Date(e.createdAt.toDate()).toLocaleString():'—';
+      const provider = e.provider || 'ai';
       const sourceBadge=e.source==='kb'
         ?'<span class="log-source-badge">📚 Knowledge Base</span>'
-        :'<span class="log-source-badge ai">✨ Gemini AI</span>';
+        :`<span class="log-source-badge ai">✨ ${provider.charAt(0).toUpperCase()+provider.slice(1)} AI</span>`;
       html+=`<div class="log-item">
         <div class="log-meta"><span>${date}</span>${sourceBadge}</div>
         <div class="log-q">Q: ${e.question||'—'}</div>
@@ -657,5 +938,236 @@
     container.innerHTML=html;
   }
 </script>
+
+<!-- ── COMBINED SPEED-DIAL FAB (Social + AI Chat) ── -->
+  <style>
+    .fab-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 22px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    /* Speed-dial children */
+    .fab-child {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+      opacity: 0;
+      transform: translateY(16px) scale(0.7);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.18s ease;
+      will-change: opacity, transform;
+      border: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .fab-child:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.38);
+      transform: translateY(0) scale(1.08) !important;
+    }
+    .fab-child.fab-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    /* Tooltip labels */
+    .fab-child::before {
+      content: attr(data-label);
+      position: absolute;
+      right: 54px;
+      background: rgba(26,0,40,0.88);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      font-family: 'DM Sans','Segoe UI',sans-serif;
+      letter-spacing: 0.2px;
+    }
+    .fab-child:hover::before { opacity: 1; }
+    /* Social platform colors */
+    .fab-tiktok    { background: #010101; }
+    .fab-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+    .fab-facebook  { background: #1877f2; }
+    .fab-twitter   { background: #1da1f2; }
+    .fab-pinterest { background: #e60023; }
+    .fab-youtube   { background: #ff0000; }
+    /* AI Chat child */
+    .fab-ai-child  { background: linear-gradient(135deg, #9B1FBE, #E8447A); }
+    /* Main trigger button */
+    .fab-main {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #9B1FBE, #E8447A);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 4px 18px rgba(155,31,190,0.5);
+      transition: transform 0.22s ease, box-shadow 0.18s ease;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .fab-main:hover {
+      box-shadow: 0 6px 24px rgba(155,31,190,0.65);
+      transform: scale(1.07);
+    }
+    .fab-main i {
+      transition: transform 0.28s ease, opacity 0.2s ease;
+      position: absolute;
+    }
+    .fab-main .fab-icon-open  { opacity: 1; transform: scale(1) rotate(0deg); }
+    .fab-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
+    .fab-wrap.open .fab-icon-open  { opacity: 0; transform: scale(0.5) rotate(90deg); }
+    .fab-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
+    /* Notification dot */
+    .fab-notif-dot {
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: #D4A843;
+      border: 2px solid #fff;
+      display: none;
+    }
+    @media (max-width: 480px) {
+      .fab-wrap { bottom: 18px; right: 14px; }
+      .fab-main { width: 48px; height: 48px; font-size: 20px; }
+      .fab-child { width: 40px; height: 40px; font-size: 16px; }
+    }
+  </style>
+
+  <div class="fab-wrap" id="fabWrap">
+    <button class="fab-main" id="fabMainBtn" aria-label="Menu">
+      <i class="fas fa-comment-dots fab-icon-open"></i>
+      <i class="fas fa-times fab-icon-close"></i>
+      <span class="fab-notif-dot" id="fabNotifDot"></span>
+    </button>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const FAB_CONFIG = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289"
+    };
+
+    const fabApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FAB_CONFIG, 'fab-social');
+    const fabDb  = getFirestore(fabApp);
+
+    const PLATFORMS = [
+      { key: 'tiktok',    icon: 'fab fa-tiktok',      cls: 'fab-tiktok',    label: 'TikTok'    },
+      { key: 'instagram', icon: 'fab fa-instagram',   cls: 'fab-instagram', label: 'Instagram' },
+      { key: 'facebook',  icon: 'fab fa-facebook-f',  cls: 'fab-facebook',  label: 'Facebook'  },
+      { key: 'twitter',   icon: 'fab fa-twitter',     cls: 'fab-twitter',   label: 'Twitter'   },
+      { key: 'pinterest', icon: 'fab fa-pinterest-p', cls: 'fab-pinterest', label: 'Pinterest' },
+      { key: 'youtube',   icon: 'fab fa-youtube',     cls: 'fab-youtube',   label: 'YouTube'   },
+    ];
+
+    const wrap    = document.getElementById('fabWrap');
+    const mainBtn = document.getElementById('fabMainBtn');
+    const notifDot = document.getElementById('fabNotifDot');
+    let   children = [];
+    let   isOpen   = false;
+
+    // Always add AI Chat as the first (top) child
+    function buildAIChild() {
+      const btn = document.createElement('button');
+      btn.className   = 'fab-child fab-ai-child';
+      btn.setAttribute('data-label', 'AI Chat');
+      btn.setAttribute('aria-label', 'Open AI Chat');
+      btn.innerHTML   = '<i class="fas fa-comments"></i>';
+      btn.addEventListener('click', () => {
+        closeMenu();
+        // Try direct call first, fall back to custom event
+        if (typeof window.aniChatOpen === 'function') {
+          window.aniChatOpen();
+        } else {
+          window.dispatchEvent(new Event('ani:openChat'));
+        }
+      });
+      wrap.insertBefore(btn, mainBtn);
+      return btn;
+    }
+
+    function buildSocialItems(social) {
+      // Remove old social children (keep AI child)
+      wrap.querySelectorAll('.fab-child:not(.fab-ai-child)').forEach(el => el.remove());
+      const active = PLATFORMS.filter(p => social[p.key]);
+      [...active].reverse().forEach(p => {
+        const a = document.createElement('a');
+        a.href      = social[p.key];
+        a.target    = '_blank';
+        a.rel       = 'noopener noreferrer';
+        a.className = `fab-child ${p.cls}`;
+        a.setAttribute('data-label', p.label);
+        a.setAttribute('aria-label', p.label);
+        a.innerHTML = `<i class="${p.icon}"></i>`;
+        // Insert above the AI child (which is above the main button)
+        const aiChild = wrap.querySelector('.fab-ai-child');
+        wrap.insertBefore(a, aiChild);
+      });
+      // Rebuild children list (all fab-child elements in DOM order, reversed for stagger)
+      children = Array.from(wrap.querySelectorAll('.fab-child')).reverse();
+    }
+
+    function openMenu() {
+      isOpen = true;
+      wrap.classList.add('open');
+      notifDot.style.display = 'none';
+      children.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
+    }
+
+    function closeMenu() {
+      isOpen = false;
+      wrap.classList.remove('open');
+      [...children].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
+    }
+
+    mainBtn.addEventListener('click', () => isOpen ? closeMenu() : openMenu());
+
+    // Build AI child immediately
+    const aiChild = buildAIChild();
+    children = [aiChild];
+
+    // Load social links from Firestore
+    try {
+      const snap = await getDoc(doc(fabDb, 'settings', 'siteConfig'));
+      if (snap.exists()) buildSocialItems(snap.data().social || {});
+    } catch(e) {}
+
+    // Show notification dot after 4s if not opened
+    setTimeout(() => {
+      if (!isOpen) notifDot.style.display = 'block';
+    }, 4000);
+  </script>
+  <!-- ── END COMBINED SPEED-DIAL FAB ── -->
+
+  <script src="ani-chat.js"></script>
 </body>
 </html>

@@ -1,38 +1,52 @@
 /**
- * Ani Braids — AI Chat Widget
- * Include this script on every page:  <script src="ani-chat.js"></script>
- * The widget injects itself as a floating button bottom-right.
+ * Ani Braids — AI Chat Widget  v2.0
+ * Include on every page:  <script src="ani-chat.js"></script>
+ *
+ * Supports multiple AI providers: Gemini, OpenAI, Claude (Anthropic)
+ * Active provider + API keys are managed in ai-admin.html → saved to Firestore.
  *
  * Flow:
  *  1. User message → search local knowledge base (KB_ENTRIES)
- *  2. If confidence >= threshold → answer from KB
- *  3. If not → call Gemini API for a live answer
- *
- * Replace GEMINI_API_KEY below with your real key, OR manage it in ai-admin.html
- * which stores it in Firestore at  settings/aiChat  { geminiKey, systemPrompt, enabled }
+ *  2. If confidence >= threshold → answer from KB  (no API call)
+ *  3. If not → call active AI provider's API
  */
 
 (function () {
   /* ─────────────────────────────────────────────
-     CONFIG  (overridden by Firestore if available)
+     CONFIG  (overridden by Firestore on load)
   ───────────────────────────────────────────────*/
   const CONFIG = {
-    geminiKey: 'YOUR_GEMINI_API_KEY',       // ← replace or manage via ai-admin.html
-    geminiModel: 'gemini-2.0-flash',
-    systemPrompt: `You are Zara, the friendly AI assistant for Ani Braids — a premium protective braiding studio based in Maryland. 
+    // Active provider: 'gemini' | 'openai' | 'claude'
+    aiProvider:   'gemini',
+
+    // Keys — set via ai-admin.html, stored in Firestore
+    geminiKey:    '',
+    geminiModel:  'gemini-2.0-flash',
+
+    openaiKey:    '',
+    openaiModel:  'gpt-4o-mini',
+
+    claudeKey:    '',
+    claudeModel:  'claude-haiku-4-5-20251001',
+
+    groqKey:      '',
+    groqModel:    'llama-3.3-70b-versatile',
+
+    systemPrompt: `You are Anita, the friendly AI assistant for Ani Braids — a premium protective braiding studio based in Maryland.
 You help clients with questions about services, pricing, booking, hair care, and salon policies.
-Keep answers warm, concise, and professional. Use emojis sparingly. 
+Keep answers warm, concise, and professional. Use emojis sparingly.
+IMPORTANT: When the customer message includes "knowledge base" context, you MUST answer using ONLY that provided context. Rephrase it naturally to match how the customer asked their question — do not add, invent, or assume extra facts.
 If asked something you don't know, politely say you'll pass it to the team and suggest they email awaanita25@gmail.com or call +1 (202) 424-4894.
 Never make up specific prices — say "prices vary by style, use our price estimator or contact us".`,
-    kbThreshold: 0.35,   // minimum KB match score to skip Gemini
-    maxHistory: 10,      // messages kept for Gemini context
-    enabled: true,
+
+    kbThreshold:  0.35,
+    maxHistory:   10,
+    enabled:      true,
   };
 
   /* ─────────────────────────────────────────────
-     KNOWLEDGE BASE
-     Each entry: { keywords: [], answer: '' }
-     Add/edit entries from ai-admin.html (saved to Firestore)
+     KNOWLEDGE BASE  (built-in presets)
+     Custom entries from Firestore are prepended at load time
   ───────────────────────────────────────────────*/
   let KB_ENTRIES = [
     {
@@ -125,7 +139,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
     },
     {
       keywords: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'helo', 'hii'],
-      answer: '👋 Hello! Welcome to **Ani Braids**! I\'m Zara, your AI assistant. I can help you with:\n- 📅 Booking an appointment\n- 💇 Choosing a style\n- 💰 Pricing info\n- ❓ General questions\n\nWhat can I help you with today? 💜'
+      answer: '👋 Hello! Welcome to **Ani Braids**! I\'m Anita, your AI assistant. I can help you with:\n- 📅 Booking an appointment\n- 💇 Choosing a style\n- 💰 Pricing info\n- ❓ General questions\n\nWhat can I help you with today? 💜'
     },
     {
       keywords: ['thank', 'thanks', 'thank you', 'thx', 'appreciate'],
@@ -139,6 +153,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
   const css = `
     #ani-chat-btn {
       position: fixed; bottom: 28px; right: 28px; z-index: 99999;
+      display: none !important; /* Hidden — opened by the combined speed-dial FAB */
       height: 56px; border-radius: 50px;
       background: linear-gradient(135deg, #9B1FBE, #E8447A);
       border: none; cursor: pointer;
@@ -169,7 +184,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
       display: none;
     }
     #ani-chat-window {
-      position: fixed; bottom: 100px; right: 28px; z-index: 99998;
+      position: fixed; bottom: 110px; right: 22px; z-index: 99998;
       width: 360px; max-width: calc(100vw - 40px);
       background: #fff; border-radius: 20px;
       box-shadow: 0 12px 48px rgba(0,0,0,0.18);
@@ -315,21 +330,19 @@ Never make up specific prices — say "prices vary by style, use our price estim
   document.head.appendChild(styleEl);
 
   document.body.insertAdjacentHTML('beforeend', `
-    <!-- ANI BRAIDS AI CHAT BUTTON -->
-    <button id="ani-chat-btn" aria-label="Open AI Chat" title="Chat with Zara — Ani Braids AI">
+    <button id="ani-chat-btn" aria-label="Open AI Chat" title="Chat with Anita — Ani Braids AI">
       <img id="ani-chat-btn-logo" src="anibraidsfavicon.jpeg" alt="Ani Braids" onerror="this.style.display='none'">
       <div id="ani-chat-btn-label">Ani AI<span>Ask me anything ✨</span></div>
       <div class="ani-notif" id="ani-notif"></div>
     </button>
 
-    <!-- ANI BRAIDS AI CHAT WINDOW -->
     <div id="ani-chat-window" role="dialog" aria-label="Ani Braids AI Chat">
       <div class="ani-chat-header">
         <div class="ani-chat-avatar">
           <img src="anibraidsfavicon.jpeg" alt="Ani Braids" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='🌟'">
         </div>
         <div class="ani-chat-header-info">
-          <strong>Zara — Ani Braids AI</strong>
+          <strong>Anita — Ani Braids AI</strong>
           <span id="ani-status-text">● Online now</span>
         </div>
         <button class="ani-chat-close" id="ani-chat-close" aria-label="Close chat">✕</button>
@@ -342,7 +355,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
             <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
           </button>
         </div>
-        <div class="ani-powered">Powered by <span>Ani Braids AI</span> · Gemini</div>
+        <div class="ani-powered">Powered by <span>Ani Braids AI</span></div>
       </div>
     </div>
   `);
@@ -350,10 +363,11 @@ Never make up specific prices — say "prices vary by style, use our price estim
   /* ─────────────────────────────────────────────
      STATE
   ───────────────────────────────────────────────*/
-  let isOpen = false;
-  let isTyping = false;
-  let conversationHistory = [];   // for Gemini multi-turn context
-  let hasGreeted = false;
+  let isOpen          = false;
+  let isTyping        = false;
+  let configReady;
+  let conversationHistory = [];
+  let hasGreeted      = false;
 
   const chatBtn    = document.getElementById('ani-chat-btn');
   const chatWindow = document.getElementById('ani-chat-window');
@@ -364,29 +378,59 @@ Never make up specific prices — say "prices vary by style, use our price estim
   const notifDot   = document.getElementById('ani-notif');
 
   /* ─────────────────────────────────────────────
-     LOAD CONFIG FROM FIRESTORE (if Firebase is on page)
+     LOAD CONFIG FROM FIRESTORE
   ───────────────────────────────────────────────*/
   async function loadFirestoreConfig() {
     try {
-      if (typeof window._fb === 'undefined' && typeof window.firebase === 'undefined') return;
-      // try to pick up db from whatever page we're on
-      let db = null;
-      if (window._fb && window._fb.db) db = window._fb.db;
-      if (!db) return;
+      const { initializeApp, getApps, getApp } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, getDoc, doc, getDocs, collection } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
-      const { getDoc, doc, getDocs, collection } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const FIREBASE_CONFIG = {
+        apiKey:            "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+        authDomain:        "braiders-9cc89.firebaseapp.com",
+        databaseURL:       "https://braiders-9cc89-default-rtdb.firebaseio.com",
+        projectId:         "braiders-9cc89",
+        storageBucket:     "braiders-9cc89.appspot.com",
+        messagingSenderId: "444617114412",
+        appId:             "1:444617114412:web:2a2c7008e6c40f7e63a289",
+      };
+      const firebaseApp = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+      const db = getFirestore(firebaseApp);
 
-      // Load AI config
+      // Load AI settings
       const cfgSnap = await getDoc(doc(db, 'settings', 'aiChat'));
       if (cfgSnap.exists()) {
         const d = cfgSnap.data();
-        if (d.geminiKey)    CONFIG.geminiKey    = d.geminiKey;
-        if (d.systemPrompt) CONFIG.systemPrompt = d.systemPrompt;
-        if (typeof d.enabled === 'boolean') CONFIG.enabled = d.enabled;
-        if (d.geminiModel)  CONFIG.geminiModel  = d.geminiModel;
+
+        // Provider
+        if (d.aiProvider)                   CONFIG.aiProvider   = d.aiProvider;
+
+        // Gemini
+        if (d.geminiKey)                    CONFIG.geminiKey    = d.geminiKey;
+        if (d.geminiModel)                  CONFIG.geminiModel  = d.geminiModel;
+
+        // OpenAI
+        if (d.openaiKey)                    CONFIG.openaiKey    = d.openaiKey;
+        if (d.openaiModel)                  CONFIG.openaiModel  = d.openaiModel;
+
+        // Claude
+        if (d.claudeKey)                    CONFIG.claudeKey    = d.claudeKey;
+        if (d.claudeModel)                  CONFIG.claudeModel  = d.claudeModel;
+
+        // Groq
+        if (d.groqKey)                      CONFIG.groqKey      = d.groqKey;
+        if (d.groqModel)                    CONFIG.groqModel    = d.groqModel;
+
+        // Shared
+        if (d.systemPrompt)                 CONFIG.systemPrompt = d.systemPrompt;
+        if (typeof d.enabled === 'boolean') CONFIG.enabled      = d.enabled;
+        if (d.kbThreshold)                  CONFIG.kbThreshold  = d.kbThreshold;
+        if (d.botName)                      CONFIG.botName      = d.botName;
       }
 
-      // Load custom KB entries from Firestore
+      // Load custom KB entries from Firestore (these take priority)
       const kbSnap = await getDocs(collection(db, 'aiKnowledge'));
       if (!kbSnap.empty) {
         const extra = [];
@@ -394,9 +438,20 @@ Never make up specific prices — say "prices vary by style, use our price estim
           const e = d.data();
           if (e.keywords && e.answer) extra.push({ keywords: e.keywords, answer: e.answer });
         });
+        // Custom entries go FIRST so they override built-in presets
         KB_ENTRIES = [...extra, ...KB_ENTRIES];
       }
-    } catch (_) { /* silently fail — use defaults */ }
+
+      // Disable widget if admin turned it off
+      if (!CONFIG.enabled) {
+        chatBtn.style.display = 'none';
+        chatWindow.style.display = 'none';
+      }
+
+    } catch (err) {
+      console.warn('[AniChat] Firestore config failed, using defaults:', err.message);
+      // Widget still works with empty keys — will show friendly error on AI questions
+    }
   }
 
   /* ─────────────────────────────────────────────
@@ -410,8 +465,8 @@ Never make up specific prices — say "prices vary by style, use our price estim
     for (const entry of KB_ENTRIES) {
       let score = 0;
       for (const kw of entry.keywords) {
-        if (q.includes(kw)) score += 2;           // phrase match
-        else if (words.some(w => kw.includes(w) || w.includes(kw))) score += 1; // partial
+        if (q.includes(kw)) score += 2;
+        else if (words.some(w => kw.includes(w) || w.includes(kw))) score += 1;
       }
       const norm = score / entry.keywords.length;
       if (norm > best.score) best = { score: norm, answer: entry.answer };
@@ -421,20 +476,32 @@ Never make up specific prices — say "prices vary by style, use our price estim
   }
 
   /* ─────────────────────────────────────────────
+     AI PROVIDER — ACTIVE KEY GETTER
+  ───────────────────────────────────────────────*/
+  function getActiveKey() {
+    const p = CONFIG.aiProvider;
+    if (p === 'gemini')  return CONFIG.geminiKey;
+    if (p === 'openai')  return CONFIG.openaiKey;
+    if (p === 'claude')  return CONFIG.claudeKey;
+    if (p === 'groq')    return CONFIG.groqKey;
+    return '';
+  }
+
+  function hasValidKey() {
+    const key = getActiveKey();
+    return key && key.length > 10;
+  }
+
+  /* ─────────────────────────────────────────────
      GEMINI API CALL
   ───────────────────────────────────────────────*/
   async function callGemini(userMessage) {
-    if (!CONFIG.geminiKey || CONFIG.geminiKey === 'YOUR_GEMINI_API_KEY') {
-      return "⚠️ AI responses aren't configured yet. Please contact us directly at awaanita25@gmail.com or call +1 (202) 424-4894 — we're happy to help!";
-    }
-
     conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
     if (conversationHistory.length > CONFIG.maxHistory * 2) {
       conversationHistory = conversationHistory.slice(-CONFIG.maxHistory * 2);
     }
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.geminiModel}:generateContent?key=${CONFIG.geminiKey}`;
-
     const payload = {
       system_instruction: { parts: [{ text: CONFIG.systemPrompt }] },
       contents: conversationHistory,
@@ -449,14 +516,195 @@ Never make up specific prices — say "prices vary by style, use our price estim
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+      throw new Error(err?.error?.message || `Gemini HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm not sure about that one. Please contact us at awaanita25@gmail.com and we'll get back to you shortly! 💜";
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+      || "I'm not sure about that one. Please contact us at awaanita25@gmail.com 💜";
 
     conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
     return reply;
+  }
+
+  /* ─────────────────────────────────────────────
+     OPENAI API CALL
+  ───────────────────────────────────────────────*/
+  async function callOpenAI(userMessage) {
+    // Build messages array
+    const messages = [
+      { role: 'system', content: CONFIG.systemPrompt },
+      // Include recent conversation history
+      ...conversationHistory.map(m => ({
+        role: m.role === 'model' ? 'assistant' : m.role,
+        content: m.content || (m.parts ? m.parts[0].text : '')
+      })),
+      { role: 'user', content: userMessage }
+    ];
+
+    // Trim history
+    if (messages.length > CONFIG.maxHistory * 2 + 1) {
+      const trimmed = messages.slice(0, 1).concat(messages.slice(-(CONFIG.maxHistory * 2)));
+      messages.splice(0, messages.length, ...trimmed);
+    }
+
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CONFIG.openaiKey
+      },
+      body: JSON.stringify({
+        model: CONFIG.openaiModel,
+        messages,
+        max_tokens: 400,
+        temperature: 0.7
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `OpenAI HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content
+      || "I'm not sure about that one. Please contact us at awaanita25@gmail.com 💜";
+
+    // Store in history (OpenAI format)
+    conversationHistory.push({ role: 'user', content: userMessage });
+    conversationHistory.push({ role: 'assistant', content: reply });
+    if (conversationHistory.length > CONFIG.maxHistory * 2) {
+      conversationHistory = conversationHistory.slice(-CONFIG.maxHistory * 2);
+    }
+
+    return reply;
+  }
+
+  /* ─────────────────────────────────────────────
+     CLAUDE (ANTHROPIC) API CALL
+     Note: Requires a CORS proxy in production.
+     Claude's API doesn't allow direct browser calls.
+  ───────────────────────────────────────────────*/
+  async function callClaude(userMessage) {
+    // Build messages (Claude format: alternating user/assistant)
+    const msgs = [];
+    for (const m of conversationHistory) {
+      const role = m.role === 'model' || m.role === 'assistant' ? 'assistant' : 'user';
+      const content = m.content || (m.parts ? m.parts[0].text : '');
+      if (content) msgs.push({ role, content });
+    }
+    msgs.push({ role: 'user', content: userMessage });
+
+    // Claude needs alternating messages — ensure no consecutive same roles
+    const cleaned = [];
+    for (const msg of msgs) {
+      if (cleaned.length > 0 && cleaned[cleaned.length - 1].role === msg.role) {
+        cleaned[cleaned.length - 1].content += '\n' + msg.content;
+      } else {
+        cleaned.push({ ...msg });
+      }
+    }
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CONFIG.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-cors': 'true'
+      },
+      body: JSON.stringify({
+        model: CONFIG.claudeModel,
+        max_tokens: 400,
+        system: CONFIG.systemPrompt,
+        messages: cleaned.slice(-CONFIG.maxHistory * 2)
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Claude HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data?.content?.[0]?.text
+      || "I'm not sure about that one. Please contact us at awaanita25@gmail.com 💜";
+
+    conversationHistory.push({ role: 'user', content: userMessage });
+    conversationHistory.push({ role: 'assistant', content: reply });
+    if (conversationHistory.length > CONFIG.maxHistory * 2) {
+      conversationHistory = conversationHistory.slice(-CONFIG.maxHistory * 2);
+    }
+
+    return reply;
+  }
+
+  /* ─────────────────────────────────────────────
+     GROQ API CALL  (OpenAI-compatible format)
+  ───────────────────────────────────────────────*/
+  async function callGroq(userMessage) {
+    const messages = [
+      { role: 'system', content: CONFIG.systemPrompt },
+      ...conversationHistory.map(m => ({
+        role: m.role === 'model' ? 'assistant' : (m.role === 'assistant' ? 'assistant' : 'user'),
+        content: m.content || (m.parts ? m.parts[0].text : '')
+      })),
+      { role: 'user', content: userMessage }
+    ];
+
+    if (messages.length > CONFIG.maxHistory * 2 + 1) {
+      const trimmed = messages.slice(0, 1).concat(messages.slice(-(CONFIG.maxHistory * 2)));
+      messages.splice(0, messages.length, ...trimmed);
+    }
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CONFIG.groqKey
+      },
+      body: JSON.stringify({
+        model: CONFIG.groqModel,
+        messages,
+        max_tokens: 400,
+        temperature: 0.7
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Groq HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content
+      || "I'm not sure about that one. Please contact us at awaanita25@gmail.com 💜";
+
+    conversationHistory.push({ role: 'user', content: userMessage });
+    conversationHistory.push({ role: 'assistant', content: reply });
+    if (conversationHistory.length > CONFIG.maxHistory * 2) {
+      conversationHistory = conversationHistory.slice(-CONFIG.maxHistory * 2);
+    }
+
+    return reply;
+  }
+
+  /* ─────────────────────────────────────────────
+     UNIFIED AI CALL — dispatches to active provider
+  ───────────────────────────────────────────────*/
+  async function callAI(userMessage) {
+    if (!hasValidKey()) {
+      return "⚠️ AI responses aren't configured yet. Please contact us directly:\n📧 awaanita25@gmail.com\n📞 +1 (202) 424-4894";
+    }
+
+    const p = CONFIG.aiProvider;
+    if (p === 'gemini')  return await callGemini(userMessage);
+    if (p === 'openai')  return await callOpenAI(userMessage);
+    if (p === 'claude')  return await callClaude(userMessage);
+    if (p === 'groq')    return await callGroq(userMessage);
+
+    throw new Error('Unknown AI provider: ' + p);
   }
 
   /* ─────────────────────────────────────────────
@@ -482,17 +730,6 @@ Never make up specific prices — say "prices vary by style, use our price estim
     bubble.className = 'ani-msg-bubble';
     bubble.innerHTML = formatMarkdown(text);
 
-    if (source === 'kb') {
-      const badge = document.createElement('div');
-      badge.className = 'ani-kb-badge';
-      badge.textContent = '📚 From knowledge base';
-      bubble.appendChild(badge);
-    } else if (source === 'ai') {
-      const badge = document.createElement('div');
-      badge.className = 'ani-ai-badge';
-      badge.textContent = '✨ AI response';
-      bubble.appendChild(badge);
-    }
 
     if (role === 'bot') { wrapper.appendChild(avatarEl); wrapper.appendChild(bubble); }
     else { wrapper.appendChild(bubble); wrapper.appendChild(avatarEl); }
@@ -548,33 +785,73 @@ Never make up specific prices — say "prices vary by style, use our price estim
     isTyping = true;
 
     appendMessage('user', text);
-
-    // Remove any lingering quick replies
     document.querySelectorAll('.ani-quick-replies').forEach(el => el.remove());
-
     showTyping();
 
-    // Simulate a tiny delay so it feels natural
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 500));
+    // Wait for Firestore config to finish loading before calling AI
+    await configReady;
 
-    removeTyping();
-
-    let reply, source;
     const kbAnswer = searchKB(text);
+    let reply, source;
 
-    if (kbAnswer) {
+    // Build KB context string for all top matches (not just the best one)
+    function getTopKBContext(query, maxEntries = 3) {
+      const q = query.toLowerCase().trim();
+      const words = q.split(/\s+/);
+      const scored = KB_ENTRIES.map(entry => {
+        let score = 0;
+        for (const kw of entry.keywords) {
+          if (q.includes(kw)) score += 2;
+          else if (words.some(w => kw.includes(w) || w.includes(kw))) score += 1;
+        }
+        return { score: score / entry.keywords.length, answer: entry.answer };
+      }).filter(e => e.score > 0).sort((a, b) => b.score - a.score);
+      return scored.slice(0, maxEntries).map(e => e.answer).join('\n\n---\n\n');
+    }
+
+    if (kbAnswer && hasValidKey()) {
+      // KB hit + AI available: use AI to rephrase KB answer naturally
+      try {
+        const kbContext = getTopKBContext(text);
+        const rephraseMsg = `The customer asked: "${text}"\n\nHere is the relevant information from our knowledge base:\n\n${kbContext}\n\nUsing ONLY the information above, answer the customer's question naturally and conversationally — as if you already knew it. Match the tone and phrasing of their question. Do not add information that is not in the knowledge base. Keep it concise.`;
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 15000)
+        );
+        reply = await Promise.race([callAI(rephraseMsg), timeout]);
+        source = 'kb';
+      } catch (err) {
+        // AI failed — fall back to raw KB answer
+        await new Promise(r => setTimeout(r, 500));
+        reply = kbAnswer;
+        source = 'kb';
+      }
+    } else if (kbAnswer && !hasValidKey()) {
+      // KB hit, no AI — return raw KB answer
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
       reply = kbAnswer;
       source = 'kb';
     } else {
+      // No KB match — call AI with KB context injected so it can answer from business knowledge
       try {
-        reply = await callGemini(text);
+        const kbContext = getTopKBContext(text);
+        const aiMsg = kbContext
+          ? `The customer asked: "${text}"\n\nHere is some possibly relevant background from our knowledge base:\n\n${kbContext}\n\nAnswer naturally using this context if relevant, or use your general knowledge about Ani Braids if the context doesn't help.`
+          : text;
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 15000)
+        );
+        reply = await Promise.race([callAI(aiMsg), timeout]);
         source = 'ai';
       } catch (err) {
-        reply = `⚠️ I had trouble connecting. Please contact us directly:\n📧 awaanita25@gmail.com\n📞 +1 (202) 424-4894`;
+        const isTimeout = err.message === 'timeout';
+        reply = isTimeout
+          ? `⏱ The AI is taking too long right now. Please try again or contact us:\n📧 awaanita25@gmail.com\n📞 +1 (202) 424-4894`
+          : `⚠️ Couldn't reach the AI (${err.message}). Please contact us directly:\n📧 awaanita25@gmail.com\n📞 +1 (202) 424-4894`;
         source = null;
       }
     }
 
+    removeTyping();
     appendMessage('bot', reply, source);
 
     // Contextual quick replies
@@ -604,7 +881,7 @@ Never make up specific prices — say "prices vary by style, use our price estim
       hasGreeted = true;
       setTimeout(() => {
         appendMessage('bot',
-          '👋 Hi there! I\'m **Zara**, the Ani Braids AI assistant. How can I help you today?',
+          '👋 Hi there! I\'m **Anita**, the Ani Braids AI assistant. How can I help you today?',
           null
         );
         showQuickReplies(['📅 Book appointment', '💇 Browse styles', '💰 Pricing', '📞 Contact us']);
@@ -620,6 +897,12 @@ Never make up specific prices — say "prices vary by style, use our price estim
   chatBtn.addEventListener('click', () => isOpen ? closeChat() : openChat());
   closeBtn.addEventListener('click', closeChat);
 
+  // Expose globally so the combined speed-dial FAB can trigger the chat
+  window.aniChatOpen  = openChat;
+  window.aniChatClose = closeChat;
+  window.aniChatToggle = () => isOpen ? closeChat() : openChat();
+  // Also support custom event from FAB
+  window.addEventListener('ani:openChat', openChat);
   sendBtn.addEventListener('click', () => handleSend());
   chatInput.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -632,12 +915,11 @@ Never make up specific prices — say "prices vary by style, use our price estim
   /* ─────────────────────────────────────────────
      INIT
   ───────────────────────────────────────────────*/
-  // Show notification dot after 4 seconds to attract attention
   setTimeout(() => {
     if (!isOpen) notifDot.style.display = 'block';
   }, 4000);
 
-  // Load Firestore config if available
-  loadFirestoreConfig();
+  // Load Firestore config — handleSend awaits this before calling AI
+  configReady = loadFirestoreConfig();
 
 })();

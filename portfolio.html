@@ -4,24 +4,18 @@
   <link rel="icon" type="image/png" href="anibraidsfavicon.jpeg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome 6 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <title>Portfolio – Ani Braids – Premium Braiding Studio</title>
   <meta name="description" content="Browse the Ani Braids style gallery – real photos of knotless box braids, cornrows, twists and more. Get inspired before your next appointment.">
   <meta property="og:title" content="Style Portfolio – Ani Braids">
   <meta property="og:description" content="Real photos of knotless box braids, cornrows, passion twists and more. Browse for inspiration and book your style.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://braiders-9cc89.web.app/og-image.jpg">
-  <meta property="og:url" content="https://braiders-9cc89.web.app/portfolio.html">
+  <meta property="og:image" content="https://anibraids.com/og-image.jpg">
+  <meta property="og:url" content="https://anibraids.com/portfolio.html">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Style Portfolio – Ani Braids">
   <meta name="twitter:description" content="Real photos of knotless box braids, cornrows, passion twists and more. Browse and book.">
-  <meta name="twitter:image" content="https://braiders-9cc89.web.app/og-image.jpg">
-  <link rel="canonical" href="https://braiders-9cc89.web.app/portfolio.html">
+  <meta name="twitter:image" content="https://anibraids.com/og-image.jpg">
+  <link rel="canonical" href="https://anibraids.com/portfolio.html">
 
   <!-- Firebase -->
   <script type="module">
@@ -143,33 +137,7 @@
     .sticky-header-wrap { position: sticky; top: 0; z-index: 1000; }
     .header-inner {
       max-width: 1200px; margin: 0 auto; padding: 0 24px;
-      height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
-    /* Hamburger menu button */
-    .header-menu-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--brand); font-size: 22px; padding: 8px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 8px; transition: background 0.18s, color 0.18s;
-      flex-shrink: 0;
-    }
-    .header-menu-btn:hover { background: rgba(155,31,190,0.08); color: var(--pink); }
-    /* Header right side icons */
-    .header-right {
-      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-    }
-    .header-icon-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--brand); font-size: 19px; padding: 8px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 8px; transition: background 0.18s, color 0.18s;
-      position: relative;
-    }
-    .header-icon-btn:hover { background: rgba(155,31,190,0.08); color: var(--pink); }
-    .header-icon-btn .notif-badge {
-      position: absolute; top: 4px; right: 4px;
-      width: 9px; height: 9px; border-radius: 50%;
-      background: var(--pink); border: 2px solid var(--white);
+      height: 72px; display: flex; align-items: center; justify-content: space-between;
     }
     .logo {
       font-family: var(--font-heading); font-size: 28px; font-weight: 700;
@@ -179,22 +147,14 @@
     .header-search {
       display: flex; align-items: center; background: var(--light);
       border: 1.5px solid rgba(155,31,190,0.2); border-radius: 50px; padding: 6px 16px; gap: 8px;
-      flex: 1; max-width: 240px;
     }
     .header-search input {
       border: none; background: transparent; outline: none;
-      font-family: var(--font-body); font-size: 14px; color: var(--text); width: 100%;
+      font-family: var(--font-body); font-size: 14px; color: var(--text); width: 180px;
     }
     .header-search input::placeholder { color: #aaa; }
-    .header-search button { background: none; border: none; cursor: pointer; color: var(--brand); font-size: 15px; flex-shrink: 0; }
+    .header-search button { background: none; border: none; cursor: pointer; color: var(--brand); font-size: 15px; }
     .header-search button:hover { color: var(--pink); }
-    @media (max-width: 768px) {
-      .header-search { max-width: 160px; }
-      .logo { font-size: 22px; }
-    }
-    @media (max-width: 480px) {
-      .header-search { display: none; }
-    }
 
     /* ── SECONDARY NAV ── */
     .secondary-nav { background: #111111; border-top: 1px solid rgba(255,255,255,0.06); }
@@ -231,10 +191,8 @@
         border-radius: 0; font-size: 14px; white-space: normal;
       }
       .secondary-nav-inner a:last-child { border-bottom: none; }
-      .header-search { max-width: 130px; }
+      .header-search input { width: 130px; }
     }
-
-    .secondary-nav-inner.desktop-hidden { display: none !important; }
 
     /* ── PAGE HERO ── */
     .page-hero {
@@ -757,12 +715,6 @@
       cursor: pointer; transition: all 0.2s;
     }
     .btn-continue-browsing:hover { background: rgba(155,31,190,0.07); border-color: var(--brand); }
-  
-    @media (max-width: 600px) {
-      .footer-body { grid-template-columns: 1fr !important; gap: 24px; }
-      .newsletter-form { width: 100%; }
-      .newsletter-form input, .newsletter-form button { width: 100%; box-sizing: border-box; }
-    }
   </style>
 </head>
 <body>
@@ -775,29 +727,10 @@
   <div class="sticky-header-wrap">
     <header>
       <div class="header-inner">
-        <!-- Hamburger menu (three bars) on the LEFT -->
-        <button class="header-menu-btn" id="headerMenuBtn" aria-label="Open navigation menu">
-          <i class="fas fa-bars"></i>
-        </button>
-        <!-- Logo -->
         <a href="index.html" class="logo">Ani <span>Braids</span></a>
-        <!-- Search bar -->
         <div class="header-search">
-          <input type="text" placeholder="Search styles...">
+          <input type="text" placeholder="Search...">
           <button aria-label="Search"><i class="fas fa-search"></i></button>
-        </div>
-        <!-- Right-side icons: Message, Heart, Profile -->
-        <div class="header-right">
-          <button class="header-icon-btn" aria-label="Messages" onclick="typeof window.aniChatOpen==='function'?window.aniChatOpen():window.dispatchEvent(new Event('ani:openChat'))">
-            <i class="fas fa-comment-dots"></i>
-            <span class="notif-badge"></span>
-          </button>
-          <button class="header-icon-btn" aria-label="Saved styles">
-            <i class="fas fa-heart"></i>
-          </button>
-          <a href="customer.html" class="header-icon-btn" aria-label="My Account" style="text-decoration:none;">
-            <i class="fas fa-user-circle"></i>
-          </a>
         </div>
       </div>
     </header>
@@ -810,16 +743,16 @@
         </button>
       </div>
       <div class="secondary-nav-inner" id="secondaryNavLinks">
-        <a href="index.html"><i class="fas fa-home" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Home</a>
-        <a href="about.html"><i class="fas fa-star" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>About</a>
-        <a href="appointment.html"><i class="fas fa-calendar-check" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Appointment</a>
-        <a href="services.html"><i class="fas fa-scissors" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Services</a>
-        <a href="portfolio.html" class="active"><i class="fas fa-images" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Portfolio</a>
-        <a href="customer.html"><i class="fas fa-user-circle" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Customer Cabinet</a>
-        <a href="contact.html"><i class="fas fa-envelope" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Contact us</a>
-        <a href="privacy.html"><i class="fas fa-shield-alt" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Privacy Policy</a>
-        <a href="refund.html"><i class="fas fa-undo-alt" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Refund &amp; Returns</a>
-        <a href="reviews.html"><i class="fas fa-comment-dots" style="margin-right:6px;font-size:11px;opacity:0.8;"></i>Reviews</a>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="appointment.html">Appointment</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html" class="active">Portfolio</a>
+        <a href="customer.html">Customer Cabinet</a>
+        <a href="contact.html">Contact us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund &amp; Returns</a>
+        <a href="reviews.html">Reviews</a>
       </div>
     </nav>
   </div>
@@ -1099,20 +1032,6 @@
     icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
   });
 
-  // Header hamburger (three-bars) toggles the secondary nav on all screen sizes
-  document.getElementById('headerMenuBtn')?.addEventListener('click', () => {
-    const links = document.getElementById('secondaryNavLinks');
-    const icon  = document.getElementById('navToggleIcon');
-    if (!links) return;
-    // On desktop the nav is always shown; toggle a "hidden" class to collapse it
-    if (window.innerWidth > 768) {
-      links.classList.toggle('desktop-hidden');
-    } else {
-      links.classList.toggle('open');
-      if (icon) icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
-    }
-  });
-
   /* Kick off render if Firebase already resolved before DOM was ready */
   if (window._portfolioServices !== undefined) renderPortfolio();
 
@@ -1235,236 +1154,5 @@
   document.getElementById('btnContinueBrowsing')?.addEventListener('click', closePortfolioModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePortfolioModal(); });
   </script>
-
-<!-- ── COMBINED SPEED-DIAL FAB (Social + AI Chat) ── -->
-  <style>
-    .fab-wrap {
-      position: fixed;
-      bottom: 28px;
-      right: 22px;
-      z-index: 100000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    /* Speed-dial children */
-    .fab-child {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      text-decoration: none;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-      opacity: 0;
-      transform: translateY(16px) scale(0.7);
-      pointer-events: none;
-      transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.18s ease;
-      will-change: opacity, transform;
-      border: none;
-      cursor: pointer;
-      position: relative;
-    }
-    .fab-child:hover {
-      box-shadow: 0 6px 20px rgba(0,0,0,0.38);
-      transform: translateY(0) scale(1.08) !important;
-    }
-    .fab-child.fab-visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: auto;
-    }
-    /* Tooltip labels */
-    .fab-child::before {
-      content: attr(data-label);
-      position: absolute;
-      right: 54px;
-      background: rgba(26,0,40,0.88);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s;
-      font-family: 'DM Sans','Segoe UI',sans-serif;
-      letter-spacing: 0.2px;
-    }
-    .fab-child:hover::before { opacity: 1; }
-    /* Social platform colors */
-    .fab-tiktok    { background: #010101; }
-    .fab-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
-    .fab-facebook  { background: #1877f2; }
-    .fab-twitter   { background: #1da1f2; }
-    .fab-pinterest { background: #e60023; }
-    .fab-youtube   { background: #ff0000; }
-    /* AI Chat child */
-    .fab-ai-child  { background: linear-gradient(135deg, #9B1FBE, #E8447A); }
-    /* Main trigger button */
-    .fab-main {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #9B1FBE, #E8447A);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 22px;
-      box-shadow: 0 4px 18px rgba(155,31,190,0.5);
-      transition: transform 0.22s ease, box-shadow 0.18s ease;
-      flex-shrink: 0;
-      position: relative;
-    }
-    .fab-main:hover {
-      box-shadow: 0 6px 24px rgba(155,31,190,0.65);
-      transform: scale(1.07);
-    }
-    .fab-main i {
-      transition: transform 0.28s ease, opacity 0.2s ease;
-      position: absolute;
-    }
-    .fab-main .fab-icon-open  { opacity: 1; transform: scale(1) rotate(0deg); }
-    .fab-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
-    .fab-wrap.open .fab-icon-open  { opacity: 0; transform: scale(0.5) rotate(90deg); }
-    .fab-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
-    /* Notification dot */
-    .fab-notif-dot {
-      position: absolute;
-      top: 2px; right: 2px;
-      width: 11px; height: 11px;
-      border-radius: 50%;
-      background: #D4A843;
-      border: 2px solid #fff;
-      display: none;
-    }
-    @media (max-width: 480px) {
-      .fab-wrap { bottom: 18px; right: 14px; }
-      .fab-main { width: 48px; height: 48px; font-size: 20px; }
-      .fab-child { width: 40px; height: 40px; font-size: 16px; }
-    }
-  </style>
-
-  <div class="fab-wrap" id="fabWrap">
-    <button class="fab-main" id="fabMainBtn" aria-label="Menu">
-      <i class="fas fa-comment-dots fab-icon-open"></i>
-      <i class="fas fa-times fab-icon-close"></i>
-      <span class="fab-notif-dot" id="fabNotifDot"></span>
-    </button>
-  </div>
-
-  <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const FAB_CONFIG = {
-      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
-      authDomain: "braiders-9cc89.firebaseapp.com",
-      projectId: "braiders-9cc89",
-      storageBucket: "braiders-9cc89.appspot.com",
-      messagingSenderId: "444617114412",
-      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289"
-    };
-
-    const fabApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FAB_CONFIG, 'fab-social');
-    const fabDb  = getFirestore(fabApp);
-
-    const PLATFORMS = [
-      { key: 'tiktok',    icon: 'fab fa-tiktok',      cls: 'fab-tiktok',    label: 'TikTok'    },
-      { key: 'instagram', icon: 'fab fa-instagram',   cls: 'fab-instagram', label: 'Instagram' },
-      { key: 'facebook',  icon: 'fab fa-facebook-f',  cls: 'fab-facebook',  label: 'Facebook'  },
-      { key: 'twitter',   icon: 'fab fa-twitter',     cls: 'fab-twitter',   label: 'Twitter'   },
-      { key: 'pinterest', icon: 'fab fa-pinterest-p', cls: 'fab-pinterest', label: 'Pinterest' },
-      { key: 'youtube',   icon: 'fab fa-youtube',     cls: 'fab-youtube',   label: 'YouTube'   },
-    ];
-
-    const wrap    = document.getElementById('fabWrap');
-    const mainBtn = document.getElementById('fabMainBtn');
-    const notifDot = document.getElementById('fabNotifDot');
-    let   children = [];
-    let   isOpen   = false;
-
-    // Always add AI Chat as the first (top) child
-    function buildAIChild() {
-      const btn = document.createElement('button');
-      btn.className   = 'fab-child fab-ai-child';
-      btn.setAttribute('data-label', 'AI Chat');
-      btn.setAttribute('aria-label', 'Open AI Chat');
-      btn.innerHTML   = '<i class="fas fa-comments"></i>';
-      btn.addEventListener('click', () => {
-        closeMenu();
-        // Try direct call first, fall back to custom event
-        if (typeof window.aniChatOpen === 'function') {
-          window.aniChatOpen();
-        } else {
-          window.dispatchEvent(new Event('ani:openChat'));
-        }
-      });
-      wrap.insertBefore(btn, mainBtn);
-      return btn;
-    }
-
-    function buildSocialItems(social) {
-      // Remove old social children (keep AI child)
-      wrap.querySelectorAll('.fab-child:not(.fab-ai-child)').forEach(el => el.remove());
-      const active = PLATFORMS.filter(p => social[p.key]);
-      [...active].reverse().forEach(p => {
-        const a = document.createElement('a');
-        a.href      = social[p.key];
-        a.target    = '_blank';
-        a.rel       = 'noopener noreferrer';
-        a.className = `fab-child ${p.cls}`;
-        a.setAttribute('data-label', p.label);
-        a.setAttribute('aria-label', p.label);
-        a.innerHTML = `<i class="${p.icon}"></i>`;
-        // Insert above the AI child (which is above the main button)
-        const aiChild = wrap.querySelector('.fab-ai-child');
-        wrap.insertBefore(a, aiChild);
-      });
-      // Rebuild children list (all fab-child elements in DOM order, reversed for stagger)
-      children = Array.from(wrap.querySelectorAll('.fab-child')).reverse();
-    }
-
-    function openMenu() {
-      isOpen = true;
-      wrap.classList.add('open');
-      notifDot.style.display = 'none';
-      children.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
-    }
-
-    function closeMenu() {
-      isOpen = false;
-      wrap.classList.remove('open');
-      [...children].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
-    }
-
-    mainBtn.addEventListener('click', () => isOpen ? closeMenu() : openMenu());
-
-    // Build AI child immediately
-    const aiChild = buildAIChild();
-    children = [aiChild];
-
-    // Load social links from Firestore
-    try {
-      const snap = await getDoc(doc(fabDb, 'settings', 'siteConfig'));
-      if (snap.exists()) buildSocialItems(snap.data().social || {});
-    } catch(e) {}
-
-    // Show notification dot after 4s if not opened
-    setTimeout(() => {
-      if (!isOpen) notifDot.style.display = 'block';
-    }, 4000);
-  </script>
-  <!-- ── END COMBINED SPEED-DIAL FAB ── -->
-
-  <script src="ani-chat.js"></script>
 </body>
 </html>

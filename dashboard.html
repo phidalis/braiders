@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Dashboard – Ani Braids</title>
+  <meta name="robots" content="noindex, nofollow">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -1516,20 +1517,19 @@
   });
 </script>
 
-<!-- ── COMBINED SPEED-DIAL FAB (Social + AI Chat) ── -->
+  <!-- ── FLOATING SOCIAL BUTTON ── -->
   <style>
-    .fab-wrap {
+    .fab-social-wrap {
       position: fixed;
       bottom: 28px;
       right: 22px;
-      z-index: 100000;
+      z-index: 9999;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
     }
-    /* Speed-dial children */
-    .fab-child {
+    .fab-social-item {
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -1545,49 +1545,23 @@
       pointer-events: none;
       transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.18s ease;
       will-change: opacity, transform;
-      border: none;
-      cursor: pointer;
-      position: relative;
     }
-    .fab-child:hover {
+    .fab-social-item:hover {
       box-shadow: 0 6px 20px rgba(0,0,0,0.38);
       transform: translateY(0) scale(1.08) !important;
     }
-    .fab-child.fab-visible {
+    .fab-social-item.fab-visible {
       opacity: 1;
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
-    /* Tooltip labels */
-    .fab-child::before {
-      content: attr(data-label);
-      position: absolute;
-      right: 54px;
-      background: rgba(26,0,40,0.88);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s;
-      font-family: 'DM Sans','Segoe UI',sans-serif;
-      letter-spacing: 0.2px;
-    }
-    .fab-child:hover::before { opacity: 1; }
-    /* Social platform colors */
     .fab-tiktok    { background: #010101; }
     .fab-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
     .fab-facebook  { background: #1877f2; }
     .fab-twitter   { background: #1da1f2; }
     .fab-pinterest { background: #e60023; }
     .fab-youtube   { background: #ff0000; }
-    /* AI Chat child */
-    .fab-ai-child  { background: linear-gradient(135deg, #9B1FBE, #E8447A); }
-    /* Main trigger button */
-    .fab-main {
+    .fab-social-main {
       width: 52px;
       height: 52px;
       border-radius: 50%;
@@ -1604,40 +1578,24 @@
       flex-shrink: 0;
       position: relative;
     }
-    .fab-main:hover {
+    .fab-social-main:hover {
       box-shadow: 0 6px 24px rgba(155,31,190,0.65);
       transform: scale(1.07);
     }
-    .fab-main i {
+    .fab-social-main i {
       transition: transform 0.28s ease, opacity 0.2s ease;
       position: absolute;
     }
-    .fab-main .fab-icon-open  { opacity: 1; transform: scale(1) rotate(0deg); }
-    .fab-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
-    .fab-wrap.open .fab-icon-open  { opacity: 0; transform: scale(0.5) rotate(90deg); }
-    .fab-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
-    /* Notification dot */
-    .fab-notif-dot {
-      position: absolute;
-      top: 2px; right: 2px;
-      width: 11px; height: 11px;
-      border-radius: 50%;
-      background: #D4A843;
-      border: 2px solid #fff;
-      display: none;
-    }
-    @media (max-width: 480px) {
-      .fab-wrap { bottom: 18px; right: 14px; }
-      .fab-main { width: 48px; height: 48px; font-size: 20px; }
-      .fab-child { width: 40px; height: 40px; font-size: 16px; }
-    }
+    .fab-social-main .fab-icon-msg   { opacity: 1; transform: scale(1) rotate(0deg); }
+    .fab-social-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
+    .fab-social-wrap.open .fab-icon-msg   { opacity: 0; transform: scale(0.5) rotate(90deg); }
+    .fab-social-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
   </style>
 
-  <div class="fab-wrap" id="fabWrap">
-    <button class="fab-main" id="fabMainBtn" aria-label="Menu">
-      <i class="fas fa-comment-dots fab-icon-open"></i>
+  <div class="fab-social-wrap" id="fabSocialWrap">
+    <button class="fab-social-main" id="fabSocialBtn" aria-label="Social links">
+      <i class="fas fa-comment-dots fab-icon-msg"></i>
       <i class="fas fa-times fab-icon-close"></i>
-      <span class="fab-notif-dot" id="fabNotifDot"></span>
     </button>
   </div>
 
@@ -1654,6 +1612,7 @@
       appId: "1:444617114412:web:2a2c7008e6c40f7e63a289"
     };
 
+    // Reuse existing Firebase app if already initialised on this page
     const fabApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FAB_CONFIG, 'fab-social');
     const fabDb  = getFirestore(fabApp);
 
@@ -1666,85 +1625,47 @@
       { key: 'youtube',   icon: 'fab fa-youtube',     cls: 'fab-youtube',   label: 'YouTube'   },
     ];
 
-    const wrap    = document.getElementById('fabWrap');
-    const mainBtn = document.getElementById('fabMainBtn');
-    const notifDot = document.getElementById('fabNotifDot');
-    let   children = [];
-    let   isOpen   = false;
+    const wrap = document.getElementById('fabSocialWrap');
+    const btn  = document.getElementById('fabSocialBtn');
+    let items  = [];
 
-    // Always add AI Chat as the first (top) child
-    function buildAIChild() {
-      const btn = document.createElement('button');
-      btn.className   = 'fab-child fab-ai-child';
-      btn.setAttribute('data-label', 'AI Chat');
-      btn.setAttribute('aria-label', 'Open AI Chat');
-      btn.innerHTML   = '<i class="fas fa-comments"></i>';
-      btn.addEventListener('click', () => {
-        closeMenu();
-        // Try direct call first, fall back to custom event
-        if (typeof window.aniChatOpen === 'function') {
-          window.aniChatOpen();
-        } else {
-          window.dispatchEvent(new Event('ani:openChat'));
-        }
-      });
-      wrap.insertBefore(btn, mainBtn);
-      return btn;
-    }
-
-    function buildSocialItems(social) {
-      // Remove old social children (keep AI child)
-      wrap.querySelectorAll('.fab-child:not(.fab-ai-child)').forEach(el => el.remove());
+    function buildItems(social) {
+      wrap.querySelectorAll('.fab-social-item').forEach(el => el.remove());
+      items = [];
       const active = PLATFORMS.filter(p => social[p.key]);
       [...active].reverse().forEach(p => {
         const a = document.createElement('a');
         a.href      = social[p.key];
         a.target    = '_blank';
         a.rel       = 'noopener noreferrer';
-        a.className = `fab-child ${p.cls}`;
-        a.setAttribute('data-label', p.label);
+        a.className = `fab-social-item ${p.cls}`;
         a.setAttribute('aria-label', p.label);
         a.innerHTML = `<i class="${p.icon}"></i>`;
-        // Insert above the AI child (which is above the main button)
-        const aiChild = wrap.querySelector('.fab-ai-child');
-        wrap.insertBefore(a, aiChild);
+        wrap.insertBefore(a, btn);
+        items.push(a);
       });
-      // Rebuild children list (all fab-child elements in DOM order, reversed for stagger)
-      children = Array.from(wrap.querySelectorAll('.fab-child')).reverse();
     }
 
     function openMenu() {
-      isOpen = true;
       wrap.classList.add('open');
-      notifDot.style.display = 'none';
-      children.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
+      items.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
     }
 
     function closeMenu() {
-      isOpen = false;
       wrap.classList.remove('open');
-      [...children].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
+      [...items].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
     }
 
-    mainBtn.addEventListener('click', () => isOpen ? closeMenu() : openMenu());
+    btn.addEventListener('click', () => {
+      wrap.classList.contains('open') ? closeMenu() : openMenu();
+    });
 
-    // Build AI child immediately
-    const aiChild = buildAIChild();
-    children = [aiChild];
-
-    // Load social links from Firestore
     try {
       const snap = await getDoc(doc(fabDb, 'settings', 'siteConfig'));
-      if (snap.exists()) buildSocialItems(snap.data().social || {});
+      if (snap.exists()) buildItems(snap.data().social || {});
     } catch(e) {}
-
-    // Show notification dot after 4s if not opened
-    setTimeout(() => {
-      if (!isOpen) notifDot.style.display = 'block';
-    }, 4000);
   </script>
-  <!-- ── END COMBINED SPEED-DIAL FAB ── -->
+  <!-- ── END FLOATING SOCIAL BUTTON ── -->
 
-  <script src="ani-chat.js"></script>
 </body>
 </html>

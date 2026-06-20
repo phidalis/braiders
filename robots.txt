@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /dashboard-appointment.html
+Disallow: /dashboard-portfolio.html
+Disallow: /dashboard-services.html
+Disallow: /customer.html
+
+Sitemap: https://anibraids.com/sitemap.xml

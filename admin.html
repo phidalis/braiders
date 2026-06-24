@@ -2058,9 +2058,14 @@ async function loadBookings() {
   try {
     const snap = await getDocs(query(collection(db, 'bookings'), orderBy('createdAt','desc')));
     if (snap.empty) {
+      window._bookingsCache = {};
       el.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No bookings yet.</p></div>`;
       return;
     }
+    // Cache full booking docs (with id) so the modal can read them without another fetch
+    window._bookingsCache = {};
+    snap.docs.forEach(d => { window._bookingsCache[d.id] = { id: d.id, ...d.data() }; });
+
     el.innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead>
@@ -2070,24 +2075,164 @@ async function loadBookings() {
             <th style="padding:10px 12px;text-align:left;font-weight:500;">Date</th>
             <th style="padding:10px 12px;text-align:left;font-weight:500;">Contact</th>
             <th style="padding:10px 12px;text-align:left;font-weight:500;">Status</th>
+            <th style="padding:10px 12px;text-align:center;font-weight:500;">View</th>
           </tr>
         </thead>
         <tbody>
           ${snap.docs.map(d => {
             const b = d.data();
-            const dt = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString() : (b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '—');
+            const statusInfo = bookingStatusBadge(b.status);
             return `<tr style="border-bottom:1px solid var(--border);">
               <td style="padding:10px 12px;">${b.name || b.firstName || '—'}</td>
               <td style="padding:10px 12px;">${b.service || b.style || '—'}</td>
-              <td style="padding:10px 12px;">${b.appointmentDate || b.date || '—'}</td>
-              <td style="padding:10px 12px;">${b.email || b.phone || '—'}</td>
-              <td style="padding:10px 12px;"><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(34,201,122,0.15);color:var(--success);">${b.status || 'Pending'}</span></td>
+              <td style="padding:10px 12px;">${b.date || b.appointmentDate || '—'}${b.time ? ' · '+b.time : ''}</td>
+              <td style="padding:10px 12px;">${b.phone || b.email || b.userEmail || '—'}</td>
+              <td style="padding:10px 12px;"><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:${statusInfo.bg};color:${statusInfo.color};">${statusInfo.label}</span></td>
+              <td style="padding:10px 12px;text-align:center;">
+                <button class="btn btn-outline btn-sm" title="View details" onclick="openBookingModal('${d.id}')" style="padding:6px 10px;">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
       </table>`;
   } catch(e) {
     el.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Could not load bookings.</p></div>`;
+  }
+}
+
+function bookingStatusBadge(status) {
+  const s = (status || 'pending').toLowerCase();
+  const map = {
+    pending:   { label: 'Pending',   bg: 'rgba(212,168,67,0.15)',  color: '#D4A843' },
+    confirmed: { label: 'Confirmed', bg: 'rgba(34,201,122,0.15)',  color: 'var(--success)' },
+    completed: { label: 'Completed', bg: 'rgba(78,166,255,0.15)',  color: '#4EA6FF' },
+    cancelled: { label: 'Cancelled', bg: 'rgba(240,79,90,0.15)',   color: 'var(--danger)' },
+  };
+  return map[s] || { label: status || 'Pending', bg: 'rgba(34,201,122,0.15)', color: 'var(--success)' };
+}
+
+function paymentStatusBadge(status) {
+  const s = (status || 'awaiting_verification').toLowerCase();
+  const map = {
+    awaiting_verification: { label: 'Awaiting Verification', bg: 'rgba(212,168,67,0.15)', color: '#D4A843' },
+    paid:     { label: 'Paid',     bg: 'rgba(34,201,122,0.15)', color: 'var(--success)' },
+    verified: { label: 'Verified', bg: 'rgba(34,201,122,0.15)', color: 'var(--success)' },
+    failed:   { label: 'Failed',   bg: 'rgba(240,79,90,0.15)',  color: 'var(--danger)' },
+    refunded: { label: 'Refunded', bg: 'rgba(240,79,90,0.15)',  color: 'var(--danger)' },
+  };
+  return map[s] || { label: status || 'Awaiting Verification', bg: 'rgba(212,168,67,0.15)', color: '#D4A843' };
+}
+
+/* ── Booking Detail Modal ── */
+let currentBookingId = null;
+
+function openBookingModal(id) {
+  const b = window._bookingsCache?.[id];
+  if (!b) { toast('Booking not found — try refreshing the list.', 'error'); return; }
+  currentBookingId = id;
+
+  const dt = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleString() : (b.createdAt ? new Date(b.createdAt).toLocaleString() : '—');
+  const statusInfo  = bookingStatusBadge(b.status);
+  const payInfo     = paymentStatusBadge(b.paymentStatus);
+
+  const row = (label, value) => `
+    <div style="display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="color:var(--text-muted);font-size:12.5px;">${label}</span>
+      <span style="font-size:13px;font-weight:500;text-align:right;">${value ?? '—'}</span>
+    </div>`;
+
+  document.getElementById('bookingModalBody').innerHTML = `
+    <div style="margin-bottom:18px;">
+      ${row('Client Name', b.name || b.firstName)}
+      ${row('Phone', b.phone)}
+      ${row('Email', b.email || b.userEmail)}
+      ${row('Service / Style', b.service || b.style)}
+      ${row('Stylist', b.stylist)}
+      ${row('Date', b.date || b.appointmentDate)}
+      ${row('Time', b.time)}
+      ${row('Booking Ref', b.bookingRef)}
+      ${row('Notes', b.notes)}
+      ${row('Payment Method', b.paymentMethod)}
+      ${row('Payment Handle / Name', b.paymentHandle)}
+      ${row('Submitted', dt)}
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Booking Status</div>
+        <span style="font-size:12px;padding:5px 12px;border-radius:20px;background:${statusInfo.bg};color:${statusInfo.color};font-weight:600;">${statusInfo.label}</span>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Payment Status</div>
+        <span style="font-size:12px;padding:5px 12px;border-radius:20px;background:${payInfo.bg};color:${payInfo.color};font-weight:600;">${payInfo.label}</span>
+      </div>
+    </div>
+
+    <div style="padding-top:6px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 10px;">Booking Actions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        ${b.status !== 'confirmed' ? `<button class="btn btn-success btn-sm" onclick="updateBookingStatus('confirmed')"><i class="fas fa-check"></i> Approve</button>` : ''}
+        ${b.status !== 'completed' ? `<button class="btn btn-outline btn-sm" onclick="updateBookingStatus('completed')"><i class="fas fa-flag-checkered"></i> Mark Completed</button>` : ''}
+        ${b.status !== 'pending' ? `<button class="btn btn-outline btn-sm" onclick="updateBookingStatus('pending')"><i class="fas fa-clock"></i> Set Pending</button>` : ''}
+        ${b.status !== 'cancelled' ? `<button class="btn btn-danger btn-sm" onclick="updateBookingStatus('cancelled')"><i class="fas fa-ban"></i> Cancel</button>` : ''}
+      </div>
+
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 10px;">Payment Actions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${b.paymentStatus !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="updateBookingPaymentStatus('paid')"><i class="fas fa-check-circle"></i> Mark Paid</button>` : ''}
+        ${b.paymentStatus !== 'awaiting_verification' ? `<button class="btn btn-outline btn-sm" onclick="updateBookingPaymentStatus('awaiting_verification')"><i class="fas fa-hourglass-half"></i> Awaiting Verification</button>` : ''}
+        ${b.paymentStatus !== 'failed' ? `<button class="btn btn-danger btn-sm" onclick="updateBookingPaymentStatus('failed')"><i class="fas fa-times-circle"></i> Mark Failed</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('bookingModal').classList.add('open');
+}
+
+function closeBookingModal() {
+  document.getElementById('bookingModal').classList.remove('open');
+  currentBookingId = null;
+}
+
+async function updateBookingStatus(newStatus) {
+  if (!currentBookingId) return;
+  const { db, doc, updateDoc } = window._fb;
+  try {
+    await updateDoc(doc(db, 'bookings', currentBookingId), { status: newStatus });
+    toast(`Booking marked as ${newStatus}`);
+    await loadBookings();
+    openBookingModal(currentBookingId); // refresh modal with new state
+  } catch(e) {
+    toast(`Could not update status (${e.message})`, 'error');
+  }
+}
+
+async function updateBookingPaymentStatus(newStatus) {
+  if (!currentBookingId) return;
+  const { db, doc, updateDoc } = window._fb;
+  try {
+    await updateDoc(doc(db, 'bookings', currentBookingId), { paymentStatus: newStatus });
+    toast(`Payment status set to ${newStatus.replace('_',' ')}`);
+    await loadBookings();
+    openBookingModal(currentBookingId); // refresh modal with new state
+  } catch(e) {
+    toast(`Could not update payment status (${e.message})`, 'error');
+  }
+}
+
+async function deleteBookingFromModal() {
+  if (!currentBookingId) return;
+  if (!confirm('Delete this booking permanently? This cannot be undone.')) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'bookings', currentBookingId));
+    toast('Booking deleted', 'error');
+    closeBookingModal();
+    await loadBookings();
+  } catch(e) {
+    toast(`Could not delete booking (${e.message})`, 'error');
   }
 }
 
@@ -2793,6 +2938,25 @@ document.querySelectorAll('.upload-zone').forEach(zone => {
       <button class="btn btn-primary" onclick="saveBookingStyle()">
         <i class="fas fa-save"></i> <span id="styleSaveBtnText">Save Style</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BOOKING DETAIL MODAL ══════════════════════════ -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3>Booking Details</h3>
+      <button class="modal-close" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div id="bookingModalBody">
+      <!-- populated by openBookingModal() -->
+    </div>
+
+    <div class="modal-footer" style="flex-wrap:wrap;">
+      <button class="btn btn-danger btn-sm" onclick="deleteBookingFromModal()"><i class="fas fa-trash"></i> Delete</button>
+      <button class="btn btn-outline" onclick="closeBookingModal()">Close</button>
     </div>
   </div>
 </div>

@@ -1051,23 +1051,29 @@
         await sleep(200); waited += 200;
       }
 
-      if (window.firebaseDb && window.fsCollection && window.fsAddDoc && window.currentUser) {
-        try {
-          await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
-            style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, notes,
-            status: 'pending', bookingRef: bookRef,
-            userId: window.currentUser.uid,
-            userEmail: window.currentUser.email || '',
-            paymentMethod: bsmPayMethod, paymentHandle: payHandle,
-            paymentStatus: 'awaiting_verification',
-            createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
-          });
-        } catch(err) {
-          showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
-          btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
-          btn.disabled  = false;
-          return;
-        }
+      // ── If Firebase/auth still isn't ready after waiting, STOP — do not fake success ──
+      if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) {
+        showToast('Connection issue — your booking was NOT saved. Please check your internet and try again.', 'error');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
+        btn.disabled  = false;
+        return;
+      }
+
+      try {
+        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
+          style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, notes,
+          status: 'pending', bookingRef: bookRef,
+          userId: window.currentUser.uid,
+          userEmail: window.currentUser.email || '',
+          paymentMethod: bsmPayMethod, paymentHandle: payHandle,
+          paymentStatus: 'awaiting_verification',
+          createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
+        });
+      } catch(err) {
+        showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
+        btn.disabled  = false;
+        return;
       }
 
       closeBsm();

@@ -918,6 +918,74 @@
           </div>
         </div>
 
+        <!-- Email Settings -->
+        <div class="card-box" style="margin-bottom:20px;">
+          <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Email Notifications <span style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">(powered by Resend)</span></div>
+          <div class="form-grid" style="padding:0 20px 20px;">
+            <div class="field">
+              <label>Sender Email *</label>
+              <input type="email" id="cfg-fromEmail" placeholder="bookings@anibraids.com">
+            </div>
+            <div class="field">
+              <label>Sender Name</label>
+              <input type="text" id="cfg-fromName" placeholder="Ani Braids">
+            </div>
+            <div class="field span2">
+              <label>Admin Notification Email *</label>
+              <input type="email" id="cfg-adminEmail" placeholder="awaanita25@gmail.com">
+            </div>
+          </div>
+          <div style="padding:0 20px 10px;border-bottom:1px solid var(--border);margin-bottom:14px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);">Client Confirmation Email</div>
+          </div>
+          <div class="form-grid" style="padding:0 20px;">
+            <div class="field">
+              <label>Send to client</label>
+              <select id="cfg-clientEnabled">
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Client Email Field</label>
+              <input type="text" id="cfg-clientField" value="email" readonly style="color:var(--text-muted);">
+              <div style="font-size:11px;color:var(--text-muted);">The field name on the booking form</div>
+            </div>
+            <div class="field span2">
+              <label>Subject (use {{placeholders}})</label>
+              <input type="text" id="cfg-clientSubject" placeholder="Booking Confirmation - {{businessName}}">
+            </div>
+            <div class="field span2">
+              <label>HTML Template (use {{name}}, {{style}}, {{date}}, {{time}}, {{phone}}, {{notes}}, {{bookingRef}}, etc.)</label>
+              <textarea id="cfg-clientTemplate" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="<h2>Hi {{name}},</h2><p>Your booking is confirmed!</p>..."></textarea>
+            </div>
+          </div>
+          <div style="padding:14px 20px 10px;border-bottom:1px solid var(--border);margin-bottom:14px;margin-top:14px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);">Admin Notification Email</div>
+          </div>
+          <div class="form-grid" style="padding:0 20px 20px;">
+            <div class="field">
+              <label>Send to admin</label>
+              <select id="cfg-adminEnabled">
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <div style="font-size:11px;color:var(--text-muted);padding-top:6px;">Notifies you at the email above</div>
+            </div>
+            <div class="field span2">
+              <label>Subject (use {{placeholders}})</label>
+              <input type="text" id="cfg-adminSubject" placeholder="New Booking: {{name}} - {{style}}">
+            </div>
+            <div class="field span2">
+              <label>HTML Template</label>
+              <textarea id="cfg-adminTemplate" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="<h2>New Booking!</h2><p>From: {{name}}<br>Phone: {{phone}}</p>..."></textarea>
+            </div>
+          </div>
+        </div>
+
         <!-- Newsletter Subscribers -->
         <div class="card-box" style="margin-top:20px;">
           <div style="padding:20px 20px 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;">Newsletter Subscribers <span style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">(from footer signup forms)</span></div>
@@ -2496,6 +2564,17 @@ async function loadSettings() {
     set('cfg-pinterest', c.social?.pinterest);
     set('cfg-youtube', c.social?.youtube);
     set('cfg-twitter', c.social?.twitter);
+    // Email config
+    const ec = c.emailConfig || {};
+    set('cfg-fromEmail', ec.fromEmail);
+    set('cfg-fromName', ec.fromName);
+    set('cfg-adminEmail', ec.adminEmail);
+    set('cfg-clientEnabled', ec.clientEnabled !== false ? 'true' : 'false');
+    set('cfg-clientSubject', ec.clientSubject);
+    set('cfg-clientTemplate', ec.clientTemplate);
+    set('cfg-adminEnabled', ec.adminEnabled !== false ? 'true' : 'false');
+    set('cfg-adminSubject', ec.adminSubject);
+    set('cfg-adminTemplate', ec.adminTemplate);
     // payment methods now managed separately via loadPaymentMethods()
   } catch(e) { toast('Could not load settings: ' + e.message, 'error'); }
 }
@@ -2511,6 +2590,7 @@ function toggleCatPill(btn) {
 async function saveSettings() {
   const { db, doc, setDoc } = window._fb;
   const val = id => document.getElementById(id)?.value.trim() || '';
+  const sel = id => document.getElementById(id)?.value || 'true';
   const config = {
     businessName: val('cfg-businessName'),
     tagline: val('cfg-tagline'),
@@ -2531,6 +2611,17 @@ async function saveSettings() {
       pinterest: val('cfg-pinterest'),
       youtube: val('cfg-youtube'),
       twitter: val('cfg-twitter'),
+    },
+    emailConfig: {
+      fromEmail: val('cfg-fromEmail'),
+      fromName: val('cfg-fromName'),
+      adminEmail: val('cfg-adminEmail'),
+      clientEnabled: sel('cfg-clientEnabled') === 'true',
+      clientSubject: val('cfg-clientSubject'),
+      clientTemplate: val('cfg-clientTemplate'),
+      adminEnabled: sel('cfg-adminEnabled') === 'true',
+      adminSubject: val('cfg-adminSubject'),
+      adminTemplate: val('cfg-adminTemplate'),
     },
     updatedAt: window._fb.serverTimestamp(),
   };

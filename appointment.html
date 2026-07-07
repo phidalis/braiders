@@ -15,6 +15,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    window.fsDoc = doc;
+    window.fsGetDoc = getDoc;
 
     const firebaseConfig = {
       apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
@@ -501,6 +503,10 @@
             <input type="tel" id="bsmPhone" class="bsm-input" placeholder="+254 700 000 000" required/>
           </div>
           <div class="bsm-form-group">
+            <label><i class="fas fa-envelope"></i> Email Address (for confirmation)</label>
+            <input type="email" id="bsmEmail" class="bsm-input" placeholder="you@example.com" required/>
+          </div>
+          <div class="bsm-form-group">
             <label><i class="fas fa-comment"></i> Special Requests (optional)</label>
             <textarea id="bsmNotes" class="bsm-input bsm-textarea" placeholder="Any notes for your stylist…"></textarea>
           </div>
@@ -833,6 +839,7 @@
     document.getElementById('bsmStylist').value = 'any';
     document.getElementById('bsmName').value    = '';
     document.getElementById('bsmPhone').value   = '';
+    document.getElementById('bsmEmail').value   = '';
     const notesEl = document.getElementById('bsmNotes');
     if (notesEl) notesEl.value = '';
 
@@ -868,6 +875,7 @@
     const stylist = document.getElementById('bsmStylist').value;
     const name    = document.getElementById('bsmName').value;
     const phone   = document.getElementById('bsmPhone').value;
+    const email   = document.getElementById('bsmEmail')?.value || '';
     const notes   = document.getElementById('bsmNotes')?.value || '';
 
     const rows = [
@@ -877,6 +885,7 @@
       { icon: 'fas fa-user-tie', label: 'Stylist',  value: stylist === 'any' ? 'Any Available Stylist' : stylist },
       { icon: 'fas fa-user',     label: 'Name',     value: name },
       { icon: 'fab fa-whatsapp', label: 'WhatsApp', value: phone },
+      { icon: 'fas fa-envelope', label: 'Email',    value: email },
       ...(notes ? [{ icon: 'fas fa-comment', label: 'Notes', value: notes }] : []),
     ];
 
@@ -892,6 +901,7 @@
       `Hi Ani Braids! 👋 I'd like to book an appointment:\n\n` +
       `✂️ Style: ${bsmStyleName}\n📅 Date: ${formatDate(date)}\n⏰ Time: ${time}\n` +
       `👤 Name: ${name}\n📱 WhatsApp: ${phone}\n` +
+      (email ? `📧 Email: ${email}\n` : '') +
       (notes ? `📝 Notes: ${notes}\n` : '') +
       `\nPlease confirm my booking. Thank you! 💜`
     );
@@ -960,6 +970,26 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  /* ─── SEND EMAIL NOTIFICATIONS ─── */
+  async function sendBookingEmails(booking) {
+    try {
+      const snap = await window.fsGetDoc(window.fsDoc(window.firebaseDb, 'settings', 'siteConfig'));
+      const emailConfig = snap.exists() ? (snap.data().emailConfig || {}) : {};
+      if (!emailConfig.clientTemplate && !emailConfig.adminTemplate) return;
+      const bizName = document.querySelector('.logo')?.textContent || 'Ani Braids';
+      await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking: { ...booking, businessName: bizName },
+          emailConfig: { ...emailConfig, businessName: bizName },
+        }),
+      });
+    } catch(e) {
+      console.warn('Email notification failed (non-blocking):', e);
+    }
+  }
+
   /* ─── INIT ─── */
   document.addEventListener('DOMContentLoaded', () => {
     // Styles are loaded by loadSiteConfig() which calls initStylesUI()
@@ -1012,6 +1042,7 @@
     document.getElementById('bsmNext2').addEventListener('click', () => {
       if (!document.getElementById('bsmName').value.trim())  { showToast('Please enter your name 👤', 'error'); return; }
       if (!document.getElementById('bsmPhone').value.trim()) { showToast('Please enter your WhatsApp number 📱', 'error'); return; }
+      if (!document.getElementById('bsmEmail').value.trim()) { showToast('Please enter your email address 📧', 'error'); return; }
       goToBsmStep(3);
     });
 
@@ -1043,6 +1074,7 @@
       const stylist = document.getElementById('bsmStylist').value;
       const name    = document.getElementById('bsmName').value;
       const phone   = document.getElementById('bsmPhone').value;
+      const email   = document.getElementById('bsmEmail')?.value || '';
       const notes   = document.getElementById('bsmNotes')?.value || '';
       const bookRef = 'BK' + Date.now();
 
@@ -1061,10 +1093,10 @@
 
       try {
         await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
-          style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, notes,
+          style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, email, notes,
           status: 'pending', bookingRef: bookRef,
           userId: window.currentUser.uid,
-          userEmail: window.currentUser.email || '',
+          userEmail: email || window.currentUser.email || '',
           paymentMethod: bsmPayMethod, paymentHandle: payHandle,
           paymentStatus: 'awaiting_verification',
           createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
@@ -1079,6 +1111,9 @@
       closeBsm();
       btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
       btn.disabled  = false;
+
+      // ── Send email notifications ──
+      sendBookingEmails({ name, phone, email, style: bsmStyleName, date, time, stylist, notes, bookingRef, paymentMethod: bsmPayMethod, paymentHandle: payHandle });
 
       const methodLabel = (BUILTIN_METHODS[bsmPayMethod] && BUILTIN_METHODS[bsmPayMethod].name) || bsmPayMethod;
       document.getElementById('confirmMsg').textContent =

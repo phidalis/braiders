@@ -1373,16 +1373,29 @@ window._adminReady = async function() {
     const { db, collection, query, orderBy, onSnapshot } = window._fb;
     if (!onSnapshot) return;
     let initialized = false;
+    const autoEmailIds = new Set();
     const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
     onSnapshot(q, (snap) => {
-      if (!initialized) { initialized = true; return; } // skip initial load
+      if (!initialized) { initialized = true; return; }
       snap.docChanges().forEach(change => {
         if (change.type === 'added') {
           const b = change.doc.data();
+          const bookingId = change.doc.id;
           toast(`🔔 New booking: ${b.name || 'Client'} — ${b.style || b.service || 'Style'} on ${b.date || b.appointmentDate || '?'}`, 'success');
-          // Reload bookings panel if visible
+
+          // Auto-send email notifications for new bookings
+          if (!autoEmailIds.has(bookingId)) {
+            autoEmailIds.add(bookingId);
+            if (window._bookingsCache) {
+              window._bookingsCache[bookingId] = { id: bookingId, ...b };
+            }
+            setTimeout(() => {
+              sendBookingEmail(bookingId, 'client');
+              sendBookingEmail(bookingId, 'admin');
+            }, 1000);
+          }
+
           if (document.getElementById('panel-bookings')?.classList.contains('active')) loadBookings();
-          // Update stats counter
           loadStats();
         }
       });

@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="anibraidsfavicon.jpeg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment – Ani Braids – Premium Braiding Studio</title>
+  <meta name="description" content="Book your braiding appointment online with Ani Braids in Lanham, Maryland. Choose your style, pick a time, and secure your spot in seconds.">
+  <link rel="canonical" href="https://anibraids.com/appointment.html">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    window.fsDoc = doc;
+    window.fsGetDoc = getDoc;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      databaseURL: "https://braiders-9cc89-default-rtdb.firebaseio.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.firebaseApp = app;
+    window.firebaseAuth = getAuth(app);
+    window.firebaseDb = getFirestore(app);
+    window.fsCollection = collection;
+    window.fsAddDoc = addDoc;
+    window.fsServerTimestamp = serverTimestamp;
+
+    onAuthStateChanged(window.firebaseAuth, (user) => {
+      if (!user) {
+        signInAnonymously(window.firebaseAuth).catch(e => console.warn('Anonymous sign-in failed:', e));
+        return;
+      }
+      window.currentUser = user;
+    });
+
+    // ── SITE CONFIG LOADER ──
+    async function loadSiteConfig() {
+      try {
+        const cfgSnap = await getDoc(doc(window.firebaseDb,'settings','siteConfig'));
+        if (!cfgSnap.exists()) return;
+        const c = cfgSnap.data();
+        if (c.topbarText) { const tb = document.querySelector('.topbar'); if(tb) tb.innerHTML = c.topbarText; }
+        if (c.email) document.querySelectorAll('.footer-email').forEach(el=>{el.href=`mailto:${c.email}`;el.textContent=c.email;});
+        if (c.phone) document.querySelectorAll('.footer-phone').forEach(el=>{el.href=`tel:${c.phone.replace(/\D/g,'')}`;el.textContent=c.phone;});
+        if (c.footerTagline) document.querySelectorAll('.footer-tagline').forEach(el=>el.textContent=c.footerTagline);
+        if (c.copyright) document.querySelectorAll('.footer-copyright').forEach(el=>el.textContent=c.copyright);
+        const s = c.social||{};
+        const sMap = {instagram:'fa-instagram',tiktok:'fa-tiktok',facebook:'fa-facebook',pinterest:'fa-pinterest',youtube:'fa-youtube',twitter:'fa-twitter'};
+        const socialEl = document.querySelector('.social-links');
+        if (socialEl) {
+          const lnks = Object.entries(sMap).filter(([k])=>s[k]).map(([k,ic])=>`<a href="${s[k]}" target="_blank" rel="noopener" aria-label="${k}"><i class="fab ${ic}"></i></a>`).join('');
+          if (lnks) socialEl.innerHTML = lnks;
+        }
+        // Populate WhatsApp and legacy fallbacks from siteConfig
+        if (c.whatsapp) window._waNumber = c.whatsapp.replace(/\D/g, '');
+        if (c.zelleEmail)   window._zelleEmail   = c.zelleEmail;
+        if (c.cashappTag)   window._cashappTag   = c.cashappTag;
+      } catch(e) {}
+
+      // ── Load payment methods from the paymentMethods collection ──
+      try {
+        const pmSnap = await getDocs(query(collection(window.firebaseDb, 'paymentMethods'), orderBy('createdAt', 'asc')));
+        // Store as array on window so renderPaymentMethods() can use it
+        window._paymentMethodsArray = pmSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) {
+        window._paymentMethodsArray = [];
+      }
+
+      // ── Load booking styles from the bookingStyles collection ──
+      try {
+        const bsSnap = await getDocs(query(collection(window.firebaseDb, 'bookingStyles'), orderBy('order', 'asc')));
+        window._bookingStyles = bsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) {
+        window._bookingStyles = [];
+      }
+
+      // Render payment methods once config is loaded
+      if (typeof renderPaymentMethods === 'function') renderPaymentMethods();
+      // Render styles once loaded
+      if (typeof initStylesUI === 'function') initStylesUI();
+      else window._configLoaded = true;
+    }
+    loadSiteConfig();
+  </script>
+
+  <style>
+    :root {
+      --brand: #9B1FBE;
+      --brand-light: #E8447A;
+      --dark: #1a1a1a;
+      --white: #ffffff;
+      --font-body: 'DM Sans', 'Jost', sans-serif;
+      --font-heading: 'Cormorant Garamond', serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); color: var(--dark); line-height: 1.6; background: #f9f6fb; }
+
+    /* TOP BAR */
+    .topbar { background: #6B0E85; color: #fff; text-align: center; padding: 8px 20px; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
+    .topbar strong { color: #D4A843; }
+
+    /* HEADER */
+    header { background: #fff; box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+    .sticky-header-wrap { position: sticky; top: 0; z-index: 1000; }
+    .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 72px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: var(--font-heading); font-size: 28px; font-weight: 700; color: #9B1FBE; text-decoration: none; letter-spacing: -0.5px; }
+    .logo span { color: #E8447A; }
+    .header-search { display: flex; align-items: center; background: #F8F4FB; border: 1.5px solid rgba(155,31,190,0.2); border-radius: 50px; padding: 6px 16px; gap: 8px; }
+    .header-search input { border: none; background: transparent; outline: none; font-family: var(--font-body); font-size: 14px; color: #2A2A2A; width: 180px; }
+    .header-search input::placeholder { color: #aaa; }
+    .header-search button { background: none; border: none; cursor: pointer; color: #9B1FBE; font-size: 15px; }
+
+    /* SECONDARY NAV */
+    .secondary-nav { background: #111; border-top: 1px solid rgba(255,255,255,0.06); }
+    .secondary-nav-top { display: none; }
+    .secondary-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; flex-wrap: wrap; }
+    .secondary-nav-inner a { color: rgba(255,255,255,0.82); text-decoration: none; font-size: 13px; font-weight: 500; padding: 11px 13px; white-space: nowrap; transition: color 0.2s, background 0.2s; border-radius: 4px; display: block; }
+    .secondary-nav-inner a:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .secondary-nav-inner a.active { color: #ff9fce; }
+
+    @media (max-width: 768px) {
+      .secondary-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+      .secondary-nav-top span { color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 0; }
+      .nav-toggle-btn { background: none; border: none; cursor: pointer; padding: 8px 4px; }
+      .nav-toggle-btn i { color: rgba(255,255,255,0.85); font-size: 18px; }
+      .secondary-nav-inner { display: none; flex-direction: column; align-items: stretch; padding: 0; border-top: 1px solid rgba(255,255,255,0.06); }
+      .secondary-nav-inner.open { display: flex; }
+      .secondary-nav-inner a { padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 0; }
+      .secondary-nav-inner a:last-child { border-bottom: none; }
+      .header-search input { width: 130px; }
+    }
+
+    /* PAGE HERO */
+    .page-hero { background: linear-gradient(135deg, #6B0E85, #9B1FBE, #E8447A); color: #fff; padding: 48px 24px 40px; text-align: center; }
+    .page-hero .breadcrumb { font-size: 13px; opacity: 0.7; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .page-hero .breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+    .page-hero h1 { font-family: var(--font-heading); font-size: clamp(32px, 6vw, 52px); font-weight: 700; margin-bottom: 10px; }
+    .page-hero p { font-size: 15px; opacity: 0.88; max-width: 480px; margin: 0 auto; }
+
+    /* MAIN WRAP */
+    .appointment-wrap { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+
+    /* SECTION LABELS */
+    .appt-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #9B1FBE; margin-bottom: 6px; }
+    .appt-section-title { font-family: var(--font-heading); font-size: 26px; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
+    .appt-section-sub { font-size: 14px; color: #777; margin-bottom: 28px; }
+
+    /* TABS */
+    .style-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+    .style-tab { padding: 7px 16px; border-radius: 50px; border: 1.5px solid #ddd; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; color: #555; }
+    .style-tab.active, .style-tab:hover { background: linear-gradient(135deg, #9B1FBE, #E8447A); color: #fff; border-color: transparent; }
+
+    /* STYLE CARDS */
+    .styles-list { display: flex; flex-direction: column; gap: 10px; }
+    .style-card { background: #fff; border-radius: 14px; border: 1.5px solid #ede0f5; padding: 16px 20px; cursor: pointer; transition: all 0.22s; display: flex; align-items: center; gap: 16px; }
+    .style-card:hover { border-color: #9B1FBE; box-shadow: 0 4px 20px rgba(155,31,190,0.12); transform: translateX(4px); }
+    .style-card-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #9B1FBE, #E8447A); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: 18px; }
+    .style-card-info { flex: 1; }
+    .style-card-name { font-weight: 600; font-size: 15px; color: #1a0a2e; margin-bottom: 3px; }
+    .style-card-meta { font-size: 12px; color: #999; }
+    .style-card-arrow { color: #C06BE0; font-size: 14px; }
+
+    /* VIEWS TOGGLE */
+    .detail-view { display: none; }
+    .detail-view.active { display: block; }
+    .styles-view.hidden { display: none; }
+
+    /* DETAIL VIEW */
+    .detail-back-btn { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1.5px solid #ddd; border-radius: 50px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #555; cursor: pointer; margin-bottom: 24px; transition: all 0.2s; }
+    .detail-back-btn:hover { border-color: #9B1FBE; color: #9B1FBE; }
+    .detail-hero { background: linear-gradient(135deg, #F8F0FF, #FDE8F3); border-radius: 16px; padding: 28px 24px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; }
+    .detail-style-icon { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #9B1FBE, #E8447A); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; flex-shrink: 0; }
+    .detail-hero-info h2 { font-family: var(--font-heading); font-size: 26px; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
+    .detail-hero-info p { font-size: 13px; color: #777; max-width: 400px; line-height: 1.5; }
+
+    .variants-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #9B1FBE; margin-bottom: 14px; }
+    .variants-list { display: flex; flex-direction: column; gap: 10px; }
+    .variant-card { background: #fff; border-radius: 14px; border: 1.5px solid #ede0f5; padding: 18px 20px; cursor: pointer; transition: all 0.22s; display: flex; align-items: center; gap: 14px; }
+    .variant-card:hover { border-color: #9B1FBE; box-shadow: 0 4px 20px rgba(155,31,190,0.12); transform: translateY(-2px); }
+    .variant-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #9B1FBE, #E8447A); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; flex-shrink: 0; }
+    .variant-info { flex: 1; }
+    .variant-name { font-weight: 600; font-size: 14px; color: #1a0a2e; margin-bottom: 3px; }
+    .variant-desc { font-size: 12px; color: #999; line-height: 1.4; }
+    .variant-price-wrap { text-align: right; flex-shrink: 0; }
+    .variant-price { font-weight: 700; font-size: 15px; color: #9B1FBE; }
+    .variant-duration { font-size: 11px; color: #aaa; }
+    .variant-arrow { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9B1FBE, #E8447A); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; flex-shrink: 0; margin-left: 6px; }
+
+    /* MOBILE: variant card stacks — icon+name on top row, price+arrow below */
+    @media (max-width: 520px) {
+      .variant-card {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px 14px;
+      }
+      .variant-icon {
+        flex-shrink: 0;
+      }
+      .variant-info {
+        /* Take all remaining space on the first row */
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .variant-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+      }
+      /* Price + arrow pushed to their own row below icon */
+      .variant-price-wrap {
+        /* Push to second row, after the icon column */
+        margin-left: calc(40px + 14px); /* icon width + gap */
+        flex-basis: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+        margin-top: -6px;
+      }
+      .variant-arrow {
+        margin-left: auto;
+      }
+    }
+
+    /* BOOKING STEPS MODAL */
+    .booking-steps-modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: stretch; justify-content: stretch; }
+    .booking-steps-modal.open { display: flex; }
+    .bsm-overlay { position: absolute; inset: 0; background: rgba(26,10,46,0.7); backdrop-filter: blur(4px); }
+    .bsm-content { position: relative; z-index: 1; width: 100%; height: 100%; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+    @media (min-width: 600px) {
+      .bsm-content { max-width: 480px; max-height: 90vh; margin: auto; border-radius: 20px; box-shadow: 0 24px 80px rgba(26,10,46,0.5); }
+      .booking-steps-modal.open { align-items: center; justify-content: center; }
+    }
+    .bsm-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: linear-gradient(135deg, #3d0a2a, #1a0a0f); border-bottom: 1px solid rgba(255,110,180,0.2); flex-shrink: 0; }
+    .bsm-topbar-title { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600; color: #fff; letter-spacing: 0.03em; flex: 1; text-align: center; }
+    .bsm-back, .bsm-close { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; transition: background 0.2s; flex-shrink: 0; cursor: pointer; }
+    .bsm-back:hover, .bsm-close:hover { background: rgba(255,255,255,0.2); }
+    .bsm-progress { background: linear-gradient(135deg, #3d0a2a 0%, #2d0a22 100%); padding: 16px 24px 20px; flex-shrink: 0; }
+    .bsm-step-bar { display: flex; align-items: center; justify-content: center; max-width: 320px; margin: 0 auto; }
+    .bsm-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .bsm-step-circle { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.4); background: transparent; transition: all 0.3s; }
+    .bsm-step span { font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 0.05em; transition: color 0.3s; }
+    .bsm-step.active .bsm-step-circle { background: linear-gradient(135deg, #ff6eb4, #ff2d87); border-color: #ff6eb4; color: #fff; box-shadow: 0 0 16px rgba(255,45,135,0.5); }
+    .bsm-step.active span { color: #ff9fce; }
+    .bsm-step.done .bsm-step-circle { background: linear-gradient(135deg, #ff9f00, #ffbe00); border-color: #ffbe00; color: #fff; }
+    .bsm-step.done span { color: #ffce60; }
+    .bsm-step-line { flex: 1; height: 2px; background: rgba(255,255,255,0.15); margin: 0 8px; margin-bottom: 22px; transition: background 0.3s; min-width: 30px; }
+    .bsm-step-line.done { background: linear-gradient(90deg, #ff9f00, #ffbe00); }
+    .bsm-body { flex: 1; overflow-y: auto; padding: 24px 20px 32px; background: #fdf9fb; }
+    .bsm-panel { display: none; animation: bsmSlideIn 0.35s ease; }
+    .bsm-panel.active { display: block; }
+    @keyframes bsmSlideIn { from { opacity:0; transform: translateX(24px); } to { opacity:1; transform: translateX(0); } }
+    .bsm-panel-header { text-align: center; margin-bottom: 28px; }
+    .bsm-panel-icon { font-size: 2.4rem; margin-bottom: 10px; display: block; }
+    .bsm-panel-header h3 { font-family: var(--font-heading); font-size: 1.55rem; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
+    .bsm-panel-header p { font-size: 0.88rem; color: #7a6872; }
+    .bsm-form-group { margin-bottom: 18px; }
+    .bsm-form-group label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #3d0a2a; margin-bottom: 8px; }
+    .bsm-form-group label i { margin-right: 6px; color: #ff6eb4; }
+    .bsm-input { width: 100%; padding: 13px 16px; border: 1.5px solid #f0d0e0; border-radius: 12px; background: #fff; font-family: var(--font-body); font-size: 0.95rem; color: #1a0a2e; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .bsm-input:focus { border-color: #ff6eb4; box-shadow: 0 0 0 3px rgba(255,110,180,0.12); }
+    .bsm-textarea { min-height: 90px; resize: vertical; }
+    .bsm-btn-next { width: 100%; padding: 15px; border: none; border-radius: 14px; background: linear-gradient(135deg, #ff6eb4, #ff2d87); color: #fff; font-family: var(--font-body); font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; margin-top: 8px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(255,45,135,0.35); cursor: pointer; }
+    .bsm-btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,45,135,0.45); }
+    .bsm-review-card { background: #fff; border: 1.5px solid #f0d0e0; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(255,45,135,0.08); }
+    .bsm-review-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #fce8f0; }
+    .bsm-review-row:last-child { border-bottom: none; }
+    .bsm-review-icon { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, #ffe0ef, #fce8f0); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #ff2d87; flex-shrink: 0; }
+    .bsm-review-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9b6b7a; margin-bottom: 2px; }
+    .bsm-review-value { font-size: 0.95rem; font-weight: 600; color: #1a0a2e; }
+
+    /* WhatsApp button */
+    .bsm-whatsapp-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 15px; border: none; border-radius: 14px; background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; font-family: var(--font-body); font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(37,211,102,0.35); cursor: pointer; }
+    .bsm-whatsapp-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,211,102,0.45); }
+    .bsm-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; font-size: 12px; color: #aaa; }
+    .bsm-divider::before, .bsm-divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
+
+    /* Payment */
+    .bsm-payment-methods { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .bsm-pay-option { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 14px; border: 2px solid #e5e0f0; background: #faf8ff; cursor: pointer; transition: all 0.2s; }
+    .bsm-pay-option:hover { border-color: rgba(255,45,135,.4); background: #fff0f6; transform: translateY(-1px); }
+    .bsm-pay-option.active { border-color: #ff2d87; background: #fff0f6; box-shadow: 0 0 0 3px rgba(255,45,135,.12); }
+    .bsm-pay-logo { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bsm-pay-logo-zelle { background: linear-gradient(135deg, #6D1ED4, #4a00c8); }
+    .bsm-pay-logo-cashapp { background: linear-gradient(135deg, #00D632, #00a825); }
+    .bsm-pay-info { flex: 1; }
+    .bsm-pay-name { font-weight: 700; font-size: .95rem; color: #1a0a2e; }
+    .bsm-pay-desc { font-size: .74rem; color: #666; margin-top: 2px; }
+    .bsm-pay-check { color: #ff2d87; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s; }
+    .bsm-pay-option.active .bsm-pay-check { opacity: 1; }
+    .bsm-pay-details-box { background: #fff; border: 2px solid rgba(255,45,135,.3); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+    .bsm-pay-details-title { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: #555; font-weight: 700; margin-bottom: 10px; }
+    .bsm-pay-copy-row { display: flex; align-items: center; gap: 10px; background: #f5f0ff; border: 1.5px solid rgba(109,30,212,.2); border-radius: 10px; padding: 11px 14px; }
+    .bsm-pay-copy-value { flex: 1; font-size: 1.05rem; font-weight: 700; color: #1a0a2e; user-select: all; }
+    .bsm-pay-copy-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #ff2d87; color: #fff; border: none; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .bsm-pay-copy-btn:hover { background: #e0206f; }
+    .bsm-pay-copy-btn.copied { background: #10b981; }
+    .bsm-pay-copy-hint { font-size: .72rem; color: #666; margin-top: 8px; }
+    .bsm-pay-handle-wrap { background: #fff; border: 1.5px solid rgba(255,45,135,.25); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+    .bsm-pay-handle-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: #555; font-weight: 700; margin-bottom: 10px; }
+    .bsm-pay-handle-input-row { display: flex; align-items: center; background: #f5f0ff; border: 1.5px solid #ddd6f3; border-radius: 10px; overflow: hidden; }
+    .bsm-pay-handle-input-row:focus-within { border-color: #ff2d87; background: #fff0f6; }
+    .bsm-pay-prefix { width: 42px; display: flex; align-items: center; justify-content: center; color: #888; font-size: .9rem; flex-shrink: 0; }
+    .bsm-pay-handle-input-row .bsm-input { border: none !important; background: transparent !important; border-radius: 0 !important; padding: 12px 14px 12px 0 !important; flex: 1; }
+    .bsm-pay-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: .74rem; color: #555; line-height: 1.5; }
+    .bsm-pay-note i { color: #f59e0b; margin-top: 1px; flex-shrink: 0; }
+    .bsm-pay-loading { display: flex; align-items: center; padding: 20px 16px; }
+    .bsm-btn-confirm { position: relative; width: 100%; padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, #ff9f00, #ffbe00); color: #1a0a2e; font-family: var(--font-body); font-size: 1rem; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(255,159,0,0.4); cursor: pointer; }
+    .bsm-btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,159,0,0.5); }
+    .bsm-btn-confirm:disabled { opacity: 0.7; transform: none; }
+
+    /* Confirm modal */
+    .confirm-modal { display: none; position: fixed; inset: 0; z-index: 20000; align-items: center; justify-content: center; background: rgba(26,10,46,0.75); backdrop-filter: blur(4px); }
+    .confirm-modal.open { display: flex; }
+    .confirm-content { background: #fff; border-radius: 20px; padding: 40px 32px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 24px 80px rgba(26,10,46,0.4); }
+    .confirm-icon { font-size: 3rem; margin-bottom: 14px; }
+    .confirm-content h3 { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: #1a0a2e; margin-bottom: 10px; }
+    .confirm-content p { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 24px; }
+    .btn-confirm-close { padding: 13px 28px; border: none; border-radius: 12px; background: linear-gradient(135deg, #9B1FBE, #E8447A); color: #fff; font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 24px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { padding: 13px 18px; border-radius: 12px; font-size: 0.88rem; font-weight: 500; color: #fff; min-width: 220px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); animation: toastIn 0.3s ease; }
+    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* FOOTER */
+    footer { background: var(--dark); color: var(--white); padding: 60px 20px 20px; margin-top: 60px; }
+    .footer-brand { text-align: center; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .footer-brand .logo { color: var(--white); font-size: 28px; display: block; margin-bottom: 12px; }
+    .footer-brand p { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .footer-body { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; max-width: 1200px; margin: 0 auto 40px; }
+    .footer-col h4 { margin-bottom: 16px; font-size: 14px; font-weight: 600; }
+    .footer-col a { display: block; text-decoration: none; color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
+    .footer-col a:hover { color: var(--white); }
+    .footer-col p { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .social-links { display: flex; gap: 16px; }
+    .social-links a { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 50%; font-size: 16px; text-decoration: none; }
+    .social-links a:hover { background: var(--brand); }
+    .newsletter-form { display: flex; gap: 8px; }
+    .newsletter-form input { flex: 1; padding: 10px 12px; border: none; border-radius: 4px; font-size: 13px; }
+    .newsletter-form button { padding: 10px 16px; background: var(--brand); color: var(--white); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; }
+    .footer-bottom { text-align: center; font-size: 12px; color: rgba(255,255,255,0.5); padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    @media (max-width: 768px) {
+      .footer-body { grid-template-columns: 1fr 1fr; gap: 30px; }
+      .detail-hero { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <strong>✨ Ani Braids</strong> — Premium Protective Styling, Worldwide Bookings Available
+  </div>
+
+  <div class="sticky-header-wrap">
+    <header>
+      <div class="header-inner">
+        <a href="index.html" class="logo">Ani <span>Braids</span></a>
+        <div class="header-search">
+          <input type="text" placeholder="Search styles...">
+          <button aria-label="Search"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+    </header>
+    <nav class="secondary-nav">
+      <div class="secondary-nav-top">
+        <span>Menu</span>
+        <button class="nav-toggle-btn" id="navToggle" aria-label="Toggle navigation">
+          <i class="fas fa-bars" id="navToggleIcon"></i>
+        </button>
+      </div>
+      <div class="secondary-nav-inner" id="secondaryNavLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="appointment.html" class="active">Appointment</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="customer.html">Customer Cabinet</a>
+        <a href="contact.html">Contact us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund &amp; Returns</a>
+        <a href="reviews.html">Reviews</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- PAGE HERO -->
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+      <span>Appointment</span>
+    </div>
+    <h1>Book Your Appointment</h1>
+    <p>Choose your style, pick a date, and confirm — we'll WhatsApp you the details.</p>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="appointment-wrap">
+
+    <!-- STYLES VIEW -->
+    <div class="styles-view" id="stylesView">
+      <p class="appt-section-label">Step 1</p>
+      <h2 class="appt-section-title">Choose Your Style</h2>
+      <p class="appt-section-sub">Tap a style to see all available options and pricing.</p>
+      <div class="style-tabs" id="styleTabs">
+        <button class="style-tab active" data-cat="all">All Styles</button>
+      </div>
+      <div class="styles-list" id="stylesList"><div style="padding:20px;color:#aaa;font-size:13px;text-align:center;">Loading styles…</div></div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div class="detail-view" id="detailView">
+      <button class="detail-back-btn" id="detailBackBtn">
+        <i class="fas fa-arrow-left"></i> Back to Styles
+      </button>
+      <div class="detail-hero" id="detailHero"></div>
+      <p class="variants-label">Select Your Option to Book</p>
+      <div class="variants-list" id="variantsList"></div>
+    </div>
+
+  </div>
+
+  <!-- BOOKING STEPS MODAL -->
+  <div class="booking-steps-modal" id="bookingStepsModal">
+    <div class="bsm-overlay" id="bsmOverlay"></div>
+    <div class="bsm-content">
+      <div class="bsm-topbar">
+        <button class="bsm-back" id="bsmBack" style="visibility:hidden;"><i class="fas fa-arrow-left"></i></button>
+        <div class="bsm-topbar-title" id="bsmTopbarTitle">Book Appointment</div>
+        <button class="bsm-close" id="bsmClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="bsm-progress">
+        <div class="bsm-step-bar">
+          <div class="bsm-step active" data-step="1"><div class="bsm-step-circle">1</div><span>Schedule</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="2"><div class="bsm-step-circle">2</div><span>Details</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="3"><div class="bsm-step-circle">3</div><span>Review</span></div>
+          <div class="bsm-step-line"></div>
+          <div class="bsm-step" data-step="4"><div class="bsm-step-circle">4</div><span>Payment</span></div>
+        </div>
+      </div>
+      <div class="bsm-body">
+        <!-- Step 1 -->
+        <div class="bsm-panel active" id="bsmPanel1">
+          <div class="bsm-panel-header">
+            <div class="bsm-panel-icon">📅</div>
+            <h3>Choose Your Schedule</h3>
+            <p>Pick a date, time and stylist</p>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-calendar"></i> Date</label>
+            <input type="date" id="bsmDate" class="bsm-input" required/>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-clock"></i> Time</label>
+            <select id="bsmTime" class="bsm-input" required>
+              <option value="">Choose a time…</option>
+              <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+              <option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option>
+              <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+              <option>5:00 PM</option><option>6:00 PM</option>
+            </select>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-user-tie"></i> Stylist</label>
+            <select id="bsmStylist" class="bsm-input">
+              <option value="any">Any Available Stylist</option>
+            </select>
+          </div>
+          <button class="bsm-btn-next" id="bsmNext1">Continue <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <!-- Step 2 -->
+        <div class="bsm-panel" id="bsmPanel2">
+          <div class="bsm-panel-header">
+            <div class="bsm-panel-icon">👑</div>
+            <h3>Your Details</h3>
+            <p>So we can confirm your booking</p>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-user"></i> Full Name</label>
+            <input type="text" id="bsmName" class="bsm-input" placeholder="Your full name" required/>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fab fa-whatsapp"></i> WhatsApp Number</label>
+            <input type="tel" id="bsmPhone" class="bsm-input" placeholder="+254 700 000 000" required/>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-envelope"></i> Email Address (for confirmation)</label>
+            <input type="email" id="bsmEmail" class="bsm-input" placeholder="you@example.com" required/>
+          </div>
+          <div class="bsm-form-group">
+            <label><i class="fas fa-comment"></i> Special Requests (optional)</label>
+            <textarea id="bsmNotes" class="bsm-input bsm-textarea" placeholder="Any notes for your stylist…"></textarea>
+          </div>
+          <button class="bsm-btn-next" id="bsmNext2">Review Booking <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <!-- Step 3: Review -->
+        <div class="bsm-panel" id="bsmPanel3">
+          <div class="bsm-panel-header">
+            <div class="bsm-panel-icon">✨</div>
+            <h3>Review Booking</h3>
+            <p>Confirm your details below</p>
+          </div>
+          <div class="bsm-review-card" id="bsmReviewCard"></div>
+          <!-- WhatsApp CTA -->
+          <a href="#" id="bsmWhatsappBtn" class="bsm-whatsapp-btn" target="_blank" rel="noopener">
+            <i class="fab fa-whatsapp" style="font-size:20px;"></i>
+            Send Booking via WhatsApp
+          </a>
+          <div class="bsm-divider">or pay online</div>
+          <button class="bsm-btn-next" id="bsmNext3">Proceed to Payment <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <!-- Step 4: Payment -->
+        <div class="bsm-panel" id="bsmPanel4">
+          <div class="bsm-panel-header">
+            <div class="bsm-panel-icon">💳</div>
+            <h3>Secure Payment</h3>
+            <p>Select your payment method to complete booking</p>
+          </div>
+          <!-- Payment methods loaded dynamically from Firestore -->
+          <div class="bsm-payment-methods" id="bsmPayMethodsList">
+            <div class="bsm-pay-loading">
+              <i class="fas fa-spinner fa-spin" style="color:#ff6eb4;font-size:1.2rem;"></i>
+              <span style="font-size:.85rem;color:#888;margin-left:8px;">Loading payment methods…</span>
+            </div>
+          </div>
+          <div class="bsm-pay-details-box" id="bsmPayDetailsBox" style="display:none;">
+            <div class="bsm-pay-details-title" id="bsmPayDetailsTitle">Send payment to:</div>
+            <div class="bsm-pay-copy-row">
+              <span class="bsm-pay-copy-value" id="bsmPayCopyValue">—</span>
+              <button class="bsm-pay-copy-btn" id="bsmPayCopyBtn" onclick="copyPaymentDetail()"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+            <div class="bsm-pay-copy-hint" id="bsmPayCopyHint">Tap to copy, then open your app and send</div>
+          </div>
+          <div class="bsm-pay-handle-wrap" id="bsmPayHandleWrap" style="display:none;">
+            <div class="bsm-pay-handle-label" id="bsmPayHandleLabel">Your name as it appears in the app</div>
+            <div class="bsm-pay-handle-input-row">
+              <span class="bsm-pay-prefix" id="bsmPayPrefix"><i class="fas fa-user"></i></span>
+              <input type="text" id="bsmPayHandle" class="bsm-input" placeholder="e.g. Jane Smith" autocomplete="off"/>
+            </div>
+            <div class="bsm-pay-note">
+              <i class="fas fa-info-circle"></i>
+              <span id="bsmPayNoteText">Send your payment, paste your name/handle above, then submit.</span>
+            </div>
+          </div>
+          <button class="bsm-btn-confirm" id="bsmConfirmBtn" style="display:none;margin-top:20px;">
+            <i class="fas fa-lock"></i> Submit Booking &amp; Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="confirm-modal" id="confirmModal">
+    <div class="confirm-content">
+      <div class="confirm-icon">✅</div>
+      <h3>Booking Confirmed!</h3>
+      <p id="confirmMsg">Your appointment has been successfully booked. We'll WhatsApp you confirmation shortly.</p>
+      <button class="btn-confirm-close" id="confirmClose">Perfect, Thank You!</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="index.html" class="logo">Ani <span>Braids</span></a>
+      <p class="footer-tagline">Premium Protective Styling Studio — Worldwide</p>
+    </div>
+    <div class="footer-body">
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <a href="mailto:awaanita25@gmail.com" class="footer-email">awaanita25@gmail.com</a>
+        <a href="tel:+12024244894" class="footer-phone">+1 (202) 424-4894</a>
+        <p>Available worldwide via online booking</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="privacy.html">Policies</a>
+        <a href="appointment.html">Book Now</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Stay Updated</h4>
+        <div class="newsletter-form">
+          <input type="email" id="newsletterEmail" placeholder="Your email address">
+          <button type="button" onclick="subscribeNewsletter(this)">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom"><span class="footer-copyright">&copy; 2026 Ani Braids. All rights reserved.</span></div>
+  </footer>
+
+  <script>
+  /* ─── STYLES DATA (loaded from Firestore) ─── */
+  // window._bookingStyles is populated by loadSiteConfig()
+  function getStyles() { return window._bookingStyles || []; }
+
+  /* ─── INIT STYLES UI ─── */
+  window.initStylesUI = function() {
+    buildStyleTabs();
+    renderStyles('all');
+  };
+
+  function buildStyleTabs() {
+    const styles = getStyles();
+    const cats = [...new Set(styles.map(s => s.category || 'Other'))];
+    const tabs = document.getElementById('styleTabs');
+    if (!tabs) return;
+    tabs.innerHTML = `<button class="style-tab active" data-cat="all">All Styles</button>` +
+      cats.map(c => `<button class="style-tab" data-cat="${c}">${c}</button>`).join('');
+    tabs.querySelectorAll('.style-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.querySelectorAll('.style-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderStyles(btn.dataset.cat);
+      });
+    });
+  }
+
+  // ── PAYMENT HELPERS ──────────────────────────────────────────────────────
+  function getWaNumber() { return window._waNumber || '12024244894'; }
+
+  // Built-in method configs — extended by Firestore data
+  const BUILTIN_METHODS = {
+    zelle:   { name: 'Zelle',    desc: 'Instant bank transfer via Zelle',   color: '#6D1ED4', svgBg: '#6D1ED4',
+               svg: `<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#6D1ED4"/><path d="M14 16h14.5L14 32h20M33 16v16" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+               detailLabel: 'Send payment to Zelle:', hint: 'Copy the email above, open Zelle, and send your payment',
+               handleLabel: 'Your name as registered in Zelle', handlePrefix: '<i class="fas fa-university"></i>',
+               handlePlaceholder: 'e.g. Jane Smith or jane@email.com',
+               handleNote: 'Send to our Zelle above. Enter your registered Zelle name/email so we can match your payment.' },
+    cashapp: { name: 'Cash App', desc: 'Fast & simple via $Cashtag',        color: '#00D632', svgBg: '#00D632',
+               svg: `<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#00D632"/><circle cx="24" cy="24" r="5.5" stroke="#fff" stroke-width="2.5"/></svg>`,
+               detailLabel: 'Send payment to Cash App:', hint: 'Copy the $Cashtag above, open Cash App, and send your payment',
+               handleLabel: 'Your Cash App $Cashtag or name', handlePrefix: '<i class="fas fa-dollar-sign"></i>',
+               handlePlaceholder: 'e.g. $JaneSmith',
+               handleNote: 'Send to our $Cashtag above. Enter your $Cashtag so we can verify your payment.' },
+    paypal:  { name: 'PayPal',   desc: 'Pay via PayPal — secure checkout',   color: '#003087', svgBg: '#003087',
+               svg: `<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#009cde"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="18" font-family="Arial" font-weight="bold">P</text></svg>`,
+               detailLabel: 'Send payment to PayPal:', hint: 'Copy the email above, open PayPal, and send your payment',
+               handleLabel: 'Your PayPal name or email', handlePrefix: '<i class="fas fa-envelope"></i>',
+               handlePlaceholder: 'e.g. yourname@email.com',
+               handleNote: 'Send to our PayPal above. Enter your name or email so we can match your payment.' },
+    venmo:   { name: 'Venmo',    desc: 'Pay via @handle on Venmo',          color: '#3D95CE', svgBg: '#3D95CE',
+               svg: `<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#3D95CE"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="13" font-family="Arial" font-weight="bold">V</text></svg>`,
+               detailLabel: 'Send payment to Venmo:', hint: 'Copy the @handle above, open Venmo, and send your payment',
+               handleLabel: 'Your Venmo @username', handlePrefix: '<i class="fas fa-at"></i>',
+               handlePlaceholder: 'e.g. @JaneSmith',
+               handleNote: 'Send to our Venmo above. Enter your @username so we can match your payment.' },
+  };
+
+  // Returns the formatted payment destination value for a given method key
+  function getMethodValue(key) {
+    const arr = window._paymentMethodsArray || [];
+    const m = arr.find(x => x.type === key);
+    if (m) {
+      const val = m.handle || '';
+      if (key === 'cashapp' && val && !val.startsWith('$')) return '$' + val;
+      if (key === 'venmo'   && val && !val.startsWith('@')) return '@' + val;
+      return val;
+    }
+    // Legacy fallback
+    if (key === 'zelle')   return window._zelleEmail  || '';
+    if (key === 'cashapp') return window._cashappTag ? (window._cashappTag.startsWith('$') ? window._cashappTag : '$' + window._cashappTag) : '';
+    return '';
+  }
+
+  // Returns the combined intro + note text for a payment method (for the "pay note" UI)
+  function getMethodNote(key) {
+    const arr = window._paymentMethodsArray || [];
+    const m = arr.find(x => x.type === key);
+    if (!m) return BUILTIN_METHODS[key]?.handleNote || '';
+    const parts = [];
+    if (m.intro) parts.push(m.intro);
+    if (m.note)  parts.push(m.note);
+    return parts.join(' — ') || BUILTIN_METHODS[key]?.handleNote || '';
+  }
+
+  // Render payment method cards from Firestore paymentMethods collection
+  function renderPaymentMethods() {
+    const list = document.getElementById('bsmPayMethodsList');
+    if (!list) return;
+
+    // Use collection-based array loaded from Firestore
+    const arr = window._paymentMethodsArray || [];
+    let methods = arr.map(pm => {
+      const b = BUILTIN_METHODS[pm.type] || {};
+      return {
+        key:  pm.type,
+        name: pm.label || b.name || pm.type,
+        desc: pm.intro ? pm.intro + (pm.handle ? ': ' + pm.handle : '') : (b.desc || ''),
+        svg:  b.svg || `<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#999"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="13" font-family="Arial">${pm.type.charAt(0).toUpperCase()}</text></svg>`,
+        bg:   b.svgBg || '#999',
+      };
+    });
+
+    // Fallback: use legacy _zelleEmail / _cashappTag globals
+    if (methods.length === 0) {
+      if (window._zelleEmail)  methods.push({ key: 'zelle',   ...BUILTIN_METHODS.zelle,   bg: BUILTIN_METHODS.zelle.svgBg });
+      if (window._cashappTag)  methods.push({ key: 'cashapp', ...BUILTIN_METHODS.cashapp, bg: BUILTIN_METHODS.cashapp.svgBg });
+    }
+
+    // Last resort: show Zelle + Cash App with placeholders
+    if (methods.length === 0) {
+      methods = [
+        { key: 'zelle',   ...BUILTIN_METHODS.zelle,   bg: BUILTIN_METHODS.zelle.svgBg },
+        { key: 'cashapp', ...BUILTIN_METHODS.cashapp, bg: BUILTIN_METHODS.cashapp.svgBg },
+      ];
+    }
+
+    list.innerHTML = methods.map(m => `
+      <div class="bsm-pay-option" id="bsmPay_${m.key}" onclick="selectPaymentMethod('${m.key}')">
+        <div class="bsm-pay-logo" style="background:${m.bg || BUILTIN_METHODS[m.key]?.svgBg || '#888'};">${m.svg}</div>
+        <div class="bsm-pay-info">
+          <div class="bsm-pay-name">${m.name}</div>
+          <div class="bsm-pay-desc">${m.desc}</div>
+        </div>
+        <div class="bsm-pay-check"><i class="fas fa-check-circle"></i></div>
+      </div>
+    `).join('');
+  }
+
+  /* ─── STATE ─── */
+  let currentCat = 'all';
+  let bsmStyleName = '';
+  let bsmCurrentStep = 1;
+  let bsmPayMethod = '';
+
+  /* ─── RENDER STYLES ─── */
+  function renderStyles(cat) {
+    const list = document.getElementById('stylesList');
+    const styles = getStyles();
+    const data = cat === 'all' ? styles : styles.filter(s => (s.category || 'Other') === cat);
+    if (!data.length) {
+      list.innerHTML = `<div style="padding:20px;color:#aaa;font-size:13px;text-align:center;">No styles available yet.</div>`;
+      return;
+    }
+    const minPrice = s => {
+      const prices = (s.variants||[]).filter(v => v.price).map(v => v.price);
+      return prices.length ? Math.min(...prices) : null;
+    };
+    list.innerHTML = data.map(s => {
+      const mp = minPrice(s);
+      const count = (s.variants||[]).length;
+      return `
+      <div class="style-card" onclick="showDetail('${s.id}')">
+        <div class="style-card-icon"><i class="fas fa-scissors"></i></div>
+        <div class="style-card-info">
+          <div class="style-card-name">${s.name}</div>
+          <div class="style-card-meta">${count} option${count !== 1 ? 's' : ''}${mp ? ' &middot; from $' + mp : ''}</div>
+        </div>
+        <div class="style-card-arrow"><i class="fas fa-chevron-right"></i></div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ─── SHOW DETAIL ─── */
+  window.showDetail = function(id) {
+    const styles = getStyles();
+    const style = styles.find(s => s.id === id);
+    if (!style) return;
+
+    document.getElementById('stylesView').classList.add('hidden');
+    document.getElementById('detailView').classList.add('active');
+
+    document.getElementById('detailHero').innerHTML = `
+      <div class="detail-style-icon"><i class="fas fa-scissors"></i></div>
+      <div class="detail-hero-info">
+        <h2>${style.name}</h2>
+        ${style.desc ? `<p>${style.desc}</p>` : ''}
+        ${style.hairNote ? `<p style="margin-top:10px;font-size:12px;color:#888;"><i class="fas fa-info-circle" style="color:#E8447A;margin-right:4px;"></i>${style.hairNote}</p>` : ''}
+      </div>
+    `;
+
+    document.getElementById('variantsList').innerHTML = (style.variants||[]).map(v => `
+      <div class="variant-card" onclick="openBooking('${v.name.replace(/'/g, "\\'")}')" >
+        <div class="variant-icon"><i class="fas fa-cut"></i></div>
+        <div class="variant-info">
+          <div class="variant-name">${v.name}</div>
+          ${v.duration ? `<div class="variant-desc"><i class="fas fa-clock" style="color:#E8447A;font-size:10px;margin-right:4px;"></i>${v.duration}</div>` : ''}
+        </div>
+        <div class="variant-price-wrap">
+          <div class="variant-price">${v.price ? '$' + v.price : 'Quote'}</div>
+          ${v.size ? `<div class="variant-duration">${v.size}</div>` : ''}
+        </div>
+        <div class="variant-arrow"><i class="fas fa-arrow-right"></i></div>
+      </div>
+    `).join('');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /* ─── OPEN BOOKING ─── */
+  window.openBooking = function(styleName) {
+    bsmStyleName = styleName;
+    bsmCurrentStep = 1;
+    document.getElementById('bsmTopbarTitle').textContent = styleName;
+    goToBsmStep(1);
+
+    const today = new Date();
+    const dateEl = document.getElementById('bsmDate');
+    if (dateEl) {
+      dateEl.min = today.toISOString().split('T')[0];
+      dateEl.value = '';
+    }
+    document.getElementById('bsmTime').value    = '';
+    document.getElementById('bsmStylist').value = 'any';
+    document.getElementById('bsmName').value    = '';
+    document.getElementById('bsmPhone').value   = '';
+    document.getElementById('bsmEmail').value   = '';
+    const notesEl = document.getElementById('bsmNotes');
+    if (notesEl) notesEl.value = '';
+
+    document.getElementById('bookingStepsModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  /* ─── GO TO STEP ─── */
+  function goToBsmStep(step) {
+    bsmCurrentStep = step;
+    document.querySelectorAll('.bsm-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === step));
+    document.querySelectorAll('.bsm-step').forEach((s, i) => {
+      const n = i + 1;
+      s.classList.remove('active','done');
+      if (n === step) s.classList.add('active');
+      else if (n < step) s.classList.add('done');
+    });
+    document.querySelectorAll('.bsm-step-line').forEach((l, i) => l.classList.toggle('done', i + 1 < step));
+    const back = document.getElementById('bsmBack');
+    if (back) back.style.visibility = step === 1 ? 'hidden' : 'visible';
+    if (step === 3) buildReview();
+  }
+
+  function closeBsm() {
+    document.getElementById('bookingStepsModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  /* ─── BUILD REVIEW ─── */
+  function buildReview() {
+    const date    = document.getElementById('bsmDate').value;
+    const time    = document.getElementById('bsmTime').value;
+    const stylist = document.getElementById('bsmStylist').value;
+    const name    = document.getElementById('bsmName').value;
+    const phone   = document.getElementById('bsmPhone').value;
+    const email   = document.getElementById('bsmEmail')?.value || '';
+    const notes   = document.getElementById('bsmNotes')?.value || '';
+
+    const rows = [
+      { icon: 'fas fa-scissors', label: 'Style',    value: bsmStyleName },
+      { icon: 'fas fa-calendar', label: 'Date',     value: formatDate(date) },
+      { icon: 'fas fa-clock',    label: 'Time',     value: time },
+      { icon: 'fas fa-user-tie', label: 'Stylist',  value: stylist === 'any' ? 'Any Available Stylist' : stylist },
+      { icon: 'fas fa-user',     label: 'Name',     value: name },
+      { icon: 'fab fa-whatsapp', label: 'WhatsApp', value: phone },
+      { icon: 'fas fa-envelope', label: 'Email',    value: email },
+      ...(notes ? [{ icon: 'fas fa-comment', label: 'Notes', value: notes }] : []),
+    ];
+
+    document.getElementById('bsmReviewCard').innerHTML = rows.map(r => `
+      <div class="bsm-review-row">
+        <div class="bsm-review-icon"><i class="${r.icon}"></i></div>
+        <div><div class="bsm-review-label">${r.label}</div><div class="bsm-review-value">${r.value}</div></div>
+      </div>
+    `).join('');
+
+    // WhatsApp message
+    const msg = encodeURIComponent(
+      `Hi Ani Braids! 👋 I'd like to book an appointment:\n\n` +
+      `✂️ Style: ${bsmStyleName}\n📅 Date: ${formatDate(date)}\n⏰ Time: ${time}\n` +
+      `👤 Name: ${name}\n📱 WhatsApp: ${phone}\n` +
+      (email ? `📧 Email: ${email}\n` : '') +
+      (notes ? `📝 Notes: ${notes}\n` : '') +
+      `\nPlease confirm my booking. Thank you! 💜`
+    );
+    const waNum = getWaNumber();
+    document.getElementById('bsmWhatsappBtn').href = waNum ? `https://wa.me/${waNum}?text=${msg}` : `#`;
+  }
+
+  function formatDate(str) {
+    if (!str) return '';
+    try { return new Date(str + 'T00:00:00').toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+    catch(e) { return str; }
+  }
+
+  /* ─── PAYMENT ─── */
+  window.selectPaymentMethod = function(method) {
+    bsmPayMethod = method;
+
+    // Deselect all, select chosen
+    document.querySelectorAll('.bsm-pay-option').forEach(el => el.classList.remove('active'));
+    document.getElementById('bsmPay_' + method)?.classList.add('active');
+
+    const cfg = BUILTIN_METHODS[method] || {};
+    const val = getMethodValue(method);
+
+    // Show details box
+    document.getElementById('bsmPayDetailsBox').style.display  = '';
+    document.getElementById('bsmPayCopyValue').textContent     = val || '(not configured — check Admin Settings)';
+    document.getElementById('bsmPayDetailsTitle').textContent  = cfg.detailLabel || 'Send payment to:';
+    document.getElementById('bsmPayCopyHint').textContent      = cfg.hint        || 'Copy the value above and send your payment';
+    const copyBtn = document.getElementById('bsmPayCopyBtn');
+    if (copyBtn) { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy'; copyBtn.classList.remove('copied'); }
+
+    // Show sender-name input
+    document.getElementById('bsmPayHandleWrap').style.display  = '';
+    document.getElementById('bsmConfirmBtn').style.display     = '';
+    const label    = document.getElementById('bsmPayHandleLabel');
+    const prefix   = document.getElementById('bsmPayPrefix');
+    const noteText = document.getElementById('bsmPayNoteText');
+    const input    = document.getElementById('bsmPayHandle');
+    if (label)    label.textContent    = cfg.handleLabel       || 'Your name in the app';
+    if (prefix)   prefix.innerHTML     = cfg.handlePrefix      || '<i class="fas fa-user"></i>';
+    if (noteText) noteText.textContent = getMethodNote(method) || cfg.handleNote || 'Enter your name/handle so we can match your payment.';
+    if (input)    input.placeholder    = cfg.handlePlaceholder || 'e.g. Jane Smith';
+  };
+
+  window.copyPaymentDetail = function() {
+    const val = document.getElementById('bsmPayCopyValue')?.textContent;
+    const btn = document.getElementById('bsmPayCopyBtn');
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+      if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Copied!'; btn.classList.add('copied'); }
+      showToast('Payment detail copied! 📋', 'success');
+      setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; btn.classList.remove('copied'); } }, 2500);
+    }).catch(() => showToast('Copy failed — please copy manually', 'error'));
+  };
+
+  /* ─── TOAST ─── */
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  /* ─── SEND EMAIL NOTIFICATIONS ─── */
+  async function sendBookingEmails(booking) {
+    try {
+      const snap = await window.fsGetDoc(window.fsDoc(window.firebaseDb, 'settings', 'siteConfig'));
+      const emailConfig = snap.exists() ? (snap.data().emailConfig || {}) : {};
+      const bizName = document.querySelector('.logo')?.textContent || 'Ani Braids';
+      const resp = await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking: { ...booking, businessName: bizName },
+          emailConfig: { ...emailConfig, businessName: bizName },
+        }),
+      });
+      if (!resp.ok) {
+        const err = await resp.text();
+        console.warn('Email API returned error:', resp.status, err);
+      } else {
+        const result = await resp.json();
+        if (result.errors && result.errors.length) {
+          console.warn('Email sent with errors:', result.errors);
+        }
+      }
+    } catch(e) {
+      console.warn('Email notification failed (non-blocking):', e);
+    }
+  }
+
+  /* ─── INIT ─── */
+  document.addEventListener('DOMContentLoaded', () => {
+    // Styles are loaded by loadSiteConfig() which calls initStylesUI()
+    // If config already loaded (race condition), init now
+    if (window._bookingStyles) initStylesUI();
+
+    // Back button
+    document.getElementById('detailBackBtn').addEventListener('click', () => {
+      document.getElementById('detailView').classList.remove('active');
+      document.getElementById('stylesView').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // BSM close / back
+    document.getElementById('bsmClose').addEventListener('click', closeBsm);
+    document.getElementById('bsmOverlay').addEventListener('click', closeBsm);
+    document.getElementById('bsmBack').addEventListener('click', () => {
+      if (bsmCurrentStep > 1) goToBsmStep(bsmCurrentStep - 1);
+    });
+
+    // Step 1 → 2
+    document.getElementById('bsmNext1').addEventListener('click', async () => {
+      const date = document.getElementById('bsmDate').value;
+      const time = document.getElementById('bsmTime').value;
+      if (!date) { showToast('Please choose a date 📅', 'error'); return; }
+      if (!time) { showToast('Please choose a time ⏰', 'error'); return; }
+      // ── Availability check ──
+      const btn = document.getElementById('bsmNext1');
+      btn.disabled = true; btn.innerHTML = 'Checking availability… <i class="fas fa-spinner fa-spin"></i>';
+      try {
+        let waited = 0;
+        while (!window.firebaseDb && waited < 5000) { await sleep(200); waited += 200; }
+        if (window.firebaseDb) {
+          const { getFirestore, collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+          const db2 = window.firebaseDb;
+          const q = query(collection(db2, 'bookings'), where('date', '==', date), where('time', '==', time), where('status', '!=', 'cancelled'));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            showToast('That date & time is already booked. Please choose another slot. 📅', 'error');
+            btn.disabled = false; btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+            return;
+          }
+        }
+      } catch(e) { /* silently skip check if unavailable */ }
+      btn.disabled = false; btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+      goToBsmStep(2);
+    });
+
+    // Step 2 → 3
+    document.getElementById('bsmNext2').addEventListener('click', () => {
+      if (!document.getElementById('bsmName').value.trim())  { showToast('Please enter your name 👤', 'error'); return; }
+      if (!document.getElementById('bsmPhone').value.trim()) { showToast('Please enter your WhatsApp number 📱', 'error'); return; }
+      if (!document.getElementById('bsmEmail').value.trim()) { showToast('Please enter your email address 📧', 'error'); return; }
+      goToBsmStep(3);
+    });
+
+    // Step 3 → 4 (payment path)
+    document.getElementById('bsmNext3').addEventListener('click', () => {
+      bsmPayMethod = '';
+      document.getElementById('bsmPayDetailsBox').style.display  = 'none';
+      document.getElementById('bsmPayHandleWrap').style.display  = 'none';
+      document.getElementById('bsmConfirmBtn').style.display     = 'none';
+      const inp = document.getElementById('bsmPayHandle');
+      if (inp) inp.value = '';
+      // Render payment methods (from Firestore or fallback)
+      renderPaymentMethods();
+      goToBsmStep(4);
+    });
+
+    // Submit booking
+    document.getElementById('bsmConfirmBtn').addEventListener('click', async () => {
+      const payHandle = document.getElementById('bsmPayHandle')?.value.trim();
+      if (!bsmPayMethod) { showToast('Please select a payment method 💳', 'error'); return; }
+      if (!payHandle)    { showToast('Please enter your payment name / handle 📝', 'error'); return; }
+
+      const btn = document.getElementById('bsmConfirmBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+      btn.disabled  = true;
+
+      const date    = document.getElementById('bsmDate').value;
+      const time    = document.getElementById('bsmTime').value;
+      const stylist = document.getElementById('bsmStylist').value;
+      const name    = document.getElementById('bsmName').value;
+      const phone   = document.getElementById('bsmPhone').value;
+      const email   = document.getElementById('bsmEmail')?.value || '';
+      const notes   = document.getElementById('bsmNotes')?.value || '';
+      const bookRef = 'BK' + Date.now();
+
+      let waited = 0;
+      while ((!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) && waited < 8000) {
+        await sleep(200); waited += 200;
+      }
+
+      // ── If Firebase/auth still isn't ready after waiting, STOP — do not fake success ──
+      if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) {
+        showToast('Connection issue — your booking was NOT saved. Please check your internet and try again.', 'error');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
+        btn.disabled  = false;
+        return;
+      }
+
+      try {
+        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
+          style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, email, notes,
+          status: 'pending', bookingRef: bookRef,
+          userId: window.currentUser.uid,
+          userEmail: email || window.currentUser.email || '',
+          paymentMethod: bsmPayMethod, paymentHandle: payHandle,
+          paymentStatus: 'awaiting_verification',
+          createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
+        });
+      } catch(err) {
+        showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
+        btn.disabled  = false;
+        return;
+      }
+
+      closeBsm();
+      btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
+      btn.disabled  = false;
+
+      // ── Send email notifications ──
+      sendBookingEmails({ name, phone, email, style: bsmStyleName, date, time, stylist, notes, bookingRef, paymentMethod: bsmPayMethod, paymentHandle: payHandle });
+
+      const methodLabel = (BUILTIN_METHODS[bsmPayMethod] && BUILTIN_METHODS[bsmPayMethod].name) || bsmPayMethod;
+      document.getElementById('confirmMsg').textContent =
+        `Your ${bsmStyleName} appointment on ${formatDate(date)} at ${time} is pending payment verification. ` +
+        `Once we confirm your ${methodLabel} payment from "${payHandle}", we'll approve and notify you via WhatsApp at ${phone}. 💳✨`;
+      document.getElementById('confirmModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      showToast('Booking submitted! Awaiting payment verification 🎉', 'success');
+    });
+
+    // Confirm modal close
+    document.getElementById('confirmClose').addEventListener('click', () => {
+      document.getElementById('confirmModal').classList.remove('open');
+      document.body.style.overflow = '';
+    });
+
+    // Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeBsm();
+        document.getElementById('confirmModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Mobile nav
+    document.getElementById('navToggle')?.addEventListener('click', () => {
+      const links = document.getElementById('secondaryNavLinks');
+      const icon  = document.getElementById('navToggleIcon');
+      links.classList.toggle('open');
+      icon.className = links.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+    });
+  });
+  </script>
+
+  <script>
+  window.subscribeNewsletter = async function(btn) {
+    const input = document.getElementById('newsletterEmail');
+    if (!input) return;
+    const email = input.value.trim();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Subscribing…';
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey:"AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+        authDomain:"braiders-9cc89.firebaseapp.com",
+        projectId:"braiders-9cc89",
+        storageBucket:"braiders-9cc89.appspot.com",
+        messagingSenderId:"444617114412",
+        appId:"1:444617114412:web:2a2c7008e6c40f7e63a289"
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db = getFirestore(app);
+      await addDoc(collection(db, 'newsletter'), { email, subscribedAt: serverTimestamp(), source: window.location.pathname });
+      input.value = '';
+      btn.textContent = '✓ Subscribed!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Subscribe'; }, 3000);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      alert('Subscription failed. Please try again.');
+    }
+  };
+  </script>
+
+  <script>
+  // Header search — coming soon placeholder
+  document.querySelectorAll('.header-search').forEach(function(form) {
+    var btn = form.querySelector('button');
+    var inp = form.querySelector('input');
+    function doSearch() {
+      var q = inp ? inp.value.trim() : '';
+      if (!q) return;
+      // Future: wire to a real search index. For now, inform the user.
+      alert('Search for "' + q + '" — full site search coming soon!');
+    }
+    if (btn) btn.addEventListener('click', doSearch);
+    if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+  });
+  </script>
+
+<!-- ── COMBINED SPEED-DIAL FAB (Social + AI Chat) ── -->
+  <style>
+    .fab-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 22px;
+      z-index: 100000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    /* Speed-dial children */
+    .fab-child {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+      opacity: 0;
+      transform: translateY(16px) scale(0.7);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.18s ease;
+      will-change: opacity, transform;
+      border: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .fab-child:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.38);
+      transform: translateY(0) scale(1.08) !important;
+    }
+    .fab-child.fab-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    /* Tooltip labels */
+    .fab-child::before {
+      content: attr(data-label);
+      position: absolute;
+      right: 54px;
+      background: rgba(26,0,40,0.88);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      font-family: 'DM Sans','Segoe UI',sans-serif;
+      letter-spacing: 0.2px;
+    }
+    .fab-child:hover::before { opacity: 1; }
+    /* Social platform colors */
+    .fab-tiktok    { background: #010101; }
+    .fab-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+    .fab-facebook  { background: #1877f2; }
+    .fab-twitter   { background: #1da1f2; }
+    .fab-pinterest { background: #e60023; }
+    .fab-youtube   { background: #ff0000; }
+    /* AI Chat child */
+    .fab-ai-child  { background: linear-gradient(135deg, #9B1FBE, #E8447A); }
+    /* Main trigger button */
+    .fab-main {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #9B1FBE, #E8447A);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 4px 18px rgba(155,31,190,0.5);
+      transition: transform 0.22s ease, box-shadow 0.18s ease;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .fab-main:hover {
+      box-shadow: 0 6px 24px rgba(155,31,190,0.65);
+      transform: scale(1.07);
+    }
+    .fab-main i {
+      transition: transform 0.28s ease, opacity 0.2s ease;
+      position: absolute;
+    }
+    .fab-main .fab-icon-open  { opacity: 1; transform: scale(1) rotate(0deg); }
+    .fab-main .fab-icon-close { opacity: 0; transform: scale(0.5) rotate(-90deg); }
+    .fab-wrap.open .fab-icon-open  { opacity: 0; transform: scale(0.5) rotate(90deg); }
+    .fab-wrap.open .fab-icon-close { opacity: 1; transform: scale(1) rotate(0deg); }
+    /* Notification dot */
+    .fab-notif-dot {
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: #D4A843;
+      border: 2px solid #fff;
+      display: none;
+    }
+    @media (max-width: 480px) {
+      .fab-wrap { bottom: 18px; right: 14px; }
+      .fab-main { width: 48px; height: 48px; font-size: 20px; }
+      .fab-child { width: 40px; height: 40px; font-size: 16px; }
+    }
+  </style>
+
+  <div class="fab-wrap" id="fabWrap">
+    <button class="fab-main" id="fabMainBtn" aria-label="Menu">
+      <i class="fas fa-comment-dots fab-icon-open"></i>
+      <i class="fas fa-times fab-icon-close"></i>
+      <span class="fab-notif-dot" id="fabNotifDot"></span>
+    </button>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const FAB_CONFIG = {
+      apiKey: "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
+      authDomain: "braiders-9cc89.firebaseapp.com",
+      projectId: "braiders-9cc89",
+      storageBucket: "braiders-9cc89.appspot.com",
+      messagingSenderId: "444617114412",
+      appId: "1:444617114412:web:2a2c7008e6c40f7e63a289"
+    };
+
+    const fabApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FAB_CONFIG, 'fab-social');
+    const fabDb  = getFirestore(fabApp);
+
+    const PLATFORMS = [
+      { key: 'tiktok',    icon: 'fab fa-tiktok',      cls: 'fab-tiktok',    label: 'TikTok'    },
+      { key: 'instagram', icon: 'fab fa-instagram',   cls: 'fab-instagram', label: 'Instagram' },
+      { key: 'facebook',  icon: 'fab fa-facebook-f',  cls: 'fab-facebook',  label: 'Facebook'  },
+      { key: 'twitter',   icon: 'fab fa-twitter',     cls: 'fab-twitter',   label: 'Twitter'   },
+      { key: 'pinterest', icon: 'fab fa-pinterest-p', cls: 'fab-pinterest', label: 'Pinterest' },
+      { key: 'youtube',   icon: 'fab fa-youtube',     cls: 'fab-youtube',   label: 'YouTube'   },
+    ];
+
+    const wrap    = document.getElementById('fabWrap');
+    const mainBtn = document.getElementById('fabMainBtn');
+    const notifDot = document.getElementById('fabNotifDot');
+    let   children = [];
+    let   isOpen   = false;
+
+    // Always add AI Chat as the first (top) child
+    function buildAIChild() {
+      const btn = document.createElement('button');
+      btn.className   = 'fab-child fab-ai-child';
+      btn.setAttribute('data-label', 'AI Chat');
+      btn.setAttribute('aria-label', 'Open AI Chat');
+      btn.innerHTML   = '<i class="fas fa-comments"></i>';
+      btn.addEventListener('click', () => {
+        closeMenu();
+        // Try direct call first, fall back to custom event
+        if (typeof window.aniChatOpen === 'function') {
+          window.aniChatOpen();
+        } else {
+          window.dispatchEvent(new Event('ani:openChat'));
+        }
+      });
+      wrap.insertBefore(btn, mainBtn);
+      return btn;
+    }
+
+    function buildSocialItems(social) {
+      // Remove old social children (keep AI child)
+      wrap.querySelectorAll('.fab-child:not(.fab-ai-child)').forEach(el => el.remove());
+      const active = PLATFORMS.filter(p => social[p.key]);
+      [...active].reverse().forEach(p => {
+        const a = document.createElement('a');
+        a.href      = social[p.key];
+        a.target    = '_blank';
+        a.rel       = 'noopener noreferrer';
+        a.className = `fab-child ${p.cls}`;
+        a.setAttribute('data-label', p.label);
+        a.setAttribute('aria-label', p.label);
+        a.innerHTML = `<i class="${p.icon}"></i>`;
+        // Insert above the AI child (which is above the main button)
+        const aiChild = wrap.querySelector('.fab-ai-child');
+        wrap.insertBefore(a, aiChild);
+      });
+      // Rebuild children list (all fab-child elements in DOM order, reversed for stagger)
+      children = Array.from(wrap.querySelectorAll('.fab-child')).reverse();
+    }
+
+    function openMenu() {
+      isOpen = true;
+      wrap.classList.add('open');
+      notifDot.style.display = 'none';
+      children.forEach((el, i) => setTimeout(() => el.classList.add('fab-visible'), i * 55));
+    }
+
+    function closeMenu() {
+      isOpen = false;
+      wrap.classList.remove('open');
+      [...children].reverse().forEach((el, i) => setTimeout(() => el.classList.remove('fab-visible'), i * 40));
+    }
+
+    mainBtn.addEventListener('click', () => isOpen ? closeMenu() : openMenu());
+
+    // Build AI child immediately
+    const aiChild = buildAIChild();
+    children = [aiChild];
+
+    // Load social links from Firestore
+    try {
+      const snap = await getDoc(doc(fabDb, 'settings', 'siteConfig'));
+      if (snap.exists()) buildSocialItems(snap.data().social || {});
+    } catch(e) {}
+
+    // Show notification dot after 4s if not opened
+    setTimeout(() => {
+      if (!isOpen) notifDot.style.display = 'block';
+    }, 4000);
+  </script>
+  <!-- ── END COMBINED SPEED-DIAL FAB ── -->
+
+  <script src="ani-chat.js"></script>
+</body>
+</html>

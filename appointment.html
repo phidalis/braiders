@@ -1108,6 +1108,7 @@
           paymentMethod: bsmPayMethod, paymentHandle: payHandle,
           paymentStatus: 'awaiting_verification',
           createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
+          emailAutoSent: false, // the Render server watches for this and sends emails itself
         });
       } catch(err) {
         showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
@@ -1120,8 +1121,10 @@
       btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
       btn.disabled  = false;
 
-      // ── Send email notifications ──
-      sendBookingEmails({ name, phone, email, style: bsmStyleName, date, time, stylist, notes, bookingRef, paymentMethod: bsmPayMethod, paymentHandle: payHandle });
+      // ── Email notifications are now sent automatically by the Render server,
+      //    which watches Firestore for new bookings (emailAutoSent: false). No
+      //    client-side call needed — this also means emails still go out even if
+      //    the visitor closes the tab right after booking. ──
 
       const methodLabel = (BUILTIN_METHODS[bsmPayMethod] && BUILTIN_METHODS[bsmPayMethod].name) || bsmPayMethod;
       document.getElementById('confirmMsg').textContent =

@@ -1,5 +1,14 @@
 {
   "git": {
     "deploymentEnabled": true
-  }
+  },
+  "functions": {
+    "api/**/*.js": {
+      "memory": 256,
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
 }

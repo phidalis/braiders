@@ -12,7 +12,7 @@
   <script type="module">
     import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, orderBy, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey:            "AIzaSyCxAGEQSKnF_aL219OcUc7AptX15DbNHBk",
@@ -36,6 +36,7 @@
     window.fsAddDoc          = addDoc;
     window.fsDoc             = doc;
     window.fsGetDoc          = getDoc;
+    window.fsRunTransaction  = runTransaction;
     window.fsServerTimestamp = serverTimestamp;
 
     /* ── AUTH GUARD ── */
@@ -556,11 +557,6 @@
             <p>Confirm your details below</p>
           </div>
           <div class="bsm-review-card" id="bsmReviewCard"></div>
-          <a href="#" id="bsmWhatsappBtn" class="bsm-whatsapp-btn" target="_blank" rel="noopener">
-            <i class="fab fa-whatsapp" style="font-size:20px;"></i>
-            Send Booking via WhatsApp
-          </a>
-          <div class="bsm-divider">or pay online</div>
           <button class="bsm-btn-next" id="bsmNext3">Proceed to Payment <i class="fas fa-arrow-right"></i></button>
         </div>
 
@@ -611,6 +607,10 @@
       <div class="confirm-icon">✅</div>
       <h3>Booking Confirmed!</h3>
       <p id="confirmMsg">Your appointment has been successfully booked. We'll WhatsApp you confirmation shortly.</p>
+      <a href="#" id="bsmWhatsappBtn" class="bsm-whatsapp-btn" target="_blank" rel="noopener" style="margin-bottom:14px;">
+        <i class="fab fa-whatsapp" style="font-size:20px;"></i>
+        Send Booking Summary via WhatsApp
+      </a>
       <div class="confirm-actions">
         <a href="dashboard.html" class="btn-confirm-dashboard"><i class="fas fa-th-large"></i> My Dashboard</a>
         <button class="btn-confirm-close" id="confirmClose">Book Another</button>
@@ -961,6 +961,43 @@
     catch(e) { return str; }
   }
 
+  /* ─── BOOKING REFERENCE NUMBER ───
+     Format: [year digits→letters][month digits][day digits→letters][daily order 001-999]
+     Each digit 0-9 maps to a letter A-J (A=0, B=1, ... J=9).
+     Example: 8 July 2026, 1st booking of the day → CG07AI001
+     The order number resets to 001 each new day (tracked via a Firestore counter doc per date). */
+  function digitToLetter(d) { return String.fromCharCode(65 + Number(d)); } // 0→A ... 9→J
+  function digitsToLetters(numStr) { return numStr.split('').map(digitToLetter).join(''); }
+
+  async function generateBookingRef() {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const dateKey = `${now.getFullYear()}-${mm}-${dd}`;
+
+    const yearLetters = digitsToLetters(yy);
+    const dayLetters  = digitsToLetters(dd);
+
+    let orderNum = 1;
+    try {
+      const counterRef = window.fsDoc(window.firebaseDb, 'bookingCounters', dateKey);
+      orderNum = await window.fsRunTransaction(window.firebaseDb, async (tx) => {
+        const snap = await tx.get(counterRef);
+        const current = snap.exists() ? (snap.data().count || 0) : 0;
+        const next = current + 1;
+        tx.set(counterRef, { count: next, date: dateKey }, { merge: true });
+        return next;
+      });
+    } catch (err) {
+      console.warn('Booking counter transaction failed, using fallback order number:', err);
+      orderNum = Number(String(Date.now()).slice(-3)) || 1;
+    }
+
+    const orderStr = String(orderNum).padStart(3, '0');
+    return `${yearLetters}${mm}${dayLetters}${orderStr}`;
+  }
+
   /* ─── PAYMENT ─── */
   window.selectPaymentMethod = function(method) {
     bsmPayMethod = method;
@@ -1126,7 +1163,6 @@
       const phone   = document.getElementById('bsmPhone').value;
       const email   = document.getElementById('bsmEmail')?.value || '';
       const notes   = document.getElementById('bsmNotes')?.value || '';
-      const bookRef = 'BK' + Date.now();
 
       /* Wait for Firebase to be ready (max 8 s) */
       let waited = 0;
@@ -1141,6 +1177,8 @@
         btn.disabled  = false;
         return;
       }
+
+      const bookRef = await generateBookingRef();
 
       try {
         await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {

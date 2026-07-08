@@ -1,5 +1,40 @@
+const DEFAULT_CLIENT_TEMPLATE = `Hi {{name}},
+
+Your appointment has been received! Here's a summary:
+
+  Style:      {{style}}
+  Date:       {{date}}
+  Time:       {{time}}
+  Stylist:    {{stylist}}
+  Reference:  {{bookingRef}}
+
+Your booking is pending payment verification. We'll notify you via WhatsApp once confirmed.
+
+Questions? Contact us at {{email}}.
+
+Best regards,
+{{businessName}}`;
+
+const DEFAULT_ADMIN_TEMPLATE = `New Booking from {{name}}!
+
+  Client:     {{name}}
+  Phone:      {{phone}}
+  Email:      {{email}}
+  Style:      {{style}}
+  Date:       {{date}}
+  Time:       {{time}}
+  Stylist:    {{stylist}}
+  Notes:      {{notes}}
+  Reference:  {{bookingRef}}
+  Payment:    {{paymentMethod}} - {{paymentHandle}}
+
+Payment status: awaiting verification. Check the admin dashboard to update.
+
+Visit the admin dashboard to manage this booking.
+
+{{businessName}} - Admin Notification`;
+
 module.exports = async (req, res) => {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -76,16 +111,16 @@ module.exports = async (req, res) => {
   };
 
   const errors = [];
-  const forceType = req.body.forceType; // 'client', 'admin', or undefined for both
+  const forceType = req.body.forceType;
 
   // Send confirmation to client
   const shouldSendClient = !forceType || forceType === 'client';
-  if (shouldSendClient && emailConfig.clientEnabled !== false && emailConfig.clientTemplate && booking.email) {
+  if (shouldSendClient && emailConfig.clientEnabled !== false && booking.email) {
     try {
       await sendEmail(
         booking.email,
         emailConfig.clientSubject || 'Booking Confirmation - {{businessName}}',
-        emailConfig.clientTemplate
+        emailConfig.clientTemplate || DEFAULT_CLIENT_TEMPLATE
       );
     } catch (e) {
       errors.push('client:' + e.message);
@@ -94,12 +129,12 @@ module.exports = async (req, res) => {
 
   // Send notification to admin
   const shouldSendAdmin = !forceType || forceType === 'admin';
-  if (shouldSendAdmin && emailConfig.adminEnabled !== false && emailConfig.adminEmail && emailConfig.adminTemplate) {
+  if (shouldSendAdmin && emailConfig.adminEnabled !== false && emailConfig.adminEmail) {
     try {
       await sendEmail(
         emailConfig.adminEmail,
         emailConfig.adminSubject || 'New Booking: {{name}} - {{style}}',
-        emailConfig.adminTemplate
+        emailConfig.adminTemplate || DEFAULT_ADMIN_TEMPLATE
       );
     } catch (e) {
       errors.push('admin:' + e.message);

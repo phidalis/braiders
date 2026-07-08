@@ -1017,7 +1017,6 @@
     try {
       const snap = await window.fsGetDoc(window.fsDoc(window.firebaseDb, 'settings', 'siteConfig'));
       const emailConfig = snap.exists() ? (snap.data().emailConfig || {}) : {};
-      if (!emailConfig.clientTemplate && !emailConfig.adminTemplate) return;
       const bizName = document.querySelector('.logo')?.textContent || 'Ani Braids';
       const resp = await fetch('/api/send-booking-email', {
         method: 'POST',

@@ -825,8 +825,22 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /* ─── WAKE UP RENDER SERVER ───
+     Render free-tier services spin down after inactivity and take 30-50s to
+     wake on the next request. We fire a harmless "wake-up" ping the moment
+     someone opens the booking modal, so by the time they finish filling the
+     form and submit, the server (and its email-sending) is already warm.
+     Fire-and-forget: errors are ignored, nothing else waits on this. */
+  let _renderWokenUp = false;
+  function wakeUpRenderServer() {
+    if (_renderWokenUp) return; // only need to do this once per page visit
+    _renderWokenUp = true;
+    fetch('https://braiders.onrender.com/', { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+  }
+
   /* ─── OPEN BOOKING ─── */
   window.openBooking = function(styleName) {
+    wakeUpRenderServer();
     bsmStyleName = styleName;
     bsmCurrentStep = 1;
     document.getElementById('bsmTopbarTitle').textContent = styleName;

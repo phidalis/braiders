@@ -43,20 +43,30 @@ module.exports = async (req, res) => {
     return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars['{{' + key + '}}'] || '{{' + key + '}}');
   };
 
-  const sendEmail = async (to, subject, html) => {
+  const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text);
+
+  const sendEmail = async (to, subject, content) => {
     const from = (emailConfig.fromName || 'Ani Braids') + ' <' + (emailConfig.fromEmail || 'bookings@anibraids.com') + '>';
+    const renderedSubject = render(subject);
+    const renderedContent = render(content);
+    const body = {
+      from,
+      to,
+      subject: renderedSubject,
+    };
+    if (isHtml(renderedContent)) {
+      body.html = renderedContent;
+    } else {
+      body.text = renderedContent;
+      body.html = renderedContent.replace(/\n/g, '<br>\n');
+    }
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + RESEND_API_KEY,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from,
-        to,
-        subject: render(subject),
-        html: render(html),
-      }),
+      body: JSON.stringify(body),
     });
     if (!resp.ok) {
       const err = await resp.text();
@@ -66,9 +76,11 @@ module.exports = async (req, res) => {
   };
 
   const errors = [];
+  const forceType = req.body.forceType; // 'client', 'admin', or undefined for both
 
   // Send confirmation to client
-  if (emailConfig.clientEnabled !== false && emailConfig.clientTemplate && booking.email) {
+  const shouldSendClient = !forceType || forceType === 'client';
+  if (shouldSendClient && emailConfig.clientEnabled !== false && emailConfig.clientTemplate && booking.email) {
     try {
       await sendEmail(
         booking.email,
@@ -81,7 +93,8 @@ module.exports = async (req, res) => {
   }
 
   // Send notification to admin
-  if (emailConfig.adminEnabled !== false && emailConfig.adminEmail && emailConfig.adminTemplate) {
+  const shouldSendAdmin = !forceType || forceType === 'admin';
+  if (shouldSendAdmin && emailConfig.adminEnabled !== false && emailConfig.adminEmail && emailConfig.adminTemplate) {
     try {
       await sendEmail(
         emailConfig.adminEmail,

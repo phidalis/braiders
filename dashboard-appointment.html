@@ -1019,7 +1019,7 @@
       const emailConfig = snap.exists() ? (snap.data().emailConfig || {}) : {};
       if (!emailConfig.clientTemplate && !emailConfig.adminTemplate) return;
       const bizName = document.querySelector('.logo')?.textContent || 'Ani Braids';
-      await fetch('/api/send-booking-email', {
+      const resp = await fetch('/api/send-booking-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1027,6 +1027,15 @@
           emailConfig: { ...emailConfig, businessName: bizName },
         }),
       });
+      if (!resp.ok) {
+        const err = await resp.text();
+        console.warn('Email API returned error:', resp.status, err);
+      } else {
+        const result = await resp.json();
+        if (result.errors && result.errors.length) {
+          console.warn('Email sent with errors:', result.errors);
+        }
+      }
     } catch(e) {
       console.warn('Email notification failed (non-blocking):', e);
     }

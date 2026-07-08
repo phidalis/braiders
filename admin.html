@@ -956,8 +956,11 @@
               <input type="text" id="cfg-clientSubject" placeholder="Booking Confirmation - {{businessName}}">
             </div>
             <div class="field span2">
-              <label>HTML Template (use {{name}}, {{style}}, {{date}}, {{time}}, {{phone}}, {{notes}}, {{bookingRef}}, etc.)</label>
-              <textarea id="cfg-clientTemplate" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="<h2>Hi {{name}},</h2><p>Your booking is confirmed!</p>..."></textarea>
+              <label>Email Template (plain text; use {{name}}, {{style}}, {{date}}, {{time}}, {{phone}}, {{notes}}, {{bookingRef}}, etc.)</label>
+              <div style="display:flex;gap:6px;margin-bottom:4px;">
+                <textarea id="cfg-clientTemplate" style="flex:1;min-height:160px;font-family:monospace;font-size:12px;" placeholder="Hi {{name}},..."></textarea>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cfg-clientTemplate').value = DEFAULT_CLIENT_TEMPLATE"><i class="fas fa-undo"></i> Reset to default</button>
             </div>
           </div>
           <div style="padding:14px 20px 10px;border-bottom:1px solid var(--border);margin-bottom:14px;margin-top:14px;">
@@ -980,8 +983,11 @@
               <input type="text" id="cfg-adminSubject" placeholder="New Booking: {{name}} - {{style}}">
             </div>
             <div class="field span2">
-              <label>HTML Template</label>
-              <textarea id="cfg-adminTemplate" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="<h2>New Booking!</h2><p>From: {{name}}<br>Phone: {{phone}}</p>..."></textarea>
+              <label>Email Template (plain text)</label>
+              <div style="display:flex;gap:6px;margin-bottom:4px;">
+                <textarea id="cfg-adminTemplate" style="flex:1;min-height:160px;font-family:monospace;font-size:12px;" placeholder="New Booking from {{name}}!..."></textarea>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cfg-adminTemplate').value = DEFAULT_ADMIN_TEMPLATE"><i class="fas fa-undo"></i> Reset to default</button>
             </div>
           </div>
         </div>
@@ -2253,6 +2259,12 @@ function openBookingModal(id) {
         ${b.paymentStatus !== 'awaiting_verification' ? `<button class="btn btn-outline btn-sm" onclick="updateBookingPaymentStatus('awaiting_verification')"><i class="fas fa-hourglass-half"></i> Awaiting Verification</button>` : ''}
         ${b.paymentStatus !== 'failed' ? `<button class="btn btn-danger btn-sm" onclick="updateBookingPaymentStatus('failed')"><i class="fas fa-times-circle"></i> Mark Failed</button>` : ''}
       </div>
+
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 10px;">Email Actions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="sendBookingEmail('${id}','client')"><i class="fas fa-envelope"></i> Send Client Email</button>
+        <button class="btn btn-primary btn-sm" onclick="sendBookingEmail('${id}','admin')"><i class="fas fa-envelope"></i> Send Admin Notification</button>
+      </div>
     </div>
   `;
 
@@ -2301,6 +2313,55 @@ async function deleteBookingFromModal() {
     await loadBookings();
   } catch(e) {
     toast(`Could not delete booking (${e.message})`, 'error');
+  }
+}
+
+async function sendBookingEmail(bookingId, type) {
+  const { db, doc, getDoc } = window._fb;
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'siteConfig'));
+    const emailConfig = snap.exists() ? (snap.data().emailConfig || {}) : {};
+    const booking = window._bookingsCache?.[bookingId];
+    if (!booking) { toast('Booking not found.', 'error'); return; }
+
+    const bizName = document.querySelector('.logo')?.textContent || 'Ani Braids';
+    const payload = {
+      booking: {
+        name: booking.name || booking.firstName || '',
+        phone: booking.phone || '',
+        email: booking.email || booking.userEmail || '',
+        style: booking.style || booking.service || '',
+        date: booking.date || booking.appointmentDate || '',
+        time: booking.time || '',
+        stylist: booking.stylist || '',
+        notes: booking.notes || '',
+        bookingRef: booking.bookingRef || '',
+        paymentMethod: booking.paymentMethod || '',
+        paymentHandle: booking.paymentHandle || '',
+        businessName: bizName,
+      },
+      emailConfig: { ...emailConfig, businessName: bizName },
+      forceType: type,
+    };
+
+    const resp = await fetch('/api/send-booking-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      toast('Email failed: ' + err.substring(0, 120), 'error');
+    } else {
+      const result = await resp.json();
+      if (result.errors && result.errors.length) {
+        toast('Email sent with errors: ' + result.errors.join('; '), 'error');
+      } else {
+        toast(type === 'client' ? 'Client confirmation email sent' : 'Admin notification sent');
+      }
+    }
+  } catch(e) {
+    toast('Email error: ' + e.message, 'error');
   }
 }
 
@@ -2539,12 +2600,47 @@ async function loadPaymentMethods() {
   }
 }
 
+const DEFAULT_CLIENT_TEMPLATE = `Hi {{name}},
+
+Your appointment has been received! Here's a summary:
+
+  Style:      {{style}}
+  Date:       {{date}}
+  Time:       {{time}}
+  Stylist:    {{stylist}}
+  Reference:  {{bookingRef}}
+
+Your booking is pending payment verification. We'll notify you via WhatsApp once confirmed.
+
+Questions? Contact us at {{email}}.
+
+Best regards,
+{{businessName}}`;
+
+const DEFAULT_ADMIN_TEMPLATE = `New Booking from {{name}}!
+
+  Client:     {{name}}
+  Phone:      {{phone}}
+  Email:      {{email}}
+  Style:      {{style}}
+  Date:       {{date}}
+  Time:       {{time}}
+  Stylist:    {{stylist}}
+  Notes:      {{notes}}
+  Reference:  {{bookingRef}}
+  Payment:    {{paymentMethod}} - {{paymentHandle}}
+
+Payment status: awaiting verification. Check the admin dashboard to update.
+
+Visit the admin dashboard to manage this booking.
+
+{{businessName}} - Admin Notification`;
+
 async function loadSettings() {
   const { db, doc, getDoc } = window._fb;
   try {
     const snap = await getDoc(doc(db,'settings','siteConfig'));
-    if (!snap.exists()) return;
-    const c = snap.data();
+    const c = snap.exists() ? snap.data() : {};
     const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
     set('cfg-businessName', c.businessName);
     set('cfg-tagline', c.tagline);
@@ -2564,17 +2660,17 @@ async function loadSettings() {
     set('cfg-pinterest', c.social?.pinterest);
     set('cfg-youtube', c.social?.youtube);
     set('cfg-twitter', c.social?.twitter);
-    // Email config
+    // Email config (with defaults, force-migrate old HTML templates to plain text)
     const ec = c.emailConfig || {};
     set('cfg-fromEmail', ec.fromEmail);
     set('cfg-fromName', ec.fromName);
     set('cfg-adminEmail', ec.adminEmail);
     set('cfg-clientEnabled', ec.clientEnabled !== false ? 'true' : 'false');
-    set('cfg-clientSubject', ec.clientSubject);
-    set('cfg-clientTemplate', ec.clientTemplate);
+    set('cfg-clientSubject', ec.clientSubject || 'Booking Confirmation - {{businessName}}');
+    set('cfg-clientTemplate', (ec.clientTemplate && !/<[a-z][\s\S]*>/i.test(ec.clientTemplate)) ? ec.clientTemplate : DEFAULT_CLIENT_TEMPLATE);
     set('cfg-adminEnabled', ec.adminEnabled !== false ? 'true' : 'false');
-    set('cfg-adminSubject', ec.adminSubject);
-    set('cfg-adminTemplate', ec.adminTemplate);
+    set('cfg-adminSubject', ec.adminSubject || 'New Booking: {{name}} - {{style}}');
+    set('cfg-adminTemplate', (ec.adminTemplate && !/<[a-z][\s\S]*>/i.test(ec.adminTemplate)) ? ec.adminTemplate : DEFAULT_ADMIN_TEMPLATE);
     // payment methods now managed separately via loadPaymentMethods()
   } catch(e) { toast('Could not load settings: ' + e.message, 'error'); }
 }

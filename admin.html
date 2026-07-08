@@ -2357,7 +2357,7 @@ async function sendBookingEmail(bookingId, type) {
       forceType: type,
     };
 
-    const resp = await fetch('/api/send-booking-email', {
+    const resp = await fetch('https://braiders.onrender.com/api/send-booking-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

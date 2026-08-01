@@ -169,6 +169,95 @@ async function sendBookingEmailsCore(booking, emailConfig, forceType) {
   return errors;
 }
 
+// ─── Booking reference generator (mirrors the old client-side logic in appointment.html) ───
+// Format: [year digits→letters][month digits][day digits→letters][daily order 001-999]
+// Each digit 0-9 maps to a letter A-J (A=0 ... J=9). Order resets to 001 each new day,
+// tracked via a `bookingCounters/{YYYY-MM-DD}` doc, updated inside a transaction so
+// concurrent bookings never collide.
+function digitToLetter(d) { return String.fromCharCode(65 + Number(d)); }
+function digitsToLetters(numStr) { return numStr.split('').map(digitToLetter).join(''); }
+
+async function generateBookingRef() {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const dateKey = `${now.getFullYear()}-${mm}-${dd}`;
+  const yearLetters = digitsToLetters(yy);
+  const dayLetters = digitsToLetters(dd);
+
+  let orderNum = 1;
+  try {
+    const counterRef = db.collection('bookingCounters').doc(dateKey);
+    orderNum = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(counterRef);
+      const current = snap.exists ? (snap.data().count || 0) : 0;
+      const next = current + 1;
+      tx.set(counterRef, { count: next, date: dateKey }, { merge: true });
+      return next;
+    });
+  } catch (err) {
+    console.warn('Booking counter transaction failed, using fallback order number:', err.message);
+    orderNum = Number(String(Date.now()).slice(-3)) || 1;
+  }
+
+  const orderStr = String(orderNum).padStart(3, '0');
+  return `${yearLetters}${mm}${dayLetters}${orderStr}`;
+}
+
+// ─── POST /api/booking/create ───
+// Creates a booking entirely server-side using the Firebase Admin SDK, so it no
+// longer depends on the visitor's browser being able to complete Firebase
+// Anonymous Auth first. This is what appointment.html now calls instead of
+// writing to Firestore directly from the client — it fixes bookings failing
+// for visitors whose browser/network blocks identitytoolkit.googleapis.com
+// (common with ad blockers, privacy extensions, or restrictive networks).
+app.post('/api/booking/create', async (req, res) => {
+  if (!db) {
+    return res.status(500).json({ error: 'Server database not configured. Contact support.' });
+  }
+
+  const { style, service, date, time, stylist, name, phone, email, notes, paymentMethod, paymentHandle } = req.body || {};
+
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ error: 'Name is required.' });
+  }
+  if (!phone || !String(phone).trim()) {
+    return res.status(400).json({ error: 'Phone number is required.' });
+  }
+
+  try {
+    const bookingRef = await generateBookingRef();
+
+    const booking = {
+      style: style || service || '',
+      service: service || style || '',
+      date: date || '',
+      time: time || '',
+      stylist: stylist || '',
+      name: String(name).trim(),
+      phone: String(phone).trim(),
+      email: email || '',
+      userEmail: email || '',
+      notes: notes || '',
+      status: 'pending',
+      bookingRef,
+      paymentMethod: paymentMethod || '',
+      paymentHandle: paymentHandle || '',
+      paymentStatus: 'awaiting_verification',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      emailAutoSent: false, // the listener below will pick this up and email it out automatically
+    };
+
+    const docRef = await db.collection('bookings').add(booking);
+
+    res.status(200).json({ success: true, id: docRef.id, bookingRef });
+  } catch (e) {
+    console.error('booking/create failed:', e.message);
+    res.status(500).json({ error: 'Could not save booking. Please try again.' });
+  }
+});
+
 // ─── POST /api/send-booking-email (manual trigger, e.g. "Send Client Email" button in admin) ───
 app.post('/api/send-booking-email', async (req, res) => {
   const { booking, emailConfig } = req.body;

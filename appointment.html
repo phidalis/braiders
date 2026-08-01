@@ -37,14 +37,6 @@
     window.fsAddDoc = addDoc;
     window.fsServerTimestamp = serverTimestamp;
 
-    onAuthStateChanged(window.firebaseAuth, (user) => {
-      if (!user) {
-        signInAnonymously(window.firebaseAuth).catch(e => console.warn('Anonymous sign-in failed:', e));
-        return;
-      }
-      window.currentUser = user;
-    });
-
     // ── SITE CONFIG LOADER ──
     async function loadSiteConfig() {
       try {
@@ -1139,38 +1131,36 @@
       const email   = document.getElementById('bsmEmail')?.value || '';
       const notes   = document.getElementById('bsmNotes')?.value || '';
 
-      let waited = 0;
-      while ((!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) && waited < 8000) {
-        await sleep(200); waited += 200;
-      }
-
-      // ── If Firebase/auth still isn't ready after waiting, STOP — do not fake success ──
-      if (!window.firebaseDb || !window.fsCollection || !window.fsAddDoc || !window.currentUser) {
-        showToast('Connection issue — your booking was NOT saved. Please check your internet and try again.', 'error');
-        btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
-        btn.disabled  = false;
-        return;
-      }
-
-      const bookRef = await generateBookingRef();
-
+      // ── Booking is created server-side (POST to our own Render backend), which
+      //    uses the Firebase Admin SDK directly. This no longer depends on the
+      //    visitor's browser completing Firebase Anonymous Auth first, which is
+      //    what used to fail (silently, with a generic "connection issue" message)
+      //    for visitors whose browser/network blocks Google's auth endpoints —
+      //    e.g. ad blockers, privacy extensions, or restrictive corporate/school
+      //    networks. This was more common outside Kenya, which is why it worked
+      //    for local testing but failed for some visitors elsewhere. ──
+      let result;
       try {
-        await window.fsAddDoc(window.fsCollection(window.firebaseDb, 'bookings'), {
-          style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, email, notes,
-          status: 'pending', bookingRef: bookRef,
-          userId: window.currentUser.uid,
-          userEmail: email || window.currentUser.email || '',
-          paymentMethod: bsmPayMethod, paymentHandle: payHandle,
-          paymentStatus: 'awaiting_verification',
-          createdAt: window.fsServerTimestamp ? window.fsServerTimestamp() : new Date().toISOString(),
-          emailAutoSent: false, // the Render server watches for this and sends emails itself
+        const resp = await fetch('/api/booking/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            style: bsmStyleName, service: bsmStyleName, date, time, stylist, name, phone, email, notes,
+            paymentMethod: bsmPayMethod, paymentHandle: payHandle,
+          }),
         });
+        result = await resp.json().catch(() => ({}));
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || `Server error (${resp.status})`);
+        }
       } catch(err) {
-        showToast(`Booking failed (${err.code || err.message}). Please try again.`, 'error');
+        showToast(`Booking failed: ${err.message}. Please try again.`, 'error');
         btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';
         btn.disabled  = false;
         return;
       }
+
+      const bookRef = result.bookingRef;
 
       closeBsm();
       btn.innerHTML = '<i class="fas fa-lock"></i> Submit Booking &amp; Payment';

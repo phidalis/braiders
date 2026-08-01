@@ -1131,7 +1131,7 @@
       const email   = document.getElementById('bsmEmail')?.value || '';
       const notes   = document.getElementById('bsmNotes')?.value || '';
 
-      // ── Booking is created server-side (POST to our own Render backend), which
+      // ── Booking is created server-side (POST to the Render backend), which
       //    uses the Firebase Admin SDK directly. This no longer depends on the
       //    visitor's browser completing Firebase Anonymous Auth first, which is
       //    what used to fail (silently, with a generic "connection issue" message)
@@ -1141,7 +1141,7 @@
       //    for local testing but failed for some visitors elsewhere. ──
       let result;
       try {
-        const resp = await fetch('/api/booking/create', {
+        const resp = await fetch('https://braiders.onrender.com/api/booking/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
